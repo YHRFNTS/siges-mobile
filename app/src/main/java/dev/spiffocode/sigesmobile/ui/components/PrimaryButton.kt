@@ -32,7 +32,7 @@ fun PrimaryButton(
         if (isLoading) {
             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
         } else {
-            Text(text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(text, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }

@@ -27,6 +27,7 @@ fun PasswordTextField(
     val plum = Color(0xFF6B5B95)
     val borderGray = Color(0xFFE5E7EB)
     val textSecondary = Color(0xFF6B7280)
+    val textPrimary = Color(0xFF2D3142)
 
     OutlinedTextField(
         value = value,
@@ -49,7 +50,9 @@ fun PasswordTextField(
             focusedBorderColor = plum,
             unfocusedBorderColor = borderGray,
             focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White
+            unfocusedContainerColor = Color.White,
+            focusedTextColor = textPrimary,
+            unfocusedTextColor = textPrimary
         ),
         singleLine = true
     )

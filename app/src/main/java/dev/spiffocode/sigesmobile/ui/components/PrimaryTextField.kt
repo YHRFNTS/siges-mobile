@@ -19,6 +19,7 @@ fun PrimaryTextField(
 ) {
     val plum = Color(0xFF6B5B95)
     val borderGray = Color(0xFFE5E7EB)
+    val textPrimary = Color(0xFF2D3142)
 
     OutlinedTextField(
         value = value,
@@ -31,7 +32,9 @@ fun PrimaryTextField(
             focusedBorderColor = plum,
             unfocusedBorderColor = borderGray,
             focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White
+            unfocusedContainerColor = Color.White,
+            focusedTextColor = textPrimary,
+            unfocusedTextColor = textPrimary
         ),
         singleLine = true
     )
