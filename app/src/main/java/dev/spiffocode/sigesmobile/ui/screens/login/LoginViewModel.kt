@@ -31,12 +31,23 @@ class LoginViewModel : ViewModel() {
     fun login() {
         val currentState = _uiState.value
 
-        if (currentState.email.isBlank() || currentState.contrasena.isBlank()) {
+        val emailLimpio = currentState.email.trim()
+        val contrasena = currentState.contrasena
+
+        if (emailLimpio.isBlank() || contrasena.isBlank()) {
             _uiState.update { it.copy(errorMessage = "Por favor, completa todos los campos.") }
             return
         }
 
-        _uiState.update { it.copy(isLoading = true) }
+        val tieneUnSoloArroba = emailLimpio.count { it == '@' } == 1
+        val terminaConDominio = emailLimpio.endsWith("@utez.edu.mx")
 
+        if (!tieneUnSoloArroba || !terminaConDominio) {
+            _uiState.update { it.copy(errorMessage = "Ingresa un correo institucional válido.") }
+            return
+        }
+
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
     }
+
 }

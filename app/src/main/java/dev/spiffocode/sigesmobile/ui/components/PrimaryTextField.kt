@@ -2,6 +2,8 @@ package dev.spiffocode.sigesmobile.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,6 +29,7 @@ fun PrimaryTextField(
         modifier = modifier.fillMaxWidth(),
         placeholder = { Text(placeholder, color = Color.Gray) },
         leadingIcon = { Icon(leadingIcon, contentDescription = null, tint = plum) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = plum,
