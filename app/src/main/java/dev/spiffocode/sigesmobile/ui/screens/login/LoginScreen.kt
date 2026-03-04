@@ -103,7 +103,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             PasswordTextField(
-                value = state.contrasena,
+                value = state.password,
                 onValueChange = { viewModel.onPasswordChange(it) },
                 placeholder = "••••••••",
                 leadingIcon = Icons.Default.Lock,

@@ -17,7 +17,7 @@ class LoginViewModel : ViewModel() {
     }
 
     fun onPasswordChange(newPassword: String) {
-        _uiState.update { it.copy(contrasena = newPassword, errorMessage = null) }
+        _uiState.update { it.copy(password = newPassword, errorMessage = null) }
     }
 
     fun togglePasswordVisibility() {
@@ -32,7 +32,7 @@ class LoginViewModel : ViewModel() {
         val currentState = _uiState.value
 
         val emailLimpio = currentState.email.trim()
-        val contrasena = currentState.contrasena
+        val contrasena = currentState.password
 
         if (emailLimpio.isBlank() || contrasena.isBlank()) {
             _uiState.update { it.copy(errorMessage = "Por favor, completa todos los campos.") }
