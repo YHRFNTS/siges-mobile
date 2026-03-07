@@ -24,13 +24,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import dev.spiffocode.sigesmobile.R
-import dev.spiffocode.sigesmobile.ui.components.PasswordTextField
-import dev.spiffocode.sigesmobile.ui.components.PrimaryButton
-import dev.spiffocode.sigesmobile.ui.components.PrimaryTextField
-
-val Plum = Color(0xFF6B5B95)
-val TextPrimary = Color(0xFF2D3142)
-val TextSecondary = Color(0xFF6B7280)
+import dev.spiffocode.sigesmobile.ui.components.login.PasswordTextField
+import dev.spiffocode.sigesmobile.ui.components.login.PrimaryButton
+import dev.spiffocode.sigesmobile.ui.components.login.PrimaryTextField
+import dev.spiffocode.sigesmobile.ui.theme.*
 
 @Composable
 fun LoginScreen(
@@ -76,9 +73,9 @@ private fun LoginHeader(modifier: Modifier = Modifier) {
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Text("SIGES", fontSize = 32.sp, color = TextPrimary, fontWeight = FontWeight.Bold)
+            Text("SIGES", fontSize = 32.sp, color = TextPrimaryLogin, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("SISTEMA DE GESTIÓN DE ESPACIOS Y EQUIPOS", fontSize = 12.sp, color = TextSecondary, textAlign = TextAlign.Center)
+            Text("SISTEMA DE GESTIÓN DE ESPACIOS Y EQUIPOS", fontSize = 12.sp, color = TextSecondaryLogin, textAlign = TextAlign.Center)
         }
     }
 }
@@ -89,13 +86,13 @@ private fun LoginForm(modifier: Modifier = Modifier, viewModel: LoginViewModel) 
 
     Column(modifier = modifier.padding(24.dp)) {
 
-        Text("Bienvenido", fontSize = 26.sp, color = TextPrimary, fontWeight = FontWeight.Bold)
+        Text("Bienvenido", fontSize = 26.sp, color = TextPrimaryLogin, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(4.dp))
-        Text("Ingresa tus credenciales para acceder", fontSize = 14.sp, color = TextSecondary)
+        Text("Ingresa tus credenciales para acceder", fontSize = 14.sp, color = TextSecondaryLogin)
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Correo Institucional", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+        Text("Correo Institucional", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryLogin)
         Spacer(modifier = Modifier.height(8.dp))
 
         PrimaryTextField(
@@ -107,7 +104,7 @@ private fun LoginForm(modifier: Modifier = Modifier, viewModel: LoginViewModel) 
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Contraseña", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+        Text("Contraseña", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryLogin)
         Spacer(modifier = Modifier.height(8.dp))
 
         PasswordTextField(
@@ -132,9 +129,9 @@ private fun LoginForm(modifier: Modifier = Modifier, viewModel: LoginViewModel) 
                 Checkbox(
                     checked = state.rememberMe,
                     onCheckedChange = { viewModel.toggleRememberMe(it) },
-                    colors = CheckboxDefaults.colors(checkedColor = Plum)
+                    colors = CheckboxDefaults.colors(checkedColor = PlumLogin)
                 )
-                Text("Recordarme", fontSize = 14.sp, color = TextPrimary)
+                Text("Recordarme", fontSize = 14.sp, color = TextPrimaryLogin)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -142,7 +139,7 @@ private fun LoginForm(modifier: Modifier = Modifier, viewModel: LoginViewModel) 
             Text(
                 text = "¿Olvidaste tu contraseña?",
                 fontSize = 14.sp,
-                color = Plum,
+                color = PlumLogin,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
