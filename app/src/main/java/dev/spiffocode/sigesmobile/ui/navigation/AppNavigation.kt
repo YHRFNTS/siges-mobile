@@ -22,6 +22,7 @@ import androidx.navigation.compose.rememberNavController
 
 import dev.spiffocode.sigesmobile.ui.screens.login.LoginScreen
 import dev.spiffocode.sigesmobile.ui.screens.applicant.HomeScreen
+import dev.spiffocode.sigesmobile.ui.screens.profile.ProfileScreen
 import dev.spiffocode.sigesmobile.ui.theme.*
 
 sealed class BottomNavItem(val route: String, val title: String, val icon: ImageVector) {
@@ -81,7 +82,13 @@ fun AppNavigation() {
             }
 
             composable("profile") {
-                Text("Pantalla de Perfil (En construcción)", modifier = Modifier.padding(24.dp))
+                ProfileScreen(
+                    onLogoutClick = {
+                        navController.navigate("login") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
             }
         }
     }
