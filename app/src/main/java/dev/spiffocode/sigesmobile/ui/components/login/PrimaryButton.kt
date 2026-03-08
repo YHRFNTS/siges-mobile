@@ -1,4 +1,4 @@
-package dev.spiffocode.sigesmobile.ui.components
+package dev.spiffocode.sigesmobile.ui.components.login
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height

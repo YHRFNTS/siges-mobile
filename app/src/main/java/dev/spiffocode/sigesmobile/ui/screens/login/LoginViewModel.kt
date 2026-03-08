@@ -1,11 +1,14 @@
 package dev.spiffocode.sigesmobile.ui.screens.login
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dev.spiffocode.sigesmobile.domain.model.LoginUiState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class LoginViewModel : ViewModel() {
 
@@ -28,26 +31,32 @@ class LoginViewModel : ViewModel() {
         _uiState.update { it.copy(rememberMe = checked) }
     }
 
-    fun login() {
+    fun login(onSuccess: () -> Unit) {
         val currentState = _uiState.value
+        val cleanEmail = currentState.email.trim()
+        val password = currentState.password
 
-        val emailLimpio = currentState.email.trim()
-        val contrasena = currentState.password
-
-        if (emailLimpio.isBlank() || contrasena.isBlank()) {
+        if (cleanEmail.isBlank() || password.isBlank()) {
             _uiState.update { it.copy(errorMessage = "Por favor, completa todos los campos.") }
             return
         }
 
-        val tieneUnSoloArroba = emailLimpio.count { it == '@' } == 1
-        val terminaConDominio = emailLimpio.endsWith("@utez.edu.mx")
+        val tieneUnSoloArroba = cleanEmail.count { it == '@' } == 1
+        val terminaConDominio = cleanEmail.endsWith("@utez.edu.mx")
 
         if (!tieneUnSoloArroba || !terminaConDominio) {
-            _uiState.update { it.copy(errorMessage = "Ingresa un correo institucional válido.") }
+            _uiState.update { it.copy(errorMessage = "Ingresa un correo institucional válido (@utez.edu.mx).") }
             return
         }
 
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+        viewModelScope.launch {
+            delay(2000)
+            _uiState.update { it.copy(isLoading = false) }
+
+            onSuccess()
+        }
     }
 
 }
