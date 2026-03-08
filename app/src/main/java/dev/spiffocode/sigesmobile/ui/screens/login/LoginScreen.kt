@@ -43,7 +43,12 @@ fun LoginScreen(
             .verticalScroll(scrollState)
     ) {
         LoginHeader(modifier = Modifier.fillMaxWidth())
-        LoginForm(modifier = Modifier.fillMaxWidth(), viewModel = viewModel)
+
+        LoginForm(
+            modifier = Modifier.fillMaxWidth(),
+            viewModel = viewModel,
+            onNavigateToHome = onNavigateToHome
+        )
     }
 }
 
@@ -81,7 +86,11 @@ private fun LoginHeader(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun LoginForm(modifier: Modifier = Modifier, viewModel: LoginViewModel) {
+private fun LoginForm(
+    modifier: Modifier = Modifier,
+    viewModel: LoginViewModel,
+    onNavigateToHome: () -> Unit
+) {
     val state by viewModel.uiState.collectAsState()
 
     Column(modifier = modifier.padding(24.dp)) {
@@ -150,7 +159,9 @@ private fun LoginForm(modifier: Modifier = Modifier, viewModel: LoginViewModel) 
 
         PrimaryButton(
             text = "Iniciar Sesión",
-            onClick = { viewModel.login() },
+            onClick = {
+                viewModel.login(onSuccess = { onNavigateToHome() })
+            },
             isLoading = state.isLoading
         )
 
