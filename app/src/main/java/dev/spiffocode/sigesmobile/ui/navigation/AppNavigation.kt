@@ -22,6 +22,7 @@ import androidx.navigation.compose.rememberNavController
 
 import dev.spiffocode.sigesmobile.ui.screens.login.LoginScreen
 import dev.spiffocode.sigesmobile.ui.screens.applicant.HomeScreen
+import dev.spiffocode.sigesmobile.ui.screens.login.ForgotPasswordScreen
 import dev.spiffocode.sigesmobile.ui.theme.*
 
 sealed class BottomNavItem(val route: String, val title: String, val icon: ImageVector) {
@@ -60,7 +61,14 @@ fun AppNavigation() {
                         navController.navigate("home") {
                             popUpTo("login") { inclusive = true }
                         }
-                    }
+                    },
+                    onNavigateToForgotPassword = { navController.navigate("forgot_password") }
+                )
+            }
+
+            composable("forgot_password") {
+                ForgotPasswordScreen(
+                    onNavigateBack = { navController.popBackStack() } // Esto simplemente te regresa a la pantalla anterior
                 )
             }
 
