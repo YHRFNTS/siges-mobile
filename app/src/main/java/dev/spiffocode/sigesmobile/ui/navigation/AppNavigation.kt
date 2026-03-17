@@ -22,6 +22,8 @@ import androidx.navigation.compose.rememberNavController
 
 import dev.spiffocode.sigesmobile.ui.screens.login.LoginScreen
 import dev.spiffocode.sigesmobile.ui.screens.applicant.HomeScreen
+import dev.spiffocode.sigesmobile.ui.screens.login.ForgotPasswordScreen
+import dev.spiffocode.sigesmobile.ui.screens.profile.ProfileScreen
 import dev.spiffocode.sigesmobile.ui.theme.*
 
 sealed class BottomNavItem(val route: String, val title: String, val icon: ImageVector) {
@@ -38,7 +40,7 @@ fun AppNavigation() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val showBottomBar = currentRoute != "login"
+    val showBottomBar = currentRoute != "login" && currentRoute != "forgot_password"
 
     Scaffold(
         bottomBar = {
@@ -60,7 +62,14 @@ fun AppNavigation() {
                         navController.navigate("home") {
                             popUpTo("login") { inclusive = true }
                         }
-                    }
+                    },
+                    onNavigateToForgotPassword = { navController.navigate("forgot_password") }
+                )
+            }
+
+            composable("forgot_password") {
+                ForgotPasswordScreen(
+                    onNavigateBack = { navController.popBackStack() } // Esto simplemente te regresa a la pantalla anterior
                 )
             }
 
@@ -81,7 +90,16 @@ fun AppNavigation() {
             }
 
             composable("profile") {
-                Text("Pantalla de Perfil (En construcción)", modifier = Modifier.padding(24.dp))
+                ProfileScreen(
+                    onLogoutClick = {
+                        navController.navigate("login") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    onNavigateToChangePassword = {
+                        navController.navigate("forgot_password")
+                    }
+                )
             }
         }
     }

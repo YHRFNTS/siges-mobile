@@ -109,7 +109,7 @@ fun ForgotPasswordScreen(
                 onClick = {
                     val cleanEmail = email.trim()
                     if (cleanEmail.isBlank() || !cleanEmail.endsWith("@utez.edu.mx")) {
-                        errorMessage = "Ingresa un correo válido de la UTEZ."
+                        errorMessage = "Ingresa un correo válido."
                     } else {
                         isSent = true
                     }

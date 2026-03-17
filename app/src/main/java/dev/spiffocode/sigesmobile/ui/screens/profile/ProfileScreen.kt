@@ -28,7 +28,8 @@ val Rose = Color(0xFFFFD4D4)
 
 @Composable
 fun ProfileScreen(
-    onLogoutClick: () -> Unit = {}
+    onLogoutClick: () -> Unit = {},
+    onNavigateToChangePassword: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -44,7 +45,8 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        ProfileMenu(onLogoutClick = onLogoutClick)
+        ProfileMenu(onLogoutClick = onLogoutClick,
+                    onNavigateToChangePassword = onNavigateToChangePassword)
     }
 }
 
@@ -87,7 +89,8 @@ private fun ProfileHeader() {
 }
 
 @Composable
-private fun ProfileMenu(onLogoutClick: () -> Unit) {
+private fun ProfileMenu(onLogoutClick: () -> Unit,
+                        onNavigateToChangePassword: () -> Unit) {
     Column(
         modifier = Modifier.padding(horizontal = 20.dp)
     ) {
@@ -97,7 +100,7 @@ private fun ProfileMenu(onLogoutClick: () -> Unit) {
             icon = Icons.Default.Person,
             iconBgColor = Lav,
             iconTintColor = Plum,
-            onClick = {  }
+            onClick = { /* Navigate to Edit Profile */ }
         )
 
         ProfileMenuItem(
@@ -106,8 +109,9 @@ private fun ProfileMenu(onLogoutClick: () -> Unit) {
             icon = Icons.Outlined.Notifications,
             iconBgColor = Mint,
             iconTintColor = Teal,
-            onClick = {  }
+            onClick = { /* Navigate to Notifications */ }
         )
+
 
         ProfileMenuItem(
             title = "Cambiar Contraseña",
@@ -115,7 +119,7 @@ private fun ProfileMenu(onLogoutClick: () -> Unit) {
             icon = Icons.Default.Lock,
             iconBgColor = Lav,
             iconTintColor = Plum,
-            onClick = {  }
+            onClick = { onNavigateToChangePassword() }
         )
 
         ProfileMenuItem(

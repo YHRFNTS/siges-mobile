@@ -37,7 +37,6 @@ fun ProfileMenuItem(
             .padding(vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Icon Box
         Box(
             modifier = Modifier
                 .size(40.dp)
