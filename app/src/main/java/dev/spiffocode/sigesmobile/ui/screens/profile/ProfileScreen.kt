@@ -24,8 +24,6 @@ import androidx.compose.ui.unit.sp
 import dev.spiffocode.sigesmobile.ui.components.profile.ProfileMenuItem
 import dev.spiffocode.sigesmobile.ui.theme.*
 
-val Rose = Color(0xFFFFD4D4)
-
 @Composable
 fun ProfileScreen(
     onLogoutClick: () -> Unit = {},

@@ -1,4 +1,4 @@
-package dev.spiffocode.sigesmobile.ui.screens.login
+package dev.spiffocode.sigesmobile.ui.screens.passwordRecovery
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

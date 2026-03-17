@@ -22,7 +22,7 @@ import androidx.navigation.compose.rememberNavController
 
 import dev.spiffocode.sigesmobile.ui.screens.login.LoginScreen
 import dev.spiffocode.sigesmobile.ui.screens.applicant.HomeScreen
-import dev.spiffocode.sigesmobile.ui.screens.login.ForgotPasswordScreen
+import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ForgotPasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.ProfileScreen
 import dev.spiffocode.sigesmobile.ui.theme.*
 
@@ -69,7 +69,7 @@ fun AppNavigation() {
 
             composable("forgot_password") {
                 ForgotPasswordScreen(
-                    onNavigateBack = { navController.popBackStack() } // Esto simplemente te regresa a la pantalla anterior
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 
