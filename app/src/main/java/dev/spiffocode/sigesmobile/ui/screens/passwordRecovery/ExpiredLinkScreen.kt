@@ -16,7 +16,7 @@ fun ExpiredLinkScreen(
         iconBgColor = Rose,
         iconTintColor = Coral,
         title = "Enlace caducado",
-        description = "Por motivos de seguridad, los enlaces de recuperación expiran después de 24 horas o al solicitar uno nuevo.",
+        description = "Por motivos de seguridad, los enlaces de recuperación expiran después de 15 minutos o al solicitar uno nuevo.",
         buttonText = "Solicitar nuevo enlace",
         onButtonClick = onNavigateToForgotPassword
     )
