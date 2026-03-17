@@ -27,3 +27,6 @@ val Slate = Color(0xFF5A6C7D)
 val TextPrimary = Color(0xFF2D3142)
 val TextSecondary = Color(0xFF6B7280)
 val Background = Color(0xFFFDFCFB)
+
+//Profile Screen
+val Rose = Color(0xFFFFD4D4)

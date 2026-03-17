@@ -2,6 +2,7 @@ package dev.spiffocode.sigesmobile.ui.screens.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -32,7 +33,8 @@ import dev.spiffocode.sigesmobile.ui.theme.*
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = viewModel(),
-    onNavigateToHome: () -> Unit
+    onNavigateToHome: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -47,7 +49,8 @@ fun LoginScreen(
         LoginForm(
             modifier = Modifier.fillMaxWidth(),
             viewModel = viewModel,
-            onNavigateToHome = onNavigateToHome
+            onNavigateToHome = onNavigateToHome,
+            onNavigateToForgotPassword = onNavigateToForgotPassword
         )
     }
 }
@@ -89,7 +92,8 @@ private fun LoginHeader(modifier: Modifier = Modifier) {
 private fun LoginForm(
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel,
-    onNavigateToHome: () -> Unit
+    onNavigateToHome: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -151,7 +155,9 @@ private fun LoginForm(
                 color = PlumLogin,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToForgotPassword() }
             )
         }
 
