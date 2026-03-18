@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 
 import dev.spiffocode.sigesmobile.ui.components.passwordRecovery.ErrorBaseScreen
 import dev.spiffocode.sigesmobile.ui.theme.*
@@ -21,4 +22,12 @@ fun UsedLinkScreen(
         buttonText = "Iniciar Sesión",
         onButtonClick = onNavigateToLogin
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun UsedLinkScreenPreview() {
+    SigesmobileTheme {
+        UsedLinkScreen {  }
+    }
 }

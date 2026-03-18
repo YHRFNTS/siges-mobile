@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -108,8 +109,8 @@ fun ForgotPasswordScreen(
                 text = "Enviar Instrucciones",
                 onClick = {
                     val cleanEmail = email.trim()
-                    if (cleanEmail.isBlank() || !cleanEmail.endsWith("@utez.edu.mx")) {
-                        errorMessage = "Ingresa un correo válido."
+                    if (cleanEmail.isBlank()) {
+                        errorMessage = "Ingresa un correo."
                     } else {
                         isSent = true
                     }
@@ -145,5 +146,13 @@ fun ForgotPasswordScreen(
                 isLoading = false
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ForgotPasswordScreenPreview() {
+    SigesmobileTheme {
+        ForgotPasswordScreen (onNavigateBack = {})
     }
 }

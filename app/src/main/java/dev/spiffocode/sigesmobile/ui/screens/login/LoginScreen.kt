@@ -20,6 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -105,13 +106,13 @@ private fun LoginForm(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Correo Institucional", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryLogin)
+        Text("Usuario", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryLogin)
         Spacer(modifier = Modifier.height(8.dp))
 
         PrimaryTextField(
             value = state.email,
             onValueChange = { viewModel.onEmailChange(it) },
-            placeholder = "usuario@utez.edu.mx",
+            placeholder = "Usuario / Correo Institucional",
             leadingIcon = Icons.Default.Email
         )
 
@@ -172,5 +173,16 @@ private fun LoginForm(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenPreview() {
+    SigesmobileTheme {
+        LoginScreen(
+            onNavigateToHome = {},
+            onNavigateToForgotPassword = {},
+        )
     }
 }
