@@ -4,51 +4,11 @@ package dev.spiffocode.sigesmobile.data.remote.dto
 import com.google.gson.annotations.SerializedName
 import java.time.LocalDate
 
-// ─── Requests ────────────────────────────────────────────────────────────────
-
-data class AdminRegistrationRequest(
-    @SerializedName("email")       val email: String,
-    @SerializedName("phoneNumber") val phoneNumber: String,
-    @SerializedName("firstName")   val firstName: String,
-    @SerializedName("lastName")    val lastName: String,
-    @SerializedName("birthDate")   val birthDate: LocalDate
-)
-
-data class StudentRegistrationRequest(
-    @SerializedName("email")              val email: String,
-    @SerializedName("phoneNumber")        val phoneNumber: String,
-    @SerializedName("firstName")          val firstName: String,
-    @SerializedName("lastName")           val lastName: String,
-    @SerializedName("birthDate")          val birthDate: LocalDate,
-    @SerializedName("registrationNumber") val registrationNumber: String
-)
-
-data class InstitutionalStaffRegistrationRequest(
-    @SerializedName("email")          val email: String,
-    @SerializedName("phoneNumber")    val phoneNumber: String,
-    @SerializedName("firstName")      val firstName: String,
-    @SerializedName("lastName")       val lastName: String,
-    @SerializedName("birthDate")      val birthDate: LocalDate,
-    @SerializedName("employeeNumber") val employeeNumber: String
-)
-
 data class UserInfoUpdateRequest(
     @SerializedName("phoneNumber") val phoneNumber: String,
     @SerializedName("firstName")   val firstName: String,
     @SerializedName("lastName")    val lastName: String,
     @SerializedName("birthDate")   val birthDate: LocalDate
-)
-
-data class EmailUpdateRequest(
-    @SerializedName("email") val email: String
-)
-
-data class RegNumberUpdateRequest(
-    @SerializedName("registrationNumber") val registrationNumber: String
-)
-
-data class EmpNumberUpdateRequest(
-    @SerializedName("employeeNumber") val employeeNumber: String
 )
 
 data class PushTokenRequest(
