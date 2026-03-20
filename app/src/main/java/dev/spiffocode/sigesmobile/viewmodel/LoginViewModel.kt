@@ -1,11 +1,13 @@
-package dev.spiffocode.sigesmobile.ui.screens.login
+package dev.spiffocode.sigesmobile.viewmodel
 
 import androidx.lifecycle.ViewModel
-import dev.spiffocode.sigesmobile.domain.model.LoginUiState
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class LoginViewModel : ViewModel() {
 
@@ -28,26 +30,41 @@ class LoginViewModel : ViewModel() {
         _uiState.update { it.copy(rememberMe = checked) }
     }
 
-    fun login() {
+    fun login(onSuccess: () -> Unit) {
         val currentState = _uiState.value
+        val cleanEmail = currentState.email.trim()
+        val password = currentState.password
 
-        val emailLimpio = currentState.email.trim()
-        val contrasena = currentState.password
-
-        if (emailLimpio.isBlank() || contrasena.isBlank()) {
+        if (cleanEmail.isBlank() || password.isBlank()) {
             _uiState.update { it.copy(errorMessage = "Por favor, completa todos los campos.") }
             return
         }
 
-        val tieneUnSoloArroba = emailLimpio.count { it == '@' } == 1
-        val terminaConDominio = emailLimpio.endsWith("@utez.edu.mx")
+        val hasOnlyOneAt = cleanEmail.count { it == '@' } == 1
+        val endsWithValidDomain = cleanEmail.endsWith("@utez.edu.mx")
 
-        if (!tieneUnSoloArroba || !terminaConDominio) {
-            _uiState.update { it.copy(errorMessage = "Ingresa un correo institucional válido.") }
+        if (!hasOnlyOneAt || !endsWithValidDomain) {
+            _uiState.update { it.copy(errorMessage = "Ingresa un correo institucional válido (@utez.edu.mx).") }
             return
         }
 
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+        viewModelScope.launch {
+            delay(2000)
+            _uiState.update { it.copy(isLoading = false) }
+
+            onSuccess()
+        }
     }
 
 }
+
+data class LoginUiState(
+    val email: String = "",
+    val password: String = "",
+    val isPasswordVisible: Boolean = false,
+    val rememberMe: Boolean = false,
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
+)
