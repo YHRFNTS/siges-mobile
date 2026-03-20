@@ -3,6 +3,7 @@ package dev.spiffocode.sigesmobile.ui.screens.passwordRecovery
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 
 import dev.spiffocode.sigesmobile.ui.components.passwordRecovery.ErrorBaseScreen
 import dev.spiffocode.sigesmobile.ui.theme.*
@@ -21,3 +22,11 @@ fun ExpiredLinkScreen(
         onButtonClick = onNavigateToForgotPassword
     )
 }
+
+@Preview(showBackground = true)
+@Composable
+fun ExpiredLinkScreenPreview() {
+    SigesmobileTheme {
+        ExpiredLinkScreen {  }
+    }
+ }
