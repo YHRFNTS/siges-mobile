@@ -1,4 +1,4 @@
-
+package dev.spiffocode.sigesmobile.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel

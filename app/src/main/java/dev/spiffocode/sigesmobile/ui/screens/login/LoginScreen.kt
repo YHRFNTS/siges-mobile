@@ -1,6 +1,6 @@
 package dev.spiffocode.sigesmobile.ui.screens.login
 
-import LoginViewModel
+import dev.spiffocode.sigesmobile.viewmodel.LoginViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

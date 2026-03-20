@@ -1,13 +1,22 @@
 package dev.spiffocode.sigesmobile.ui.navigation
 
+import android.content.Intent
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -22,15 +31,20 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dev.spiffocode.sigesmobile.data.local.SessionManager
+import dev.spiffocode.sigesmobile.ui.screens.applicant.ApplicantHomeScreen
 import dev.spiffocode.sigesmobile.ui.screens.login.LoginScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ExpiredLinkScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ForgotPasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ResetPasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.UsedLinkScreen
-import dev.spiffocode.sigesmobile.ui.screens.applicant.ApplicantHomeScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.ProfileScreen
-import dev.spiffocode.sigesmobile.ui.theme.*
-import dev.spiffocode.sigesmobile.viewmodel.*
+import dev.spiffocode.sigesmobile.ui.theme.Lav
+import dev.spiffocode.sigesmobile.ui.theme.Plum
+import dev.spiffocode.sigesmobile.ui.theme.TextSecondary
+import dev.spiffocode.sigesmobile.viewmodel.EditReservationViewModel
+import dev.spiffocode.sigesmobile.viewmodel.ReservationDetailViewModel
+import dev.spiffocode.sigesmobile.viewmodel.ResetPasswordError
+import dev.spiffocode.sigesmobile.viewmodel.ResetPasswordViewModel
 
 
 object Routes {
@@ -85,8 +99,23 @@ private val noBottomBarPrefixes = setOf(
 
 
 @Composable
-fun AppNavigation(sessionManager: SessionManager) {
+fun AppNavigation(sessionManager: SessionManager, deepLinkIntent: Intent? = null) {
     val navController = rememberNavController()
+
+    LaunchedEffect(deepLinkIntent) {
+        deepLinkIntent?.data?.let { uri ->
+            when (uri.scheme) {
+                "siges" -> when (uri.host) {
+                    "reset-password" -> {
+                        val token = uri.getQueryParameter("token") ?: return@LaunchedEffect
+                        navController.navigate(Routes.resetPassword(token))
+                    }
+                    "expired-link" -> navController.navigate(Routes.EXPIRED_LINK)
+                    "used-link"    -> navController.navigate(Routes.USED_LINK)
+                }
+            }
+        }
+    }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 

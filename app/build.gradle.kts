@@ -38,8 +38,8 @@ extensions.configure<ApplicationExtension> {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     buildFeatures {
@@ -49,7 +49,7 @@ extensions.configure<ApplicationExtension> {
 
 kotlin {
     compilerOptions {
-        jvmTarget = JvmTarget.JVM_1_8
+        jvmTarget = JvmTarget.JVM_11
     }
 }
 
@@ -73,8 +73,8 @@ dependencies {
     implementation(libs.logging.interceptor)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.androidx.lifecycle.viewmodel.compose.v284)
-    implementation(libs.androidx.lifecycle.runtime.ktx.v284)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -83,4 +83,9 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }

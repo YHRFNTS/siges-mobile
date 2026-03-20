@@ -24,6 +24,18 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- Opción A: Custom scheme (más simple, no requiere verificación) -->
+                <data android:scheme="siges" android:host="reset-password" />
+                <data android:scheme="siges" android:host="expired-link" />
+                <data android:scheme="siges" android:host="used-link" />
+            </intent-filter>
+
         </activity>
     </application>
 
