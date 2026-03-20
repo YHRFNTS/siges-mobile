@@ -1,6 +1,5 @@
 package dev.spiffocode.sigesmobile.ui.navigation
 
-import android.content.Intent
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -30,6 +29,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.ui.screens.applicant.ApplicantHomeScreen
 import dev.spiffocode.sigesmobile.ui.screens.login.LoginScreen
@@ -50,10 +50,10 @@ import dev.spiffocode.sigesmobile.viewmodel.ResetPasswordViewModel
 object Routes {
     const val LOGIN            = "login"
     const val FORGOT_PASSWORD  = "forgot_password"
-    const val RESET_PASSWORD   = "reset_password/{token}"
+    const val RESET_PASSWORD   = "reset_password/{token}/{email}"
     const val EXPIRED_LINK     = "expired_link"
     const val USED_LINK        = "used_link"
-    fun resetPassword(token: String) = "reset_password/$token"
+    fun resetPassword(token: String, email: String) = "reset_password/$token/$email"
 
     const val HOME           = "home"
     const val AVAILABILITY   = "availability"
@@ -99,23 +99,8 @@ private val noBottomBarPrefixes = setOf(
 
 
 @Composable
-fun AppNavigation(sessionManager: SessionManager, deepLinkIntent: Intent? = null) {
+fun AppNavigation(sessionManager: SessionManager, navController: NavController = rememberNavController()) {
     val navController = rememberNavController()
-
-    LaunchedEffect(deepLinkIntent) {
-        deepLinkIntent?.data?.let { uri ->
-            when (uri.scheme) {
-                "siges" -> when (uri.host) {
-                    "reset-password" -> {
-                        val token = uri.getQueryParameter("token") ?: return@LaunchedEffect
-                        navController.navigate(Routes.resetPassword(token))
-                    }
-                    "expired-link" -> navController.navigate(Routes.EXPIRED_LINK)
-                    "used-link"    -> navController.navigate(Routes.USED_LINK)
-                }
-            }
-        }
-    }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -163,10 +148,19 @@ fun AppNavigation(sessionManager: SessionManager, deepLinkIntent: Intent? = null
             }
 
             composable(
-                route     = Routes.RESET_PASSWORD,
-                arguments = listOf(navArgument("token") { type = NavType.StringType })
+                route = Routes.RESET_PASSWORD,
+                arguments = listOf(
+                    navArgument("token") { type = NavType.StringType },
+                    navArgument("email") {type = NavType.StringType}
+                ),
+                deepLinks = listOf(
+                    navDeepLink {
+                        uriPattern = "https://siges.lat/app/reset-password?token={token}&email={email}"
+                    }
+                )
             ) { backStack ->
                 val token     = backStack.arguments?.getString("token") ?: ""
+                val email = backStack.arguments?.getString("email") ?: ""
                 val viewModel = hiltViewModel<ResetPasswordViewModel>()
                 val state     by viewModel.uiState.collectAsState()
 
@@ -182,6 +176,7 @@ fun AppNavigation(sessionManager: SessionManager, deepLinkIntent: Intent? = null
 
                 ResetPasswordScreen(
                     token             = token,
+                    emailFromLink = email,
                     viewModel         = viewModel,
                     onNavigateToLogin = {
                         navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } }
@@ -189,7 +184,12 @@ fun AppNavigation(sessionManager: SessionManager, deepLinkIntent: Intent? = null
                 )
             }
 
-            composable(Routes.EXPIRED_LINK) {
+            composable(
+                route = Routes.EXPIRED_LINK,
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = "https://siges.lat/app/expired-link" }
+                )
+            ) {
                 ExpiredLinkScreen(
                     onNavigateToForgotPassword = {
                         navController.navigate(Routes.FORGOT_PASSWORD) { popUpTo(Routes.LOGIN) }
@@ -197,7 +197,12 @@ fun AppNavigation(sessionManager: SessionManager, deepLinkIntent: Intent? = null
                 )
             }
 
-            composable(Routes.USED_LINK) {
+            composable(
+                route = Routes.USED_LINK,
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = "https://siges.lat/app/used-link" }
+                )
+            ) {
                 UsedLinkScreen(
                     onNavigateToLogin = {
                         navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } }
