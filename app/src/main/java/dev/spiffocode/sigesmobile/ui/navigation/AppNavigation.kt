@@ -31,6 +31,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import dev.spiffocode.sigesmobile.data.local.SessionManager
+import dev.spiffocode.sigesmobile.ui.screens.admin.AdminHomeScreen
 import dev.spiffocode.sigesmobile.ui.screens.applicant.ApplicantHomeScreen
 import dev.spiffocode.sigesmobile.ui.screens.login.LoginScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ExpiredLinkScreen
@@ -259,8 +260,11 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             // ── Admin ─────────────────────────────────────────────────────────
 
             composable(Routes.ADMIN_HOME) {
-                // AdminHomeScreen(viewModel = hiltViewModel())
-                Text("Panel Admin (en construcción)", modifier = Modifier.padding(24.dp))
+                AdminHomeScreen(
+                    viewModel               = hiltViewModel(),
+                    onNavigateToAllRequests = { navController.navigate(Routes.ADMIN_ALL_REQUESTS) },
+                    onNavigateToDetail      = { id -> navController.navigate(Routes.requestDetail(id)) }
+                )
             }
 
             composable(Routes.ADMIN_ALL_REQUESTS) {
