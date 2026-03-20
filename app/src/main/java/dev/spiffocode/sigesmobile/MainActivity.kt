@@ -3,18 +3,22 @@ package dev.spiffocode.sigesmobile
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-
+import dagger.hilt.android.AndroidEntryPoint
+import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.ui.navigation.AppNavigation
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
+import jakarta.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var sessionManager: SessionManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
             SigesmobileTheme {
-                AppNavigation()
+                AppNavigation(sessionManager = sessionManager)
             }
         }
     }

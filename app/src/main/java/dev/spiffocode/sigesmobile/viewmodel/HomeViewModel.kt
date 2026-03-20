@@ -9,6 +9,7 @@ import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ShowMode
 import dev.spiffocode.sigesmobile.data.remote.dto.SpaceDto
+import dev.spiffocode.sigesmobile.data.remote.dto.UserRole
 import dev.spiffocode.sigesmobile.domain.repository.ReportRepository
 import dev.spiffocode.sigesmobile.domain.repository.ReservationRepository
 import dev.spiffocode.sigesmobile.domain.repository.SpaceRepository
@@ -23,6 +24,9 @@ import javax.inject.Inject
 data class HomeUiState(
     val isLoading: Boolean = false,
 
+    val userName: String = "",
+    val userRole: UserRole = UserRole.STUDENT,
+
     val pendingCount: Int = 0,
     val thisMonthCount: Int = 0,
     val pendingReservations: List<ReservationResponse> = emptyList(),
@@ -36,7 +40,7 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val reservationRepository: ReservationRepository,
-    private val reportsRepository: ReportRepository,
+    private val reportRepository: ReportRepository,
     private val spaceRepository: SpaceRepository,
     private val session: SessionManager
 ) : ViewModel() {
@@ -48,18 +52,30 @@ class HomeViewModel @Inject constructor(
 
     fun loadHome() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            // TODO: guardar firstName en SessionManager al hacer login para evitar
+            //       una llamada extra aquí.
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    error     = null,
+                    userRole  = session.role?.let { role -> UserRole.valueOf(role)} ?: UserRole.STUDENT
+                )
+            }
+
             if (session.role == "ADMIN") loadAdminHome() else loadApplicantHome()
         }
     }
 
     private suspend fun loadAdminHome() {
         val pendingJob = viewModelScope.async {
-            reservationRepository.getReservations(size = 20, status = ReservationStatus.PENDING, sort = "date,asc")
+            reservationRepository.getReservations(
+                size   = 20,
+                status = ReservationStatus.PENDING,
+                sort   = "date,asc"
+            )
         }
-
         val monthJob = viewModelScope.async {
-            reportsRepository.getDashboardStats()
+            reportRepository.getDashboardStats()
         }
 
         val pendingResult = pendingJob.await()
@@ -69,7 +85,7 @@ class HomeViewModel @Inject constructor(
             it.copy(
                 isLoading           = false,
                 pendingCount        = if (pendingResult is NetworkResult.Success) pendingResult.data.totalElements.toInt() else 0,
-                thisMonthCount      = if (monthResult is NetworkResult.Success) monthResult.data.reservationsThisMonth else 0,
+                thisMonthCount      = if (monthResult is NetworkResult.Success) monthResult.data.pendingRequests else 0,
                 pendingReservations = if (pendingResult is NetworkResult.Success) pendingResult.data.content else emptyList(),
                 error               = if (pendingResult is NetworkResult.Error) pendingResult.message else null
             )
@@ -81,11 +97,7 @@ class HomeViewModel @Inject constructor(
             reservationRepository.getReservations(size = 3, sort = "date,desc")
         }
         val spacesJob = viewModelScope.async {
-            spaceRepository.searchSpaces(
-                size              = 5,
-                studentsAvailable = true,
-                showMode          = ShowMode.ACTIVE
-            )
+            spaceRepository.searchSpaces(size = 5, studentsAvailable = true, showMode = ShowMode.ACTIVE)
         }
 
         val reservationsResult = myReservationsJob.await()
@@ -100,6 +112,8 @@ class HomeViewModel @Inject constructor(
             )
         }
     }
+
+    fun setUserName(name: String) = _uiState.update { it.copy(userName = name) }
 
     fun clearError() = _uiState.update { it.copy(error = null) }
 }
