@@ -1,4 +1,4 @@
-package com.spiffocode.siges.data.local
+package dev.spiffocode.sigesmobile.data.local
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -26,11 +26,8 @@ class SessionManager @Inject constructor(
         val ROLE          = stringPreferencesKey("role")
     }
 
-    val accessTokenFlow: Flow<String?> = context.dataStore.data
-        .map { it[Keys.ACCESS_TOKEN] }
-
-    val refreshTokenFlow: Flow<String?> = context.dataStore.data
-        .map { it[Keys.REFRESH_TOKEN] }
+    val accessTokenFlow: Flow<String?>  = context.dataStore.data.map { it[Keys.ACCESS_TOKEN] }
+    val refreshTokenFlow: Flow<String?> = context.dataStore.data.map { it[Keys.REFRESH_TOKEN] }
 
     val accessToken: String?  get() = runBlocking { accessTokenFlow.first() }
     val refreshToken: String? get() = runBlocking { refreshTokenFlow.first() }

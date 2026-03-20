@@ -1,7 +1,6 @@
 package dev.spiffocode.sigesmobile.data.remote
 
-import com.spiffocode.siges.data.local.SessionManager
-import com.spiffocode.siges.data.remote.dto.auth.RefreshRequest
+import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.data.remote.api.AuthApiService
 import dev.spiffocode.sigesmobile.data.remote.dto.RefreshRequest
 import kotlinx.coroutines.runBlocking
@@ -13,8 +12,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * OkHttp Authenticator — invoked automatically on 401.
- * Attempts a token refresh once; clears session on failure.
+ * OkHttp Authenticator — se dispara automáticamente en cada 401.
+ * Intenta refrescar el accessToken una sola vez.
  */
 @Singleton
 class TokenAuthenticator @Inject constructor(
@@ -31,10 +30,10 @@ class TokenAuthenticator @Inject constructor(
         val newAccessToken = runBlocking {
             val refreshToken = session.refreshToken ?: return@runBlocking null
             try {
-                val refreshResponse = authApi.get().refresh(RefreshRequest(refreshToken))
+                val refreshResponse = authApi.value.refresh(RefreshRequest(refreshToken))
                 if (refreshResponse.isSuccessful) {
                     refreshResponse.body()?.accessToken?.also { token ->
-                        session.accessToken = token
+                        session.updateAccessToken(token)
                     }
                 } else {
                     session.clearSession()
@@ -53,22 +52,22 @@ class TokenAuthenticator @Inject constructor(
     }
 }
 
-/** Simple interceptor that attaches the access token to every request. */
 @Singleton
 class AuthInterceptor @Inject constructor(
     private val session: SessionManager
 ) : okhttp3.Interceptor {
 
     override fun intercept(chain: okhttp3.Interceptor.Chain): Response {
-        val request = chain.request()
         val token = session.accessToken
 
-        val newRequest = if (token != null) {
-            request.newBuilder()
+        val request = if (token != null) {
+            chain.request().newBuilder()
                 .header("Authorization", "Bearer $token")
                 .build()
-        } else request
+        } else {
+            chain.request()
+        }
 
-        return chain.proceed(newRequest)
+        return chain.proceed(request)
     }
 }
