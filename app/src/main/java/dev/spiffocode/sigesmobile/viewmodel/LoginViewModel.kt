@@ -1,8 +1,8 @@
-package dev.spiffocode.sigesmobile.ui.screens.login
+package dev.spiffocode.sigesmobile.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.spiffocode.sigesmobile.domain.model.LoginUiState
+import dev.spiffocode.sigesmobile.viewmodel.LoginUiState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -60,3 +60,12 @@ class LoginViewModel : ViewModel() {
     }
 
 }
+
+data class LoginUiState(
+    val email: String = "",
+    val password: String = "",
+    val isPasswordVisible: Boolean = false,
+    val rememberMe: Boolean = false,
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
+)

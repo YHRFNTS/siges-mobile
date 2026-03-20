@@ -29,6 +29,7 @@ import dev.spiffocode.sigesmobile.ui.components.login.PasswordTextField
 import dev.spiffocode.sigesmobile.ui.components.login.PrimaryButton
 import dev.spiffocode.sigesmobile.ui.components.login.PrimaryTextField
 import dev.spiffocode.sigesmobile.ui.theme.*
+import dev.spiffocode.sigesmobile.viewmodel.LoginViewModel
 
 @Composable
 fun LoginScreen(
