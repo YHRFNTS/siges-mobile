@@ -32,7 +32,6 @@ class SessionManager @Inject constructor(
     val refreshTokenFlow: Flow<String?> = context.dataStore.data
         .map { it[Keys.REFRESH_TOKEN] }
 
-    // Blocking accessors for use inside OkHttp interceptors (non-coroutine context)
     val accessToken: String?  get() = runBlocking { accessTokenFlow.first() }
     val refreshToken: String? get() = runBlocking { refreshTokenFlow.first() }
     val role: String?         get() = runBlocking { context.dataStore.data.map { it[Keys.ROLE] }.first() }

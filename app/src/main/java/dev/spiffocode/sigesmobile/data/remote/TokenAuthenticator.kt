@@ -3,6 +3,7 @@ package dev.spiffocode.sigesmobile.data.remote
 import com.spiffocode.siges.data.local.SessionManager
 import com.spiffocode.siges.data.remote.dto.auth.RefreshRequest
 import dev.spiffocode.sigesmobile.data.remote.api.AuthApiService
+import dev.spiffocode.sigesmobile.data.remote.dto.RefreshRequest
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Request
@@ -18,13 +19,12 @@ import javax.inject.Singleton
 @Singleton
 class TokenAuthenticator @Inject constructor(
     private val session: SessionManager,
-    private val authApi: Lazy<AuthApiService>     // lazy to avoid circular dependency
+    private val authApi: Lazy<AuthApiService>
 ) : Authenticator {
 
     override fun authenticate(route: Route?, response: Response): Request? {
-        // Avoid retry loops: if the refresh itself 401s, bail out
         if (response.request.header("X-Retry-After-Refresh") != null) {
-            session.clearSession()
+            runBlocking { session.clearSession() }
             return null
         }
 

@@ -10,6 +10,8 @@ import dev.spiffocode.sigesmobile.data.remote.dto.PublishNoteRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.RejectReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.RescheduleReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservationType
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -17,6 +19,7 @@ import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
+import java.time.LocalDate
 
 interface ReservationApiService {
 
@@ -24,32 +27,26 @@ interface ReservationApiService {
     suspend fun getReservations(
         @Query("page")           page: Int = 0,
         @Query("size")           size: Int = 20,
-        @Query("sort")           sort: String? = null,
-        @Query("petitionerId")   petitionerId: Long? = null,
-        @Query("petitionerName") petitionerName: String? = null,
-        @Query("date")           date: String? = null,        // yyyy-MM-dd
-        @Query("dateFrom")       dateFrom: String? = null,
-        @Query("dateTo")         dateTo: String? = null,
-        @Query("status")         status: String? = null,      // ReservationStatus.name
-        @Query("reservableId")   reservableId: Long? = null,
-        @Query("type")           type: String? = null         // GROUP | SINGLE
+        @Query("sort")           sort: String?,
+        @Query("petitionerId")   petitionerId: Long?,
+        @Query("petitionerName") petitionerName: String?,
+        @Query("date")           date: LocalDate?,
+        @Query("dateFrom")       dateFrom: LocalDate?,
+        @Query("dateTo")         dateTo: LocalDate?,
+        @Query("status")         status: ReservationStatus?,      // ReservationStatus.name
+        @Query("reservableId")   reservableId: Long?,
+        @Query("type")           type: ReservationType?         // GROUP | SINGLE
     ): Response<PageReservationResponse>
-
-    // ── Single ───────────────────────────────────────────────────────────────
 
     @GET("reservations/{id}")
     suspend fun getReservation(
         @Path("id") id: Long
     ): Response<ReservationResponse>
 
-    // ── Create ───────────────────────────────────────────────────────────────
-
     @POST("reservations")
     suspend fun createReservation(
         @Body request: CreateReservationRequest
     ): Response<ReservationResponse>
-
-    // ── State transitions (admin) ─────────────────────────────────────────────
 
     @PATCH("reservations/{id}/approve")
     suspend fun approveReservation(
@@ -86,8 +83,6 @@ interface ReservationApiService {
         @Body request: CancelReservationRequest
     ): Response<ReservationResponse>
 
-    // ── Notes ─────────────────────────────────────────────────────────────────
-
     @POST("reservations/{id}/notes")
     suspend fun addNote(
         @Path("id") id: Long,
@@ -101,12 +96,10 @@ interface ReservationApiService {
         @Body request: EditNoteRequest
     ): Response<NoteItem>
 
-    // ── Calendar ─────────────────────────────────────────────────────────────
-
     @GET("reservables/{reservableId}/calendar")
     suspend fun getCalendar(
         @Path("reservableId") reservableId: Long,
-        @Query("from")        from: String? = null,  // yyyy-MM-dd
-        @Query("to")          to: String? = null
+        @Query("from")        from: LocalDate?,
+        @Query("to")          to: LocalDate?
     ): Response<List<DayAvailabilityItem>>
 }
