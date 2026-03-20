@@ -9,7 +9,7 @@ import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 interface EquipmentApiService {
 
@@ -24,8 +24,8 @@ interface EquipmentApiService {
         @Query("studentsAvailable") studentsAvailable: Boolean?,
         @Query("spaceId")           spaceId: Long?,
         @Query("equipmentTypeId")   equipmentTypeId: Long?,
-        @Query("requestStart")      requestStart: LocalDate?,
-        @Query("requestEnd")        requestEnd: LocalDate?,
+        @Query("requestStart")      requestStart: LocalDateTime?,
+        @Query("requestEnd")        requestEnd: LocalDateTime?,
         @Query("showMode")          showMode: ShowMode?
     ): Response<PageEquipmentDto>
 

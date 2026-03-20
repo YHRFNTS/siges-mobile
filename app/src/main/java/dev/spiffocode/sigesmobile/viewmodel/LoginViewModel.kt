@@ -2,7 +2,6 @@ package dev.spiffocode.sigesmobile.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.spiffocode.sigesmobile.viewmodel.LoginUiState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,10 +40,10 @@ class LoginViewModel : ViewModel() {
             return
         }
 
-        val tieneUnSoloArroba = cleanEmail.count { it == '@' } == 1
-        val terminaConDominio = cleanEmail.endsWith("@utez.edu.mx")
+        val hasOnlyOneAt = cleanEmail.count { it == '@' } == 1
+        val endsWithValidDomain = cleanEmail.endsWith("@utez.edu.mx")
 
-        if (!tieneUnSoloArroba || !terminaConDominio) {
+        if (!hasOnlyOneAt || !endsWithValidDomain) {
             _uiState.update { it.copy(errorMessage = "Ingresa un correo institucional válido (@utez.edu.mx).") }
             return
         }

@@ -2,18 +2,21 @@ package dev.spiffocode.sigesmobile.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.spiffocode.siges.data.remote.dto.reservation.*
-import com.spiffocode.siges.data.repository.ReservationRepository
-import com.spiffocode.siges.utils.NetworkResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.spiffocode.sigesmobile.data.remote.NetworkResult
+import dev.spiffocode.sigesmobile.data.remote.dto.DayAvailabilityItem
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservationType
+import dev.spiffocode.sigesmobile.domain.repository.ReservationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
 import javax.inject.Inject
-
-// ─── UI States ────────────────────────────────────────────────────────────────
 
 data class ReservationListUiState(
     val isLoading: Boolean = false,
@@ -27,7 +30,6 @@ data class ReservationDetailUiState(
     val isLoading: Boolean = false,
     val reservation: ReservationResponse? = null,
     val error: String? = null,
-    /** Transient success message after an action (approve, cancel, etc.) */
     val actionSuccess: String? = null
 )
 
@@ -36,8 +38,6 @@ data class CalendarUiState(
     val days: List<DayAvailabilityItem> = emptyList(),
     val error: String? = null
 )
-
-// ─── ViewModel ────────────────────────────────────────────────────────────────
 
 @HiltViewModel
 class ReservationViewModel @Inject constructor(
@@ -53,16 +53,14 @@ class ReservationViewModel @Inject constructor(
     private val _calendarState = MutableStateFlow(CalendarUiState())
     val calendarState: StateFlow<CalendarUiState> = _calendarState.asStateFlow()
 
-    // ── List ─────────────────────────────────────────────────────────────────
-
     fun loadReservations(
         page: Int = 0,
         size: Int = 20,
         status: ReservationStatus? = null,
         petitionerId: Long? = null,
         reservableId: Long? = null,
-        dateFrom: String? = null,
-        dateTo: String? = null,
+        dateFrom: LocalDate? = null,
+        dateTo: LocalDate? = null,
         type: ReservationType? = null
     ) {
         viewModelScope.launch {
@@ -89,8 +87,6 @@ class ReservationViewModel @Inject constructor(
         }
     }
 
-    // ── Detail ───────────────────────────────────────────────────────────────
-
     fun loadReservation(id: Long) {
         viewModelScope.launch {
             _detailState.update { it.copy(isLoading = true, error = null) }
@@ -106,20 +102,17 @@ class ReservationViewModel @Inject constructor(
         }
     }
 
-    // ── Create ───────────────────────────────────────────────────────────────
-
     fun createReservation(
         reservableId: Long,
-        date: String,
-        startTime: String,
-        endTime: String,
+        date: LocalDate,
+        startTime: LocalTime,
+        endTime: LocalTime,
         type: ReservationType,
         companions: Int? = null
     ) {
         viewModelScope.launch {
             _detailState.update { it.copy(isLoading = true, error = null, actionSuccess = null) }
-            val request = CreateReservationRequest(reservableId, date, startTime, endTime, type, companions)
-            when (val r = repository.createReservation(request)) {
+            when (val r = repository.createReservation(reservableId, date, startTime, endTime, type, companions)) {
                 is NetworkResult.Success -> _detailState.update {
                     it.copy(isLoading = false, reservation = r.data, actionSuccess = "Reservación creada")
                 }
@@ -130,8 +123,6 @@ class ReservationViewModel @Inject constructor(
             }
         }
     }
-
-    // ── Actions ──────────────────────────────────────────────────────────────
 
     fun approveReservation(id: Long) = launchAction(id, "Reservación aprobada") {
         repository.approveReservation(id)
@@ -153,20 +144,16 @@ class ReservationViewModel @Inject constructor(
         repository.cancelReservation(id, reason)
     }
 
-    fun rescheduleReservation(id: Long, date: String, startTime: String, endTime: String) =
+    fun rescheduleReservation(id: Long, date: LocalDate, startTime: LocalTime, endTime: LocalTime) =
         launchAction(id, "Reservación reprogramada") {
-            repository.rescheduleReservation(id, RescheduleReservationRequest(date, startTime, endTime))
+            repository.rescheduleReservation(id, date, startTime, endTime)
         }
-
-    // ── Notes ─────────────────────────────────────────────────────────────────
 
     fun addNote(reservationId: Long, comment: String) = launchAction(reservationId, "Nota agregada") {
         repository.addNote(reservationId, comment)
     }
 
-    // ── Calendar ─────────────────────────────────────────────────────────────
-
-    fun loadCalendar(reservableId: Long, from: String? = null, to: String? = null) {
+    fun loadCalendar(reservableId: Long, from: LocalDate? = null, to: LocalDate? = null) {
         viewModelScope.launch {
             _calendarState.update { it.copy(isLoading = true, error = null) }
             when (val r = repository.getCalendar(reservableId, from, to)) {
@@ -181,7 +168,6 @@ class ReservationViewModel @Inject constructor(
         }
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
 
     fun clearDetailError()   = _detailState.update { it.copy(error = null, actionSuccess = null) }
     fun clearListError()     = _listState.update { it.copy(error = null) }

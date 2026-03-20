@@ -1,5 +1,7 @@
 package dev.spiffocode.sigesmobile.data.remote
 
+import retrofit2.Response
+
 sealed class NetworkResult<out T> {
     data class Success<T>(val data: T) : NetworkResult<T>()
     data class Error(val code: Int, val message: String) : NetworkResult<Nothing>()
@@ -7,7 +9,7 @@ sealed class NetworkResult<out T> {
 }
 
 /** Safely execute a Retrofit suspend call and wrap result. */
-suspend fun <T> safeApiCall(call: suspend () -> retrofit2.Response<T>): NetworkResult<T> {
+suspend fun <T> safeApiCall(call: suspend () -> Response<T>): NetworkResult<T> {
     return try {
         val response = call()
         if (response.isSuccessful) {
