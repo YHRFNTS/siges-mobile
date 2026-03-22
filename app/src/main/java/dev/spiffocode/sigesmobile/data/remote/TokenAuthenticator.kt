@@ -10,6 +10,7 @@ import okhttp3.Response
 import okhttp3.Route
 import javax.inject.Inject
 import javax.inject.Singleton
+import dagger.Lazy
 
 /**
  * OkHttp Authenticator — se dispara automáticamente en cada 401.
@@ -30,7 +31,7 @@ class TokenAuthenticator @Inject constructor(
         val newAccessToken = runBlocking {
             val refreshToken = session.refreshToken ?: return@runBlocking null
             try {
-                val refreshResponse = authApi.value.refresh(RefreshRequest(refreshToken))
+                val refreshResponse = authApi.get().refresh(RefreshRequest(refreshToken))
                 if (refreshResponse.isSuccessful) {
                     refreshResponse.body()?.accessToken?.also { token ->
                         session.updateAccessToken(token)

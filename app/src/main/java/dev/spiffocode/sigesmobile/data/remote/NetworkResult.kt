@@ -14,10 +14,19 @@ suspend fun <T> safeApiCall(call: suspend () -> Response<T>): NetworkResult<T> {
         val response = call()
         if (response.isSuccessful) {
             val body = response.body()
-            if (body != null) NetworkResult.Success(body)
-            else NetworkResult.Error(response.code(), "Empty response body")
+            when {
+                response.code() == 204 || response.code() == 205 -> {
+                    @Suppress("UNCHECKED_CAST")
+                    NetworkResult.Success(Unit as T)
+                }
+                body != null -> NetworkResult.Success(body)
+                else -> NetworkResult.Error(response.code(), "Empty response body")
+            }
         } else {
-            NetworkResult.Error(response.code(), response.errorBody()?.string() ?: "Unknown error")
+            NetworkResult.Error(
+                response.code(),
+                response.errorBody()?.string() ?: "Unknown error"
+            )
         }
     } catch (e: Exception) {
         NetworkResult.Error(-1, e.localizedMessage ?: "Network exception")
