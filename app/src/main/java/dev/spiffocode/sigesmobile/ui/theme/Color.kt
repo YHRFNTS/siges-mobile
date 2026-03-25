@@ -27,6 +27,17 @@ val Slate = Color(0xFF5A6C7D)
 val TextPrimary = Color(0xFF2D3142)
 val TextSecondary = Color(0xFF6B7280)
 val Background = Color(0xFFFDFCFB)
-
 //Profile Screen
 val Rose = Color(0xFFFFD4D4)
+
+// Paleta light
+val TealLight = Color(0xFF0F6E56)
+val SurfaceLight = Color(0xFFF8F9FA)
+
+// Paleta dark
+val TealDark  = Color(0xFF5DCAA5)
+val SurfaceDark = Color(0xFF1C1C1E)
+
+val LavDark = Color(0xFF4A1A7A)
+val PeachDark = Color(0xFF8A3B1C)
+val LemonDark = Color(0xFF856A18)
