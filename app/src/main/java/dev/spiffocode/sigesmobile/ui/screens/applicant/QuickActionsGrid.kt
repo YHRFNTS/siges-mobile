@@ -15,17 +15,22 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.spiffocode.sigesmobile.ui.components.applicantHS.QuickCard
+import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 
 @Composable
 fun QuickActionsGrid(
-    onNavigateToAvailability: () -> Unit,
-    onNavigateToNewRequest: () -> Unit,
-    onNavigateToMyRequests: () -> Unit
+    horizontalPadding: Dp = 20.dp,
+    spacing: Dp = 12.dp,
+    onNavigateToAvailability: () -> Unit = {},
+    onNavigateToNewRequest: () -> Unit = {},
+    onNavigateToMyRequests: () -> Unit = {}
 ) {
-    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = Modifier.padding(horizontal = horizontalPadding)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(spacing)) {
             QuickCard(
                 title   = "Disponibilidad",
                 desc    = "Ver espacios y equipos",
@@ -41,7 +46,7 @@ fun QuickActionsGrid(
                 onClick = onNavigateToNewRequest
             )
         }
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(spacing))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             QuickCard(
                 title   = "Mis Solicitudes",
@@ -58,5 +63,13 @@ fun QuickActionsGrid(
                 onClick = onNavigateToAvailability
             )
         }
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
+fun QuickActionsGridPreview(){
+    SigesmobileTheme {
+        QuickActionsGrid{}
     }
 }

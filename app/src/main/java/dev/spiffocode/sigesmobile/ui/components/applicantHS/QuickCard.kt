@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
@@ -24,17 +23,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import dev.spiffocode.sigesmobile.ui.theme.Plum
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
-import dev.spiffocode.sigesmobile.ui.theme.TextPrimary
-import dev.spiffocode.sigesmobile.ui.theme.TextSecondary
 
 @Composable
 public fun RowScope.QuickCard(
+    weight: Float = 1f,
+    padding: Dp = 20.dp,
+    iconSize: Dp = 44.dp,
     title: String,
     desc: String,
     icon: ImageVector,
@@ -43,22 +41,22 @@ public fun RowScope.QuickCard(
 ) {
     Card(
         modifier  = Modifier
-            .weight(1f)
+            .weight(weight)
             .clickable { onClick() },
-        shape     = RoundedCornerShape(18.dp),
+        shape     = MaterialTheme.shapes.large,
         colors    = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(padding)) {
             Box(
-                modifier         = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(iconBg),
+                modifier         = Modifier.size(iconSize).clip(MaterialTheme.shapes.medium).background(iconBg),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = Plum, modifier = Modifier.size(22.dp))
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(iconSize / 2))
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Text(title, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-            Text(desc, fontSize = 11.sp, color = TextSecondary, lineHeight = 14.sp)
+            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

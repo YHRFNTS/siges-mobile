@@ -16,14 +16,17 @@ private val LightColorScheme = lightColorScheme(
     onPrimary      = Color.White,
     primaryContainer   = Mint,
     onPrimaryContainer = TealLight,
-    secondary        = Color(0xFF7B6FA0),
+    secondary        = Plum,
     secondaryContainer = Lav,
+    onSecondaryContainer = Sky,
     tertiary         = Color(0xFFB85C38),
     tertiaryContainer = Peach,
     surfaceVariant   = Lemon,
     error          = Coral,
     surface        = SurfaceLight,
     background     = Color.White,
+    onSurface = TextPrimary,
+    onSurfaceVariant = TextSecondary
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -39,6 +42,8 @@ private val DarkColorScheme = darkColorScheme(
     error          = Color(0xFFFFB4AB),
     surface        = SurfaceDark,
     background     = Color(0xFF121212),
+    onSurface = TextPrimaryDark,
+    onSurfaceVariant = TextSecondaryDark
 )
 
 @Composable
@@ -60,6 +65,7 @@ fun SigesmobileTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        shapes = shapes,
         typography = Typography,
         content = content
     )

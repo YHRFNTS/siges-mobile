@@ -21,3 +21,12 @@ fun ReservationStatus.toBgColor(): Color = when (this) {
     ReservationStatus.REJECTED    -> MaterialTheme.colorScheme.errorContainer
     else -> {MaterialTheme.colorScheme.primaryContainer}
 }
+
+fun ReservationStatus.toText(): String = when (this) {
+    ReservationStatus.PENDING     -> "Pendiente"
+    ReservationStatus.APPROVED    -> "Aprobada"
+    ReservationStatus.REJECTED    -> "Denegada"
+    ReservationStatus.CANCELLED   -> "Cancelada"
+    ReservationStatus.IN_PROGRESS -> "En curso"
+    ReservationStatus.FINISHED    -> "Completada"
+}

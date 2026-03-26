@@ -24,8 +24,11 @@ val Plum = Color(0xFF6B5B95)
 val Teal = Color(0xFF4A9B8E)
 val Coral = Color(0xFFFF9B85)
 val Slate = Color(0xFF5A6C7D)
-val TextPrimary = Color(0xFF2D3142)
+val TextPrimary = Color(0xFF30343F)
 val TextSecondary = Color(0xFF6B7280)
+
+val TextPrimaryDark = Color(0xFFF8F9FA)
+val TextSecondaryDark = Color(0xFFFDFCFB)
 val Background = Color(0xFFFDFCFB)
 //Profile Screen
 val Rose = Color(0xFFFFD4D4)

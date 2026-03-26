@@ -1,34 +1,38 @@
 package dev.spiffocode.sigesmobile.ui.components.applicantHS
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @Composable
-fun SectionHeader(title: String, actionText: String, onActionClick: () -> Unit) {
-    val textPrimary = Color(0xFF2D3142)
-    val plum = Color(0xFF6B5B95)
-
+fun SectionHeader(
+    verticalPadding: Dp = 8.dp,
+    horizontalPadding: Dp = 24.dp,
+    title: String,
+    actionText: String,
+    onActionClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 8.dp),
+            .padding(horizontal = horizontalPadding, vertical = verticalPadding),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+        Text(title, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
         Text(
             actionText,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = plum,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.clickable { onActionClick() }
         )
     }

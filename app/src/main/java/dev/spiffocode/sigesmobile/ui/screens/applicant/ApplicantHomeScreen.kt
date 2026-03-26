@@ -28,6 +28,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.ui.components.applicantHS.AvailableItemCard
 import dev.spiffocode.sigesmobile.ui.components.applicantHS.HomeHeader
 import dev.spiffocode.sigesmobile.ui.components.applicantHS.RequestCard
@@ -35,7 +37,6 @@ import dev.spiffocode.sigesmobile.ui.components.applicantHS.SectionHeader
 import dev.spiffocode.sigesmobile.ui.theme.Background
 import dev.spiffocode.sigesmobile.ui.theme.Plum
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
-import dev.spiffocode.sigesmobile.ui.theme.Teal
 import dev.spiffocode.sigesmobile.ui.theme.TextSecondary
 import dev.spiffocode.sigesmobile.viewmodel.AvailableSpaceUIItem
 import dev.spiffocode.sigesmobile.viewmodel.HomeViewModel
@@ -143,8 +144,6 @@ fun ApplicantHomeScreen(
                                 title       = reservation.title,
                                 date        = reservation.date,
                                 status      = reservation.status,
-                                statusColor = reservation.statusColor,
-                                statusBg    = reservation.statusBg,
                                 meta1       = reservation.meta1,
                                 meta2       = reservation.meta2,
                                 onClick     = { onNavigateToDetail(reservation.id) }
@@ -228,9 +227,7 @@ fun ApplicantHomeScreenWithReservations() {
                     id = 1,
                     title = "Aula 1",
                     date = Date.valueOf("2026-06-25").toString(),
-                    status = "Pendiente",
-                    statusColor = Color(0xFFB8860B),
-                    statusBg = Teal,
+                    status = ReservationStatus.PENDING,
                     meta1 = "10:00 - 11:00",
                     meta2 = "Edificio 1"
                 )
@@ -255,7 +252,7 @@ fun ApplicantHomeScreenWithSpaces() {
                 AvailableSpaceUIItem(
                     title = "Aula 1",
                     meta = "Capacidad: 30 personas",
-                    status = "Disponible"
+                    status = ReservableStatus.AVAILABLE
                 )
             ),
             error = null
