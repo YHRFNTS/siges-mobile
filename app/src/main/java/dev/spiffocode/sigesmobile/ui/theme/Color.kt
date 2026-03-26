@@ -1,7 +1,7 @@
 package dev.spiffocode.sigesmobile.ui.theme
 
 import androidx.compose.ui.graphics.Color
-
+val deepBlue = Color(0xFF2D1F5E)
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)
@@ -44,3 +44,19 @@ val SurfaceDark = Color(0xFF1C1C1E)
 val LavDark = Color(0xFF4A1A7A)
 val PeachDark = Color(0xFF8A3B1C)
 val LemonDark = Color(0xFF856A18)
+
+val PurpleContainer = Color(0xFFEDE7F6)
+val PurpleContainerDark = Color(0xFF4A3F6B)
+
+val Teal40 = Color(0xFF4A8A7A)
+val Teal80 = Color(0xFFB2DFDB)
+
+// Estados de reservación
+val StatusPending  = Color(0xFFF5A623)   // Amarillo/naranja → PENDIENTE
+val StatusApproved = Color(0xFF4CAF50)   // Verde           → APROBADA
+val StatusDenied   = Color(0xFFE57373)   // Rojo suave      → DENEGADA
+val StatusDone     = Color(0xFF9E9E9E)   // Gris            → COMPLETADA
+
+// Disponibilidad
+val AvailableGreen = Color(0xFF2E7D32)   // Verde oscuro → "Disponible..."
+val MaintenanceRed = Color(0xFFE53935)
