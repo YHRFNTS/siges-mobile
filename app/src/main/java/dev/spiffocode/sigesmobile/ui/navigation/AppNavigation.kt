@@ -32,6 +32,8 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.ui.screens.admin.AdminHomeScreen
+import dev.spiffocode.sigesmobile.ui.screens.admin.AdminReservationListScreen
+import dev.spiffocode.sigesmobile.ui.screens.admin.AdminReviewDetailScreen
 import dev.spiffocode.sigesmobile.ui.screens.applicant.ApplicantHomeScreen
 import dev.spiffocode.sigesmobile.ui.screens.login.LoginScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ExpiredLinkScreen
@@ -72,8 +74,10 @@ object Routes {
     fun requestDetail(id: Long) = "request_detail/$id"
     fun editRequest(id: Long)   = "edit_request/$id"
 
-    const val ADMIN_HOME         = "admin_home"
-    const val ADMIN_ALL_REQUESTS = "admin_all_requests"
+    const val ADMIN_HOME           = "admin_home"
+    const val ADMIN_ALL_REQUESTS   = "admin_all_requests"
+    const val ADMIN_REVIEW_DETAIL  = "admin_review/{reservationId}"
+    fun adminReviewDetail(id: Long) = "admin_review/$id"
 
     const val PROFILE            = "profile"
     const val EDIT_PROFILE       = "edit_profile"
@@ -102,6 +106,7 @@ private val noBottomBarPrefixes = setOf(
     Routes.USED_LINK,
     "reset_password",
     "change_password",
+    "admin_review",
 )
 
 
@@ -292,13 +297,27 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                 AdminHomeScreen(
                     viewModel               = hiltViewModel(),
                     onNavigateToAllRequests = { navController.navigate(Routes.ADMIN_ALL_REQUESTS) },
-                    onNavigateToDetail      = { id -> navController.navigate(Routes.requestDetail(id)) }
+                    onNavigateToDetail      = { id -> navController.navigate(Routes.adminReviewDetail(id)) }
                 )
             }
 
             composable(Routes.ADMIN_ALL_REQUESTS) {
-                // AdminReservationListScreen(viewModel = hiltViewModel())
-                Text("Todas las Solicitudes (en construcción)", modifier = Modifier.padding(24.dp))
+                AdminReservationListScreen(
+                    viewModel         = hiltViewModel(),
+                    onNavigateToDetail = { id -> navController.navigate(Routes.adminReviewDetail(id)) }
+                )
+            }
+
+            composable(
+                route     = Routes.ADMIN_REVIEW_DETAIL,
+                arguments = listOf(navArgument("reservationId") { type = NavType.LongType })
+            ) { backStack ->
+                val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
+                AdminReviewDetailScreen(
+                    reservationId  = reservationId,
+                    viewModel      = hiltViewModel(),
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
 
             // ── Profile ───────────────────────────────────────────────────────

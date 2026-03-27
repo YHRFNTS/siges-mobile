@@ -14,6 +14,80 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// ── Admin Review (approve / reject individual reservation) ───────────────────
+
+data class AdminReviewUiState(
+    val isLoading: Boolean = false,
+    val reservation: ReservationResponse? = null,
+    val observation: String = "",
+    val error: String? = null,
+    val actionSuccess: String? = null
+)
+
+@HiltViewModel
+class AdminReviewViewModel @Inject constructor(
+    private val repository: ReservationRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(AdminReviewUiState())
+    val uiState: StateFlow<AdminReviewUiState> = _uiState.asStateFlow()
+
+    fun loadReservation(id: Long) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            when (val result = repository.getReservation(id)) {
+                is NetworkResult.Success -> _uiState.update {
+                    it.copy(isLoading = false, reservation = result.data)
+                }
+                is NetworkResult.Error -> _uiState.update {
+                    it.copy(isLoading = false, error = result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun setObservation(text: String) = _uiState.update { it.copy(observation = text) }
+
+    fun approve(id: Long) {
+        val observation = _uiState.value.observation.trim()
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            // Optionally publish observation note before approving
+            if (observation.isNotEmpty()) {
+                repository.addNote(id, observation)
+            }
+            when (val result = repository.approveReservation(id)) {
+                is NetworkResult.Success -> _uiState.update {
+                    it.copy(isLoading = false, reservation = result.data, actionSuccess = "Solicitud aprobada")
+                }
+                is NetworkResult.Error -> _uiState.update {
+                    it.copy(isLoading = false, error = result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun reject(id: Long) {
+        val observation = _uiState.value.observation.trim()
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            when (val result = repository.rejectReservation(id, observation)) {
+                is NetworkResult.Success -> _uiState.update {
+                    it.copy(isLoading = false, reservation = result.data, actionSuccess = "Solicitud denegada")
+                }
+                is NetworkResult.Error -> _uiState.update {
+                    it.copy(isLoading = false, error = result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun clearMessages() = _uiState.update { it.copy(error = null, actionSuccess = null) }
+}
+
 enum class AdminReservationTab { ALL, PENDING, RESOLVED }
 
 data class AdminReservationListUiState(
