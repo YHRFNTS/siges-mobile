@@ -15,8 +15,8 @@ enum class ShowMode { ACTIVE, INACTIVE, ALL }
 data class SpaceTypeDto(
     @SerializedName("id")          val id: Long,
     @SerializedName("name")        val name: String,
-    @SerializedName("description") val description: String?,
-    @SerializedName("deletedAt")   val deletedAt: LocalDateTime?
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("deletedAt")   val deletedAt: LocalDateTime? = null
 )
 
 data class SpaceAssetDto(

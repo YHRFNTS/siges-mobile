@@ -57,8 +57,10 @@ object Routes {
     fun resetPassword(token: String, email: String) = "reset_password/$token/$email"
 
     const val HOME           = "home"
-    const val AVAILABILITY   = "availability"
-    const val MY_REQUESTS    = "requests"
+    const val AVAILABILITY   = "availability?showBackButton={showBackButton}"
+    fun availability(showBack: Boolean) = "availability?showBackButton=$showBack"
+    const val MY_REQUESTS    = "requests?showBackButton={showBackButton}"
+    fun myRequests(showBack: Boolean) = "requests?showBackButton=$showBack"
     const val NEW_REQUEST    = "new_request"
     const val REQUEST_DETAIL = "request_detail/{reservationId}"
     const val EDIT_REQUEST   = "edit_request/{reservationId}"
@@ -78,8 +80,8 @@ object Routes {
 
 sealed class BottomNavItem(val route: String, val title: String, val icon: ImageVector) {
     object Home         : BottomNavItem(Routes.HOME, "Inicio", Icons.Default.Home)
-    object Availability : BottomNavItem(Routes.AVAILABILITY, "Buscar", Icons.Default.Search)
-    object Requests     : BottomNavItem(Routes.MY_REQUESTS, "Solicitudes", Icons.Default.List)
+    object Availability : BottomNavItem(Routes.availability(false), "Buscar", Icons.Default.Search)
+    object Requests     : BottomNavItem(Routes.myRequests(false), "Solicitudes", Icons.Default.List)
     object Profile      : BottomNavItem(Routes.PROFILE, "Perfil", Icons.Default.Person)
 }
 
@@ -214,21 +216,38 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             composable(Routes.HOME) {
                 ApplicantHomeScreen(
                     viewModel                = hiltViewModel(),
-                    onNavigateToAvailability = { navController.navigate(Routes.AVAILABILITY) },
+                    onNavigateToAvailability = { navController.navigate(Routes.availability(true)) },
                     onNavigateToNewRequest   = { navController.navigate(Routes.NEW_REQUEST) },
-                    onNavigateToMyRequests   = { navController.navigate(Routes.MY_REQUESTS) },
+                    onNavigateToMyRequests   = { navController.navigate(Routes.myRequests(true)) },
                     onNavigateToDetail       = { id -> navController.navigate(Routes.requestDetail(id)) }
                 )
             }
 
-            composable(Routes.AVAILABILITY) {
-                // AvailabilityScreen(viewModel = hiltViewModel())
-                Text("Disponibilidad (en construcción)", modifier = Modifier.padding(24.dp))
+            composable(
+                route = Routes.AVAILABILITY,
+                arguments = listOf(navArgument("showBackButton") { type = NavType.BoolType; defaultValue = false })
+            ) { backStack ->
+                val showBack = backStack.arguments?.getBoolean("showBackButton") ?: false
+                dev.spiffocode.sigesmobile.ui.screens.applicant.AvailabilityScreen(
+                    showBackButton = showBack,
+                    viewModel = hiltViewModel(),
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToDetail = { id -> navController.navigate(Routes.requestDetail(id)) }
+                )
             }
 
-            composable(Routes.MY_REQUESTS) {
-                // MyReservationsScreen(viewModel = hiltViewModel())
-                Text("Mis Solicitudes (en construcción)", modifier = Modifier.padding(24.dp))
+            composable(
+                route = Routes.MY_REQUESTS,
+                arguments = listOf(navArgument("showBackButton") { type = NavType.BoolType; defaultValue = false })
+            ) { backStack ->
+                val showBack = backStack.arguments?.getBoolean("showBackButton") ?: false
+                dev.spiffocode.sigesmobile.ui.screens.applicant.MyReservationsScreen(
+                    showBackButton = showBack,
+                    viewModel = hiltViewModel(),
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToNewRequest = { navController.navigate(Routes.NEW_REQUEST) },
+                    onNavigateToDetail = { id -> navController.navigate(Routes.requestDetail(id)) }
+                )
             }
 
             composable(Routes.NEW_REQUEST) {
@@ -336,7 +355,7 @@ private fun SigesBottomBar(
 ) {
     NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
         items.forEach { (route, title, icon) ->
-            val isSelected = currentRoute == route
+            val isSelected = currentRoute?.substringBefore("?") == route.substringBefore("?")
             NavigationBarItem(
                 icon     = { Icon(icon, contentDescription = title) },
                 label    = { Text(title, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
