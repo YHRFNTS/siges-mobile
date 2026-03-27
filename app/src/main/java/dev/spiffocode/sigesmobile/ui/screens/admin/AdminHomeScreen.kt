@@ -14,33 +14,31 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.UserRole
-import dev.spiffocode.sigesmobile.ui.components.homescreen.AdminPendingCard
 import dev.spiffocode.sigesmobile.ui.components.homescreen.DashboardMetrics
 import dev.spiffocode.sigesmobile.ui.components.homescreen.HomeHeader
+import dev.spiffocode.sigesmobile.ui.components.homescreen.RequestCard
 import dev.spiffocode.sigesmobile.ui.components.homescreen.SectionHeader
-import dev.spiffocode.sigesmobile.ui.theme.Background
+import dev.spiffocode.sigesmobile.ui.helpers.toText
 import dev.spiffocode.sigesmobile.ui.theme.Plum
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
-import dev.spiffocode.sigesmobile.ui.theme.TextSecondary
 import dev.spiffocode.sigesmobile.viewmodel.HomeViewModel
 import dev.spiffocode.sigesmobile.viewmodel.NotificationsViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ReservationUIItem
-import java.sql.Date
+import kotlinx.datetime.LocalDateTime
 
 @Composable
 fun AdminHomeScreen(
@@ -94,7 +92,7 @@ fun AdminHomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Background)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
     ) {
 
@@ -138,8 +136,8 @@ fun AdminHomeScreen(
                 pendingReservations.isEmpty() -> {
                     Text(
                         text     = "No hay solicitudes pendientes.",
-                        color    = TextSecondary,
-                        fontSize = 13.sp,
+                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                     )
                 }
@@ -149,8 +147,15 @@ fun AdminHomeScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         pendingReservations.forEach { reservation ->
-                            AdminPendingCard(
-                                reservation = reservation,
+                            RequestCard(
+                                title       = reservation.title,
+                                startDateTime = reservation.dateStart,
+                                endDateTime = reservation.dateEnd,
+                                requesterName = reservation.petitionerName,
+                                requesterRole = reservation.petitionerRole.toText(),
+                                status      = reservation.status,
+                                meta1       = reservation.meta1,
+                                meta2       = reservation.meta2,
                                 onClick     = { onNavigateToDetail(reservation.id) }
                             )
                         }
@@ -161,8 +166,8 @@ fun AdminHomeScreen(
             error?.let { error ->
                 Text(
                     text     = error,
-                    color    = Color.Red,
-                    fontSize = 12.sp,
+                    color    = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
             }
@@ -209,7 +214,39 @@ fun AdminHomeScreenWithPendingReservations() {
                 ReservationUIItem(
                     id = 1,
                     title = "Aula 1",
-                    date = Date.valueOf("2026-06-25").toString(),
+                    dateStart = LocalDateTime(2026, 1, 28, 10, 0),
+                    dateEnd = LocalDateTime(2026, 1, 28, 12, 0),
+                    status = ReservationStatus.PENDING,
+                    meta1 = "10:00 - 11:00",
+                    meta2 = "Edificio 1",
+                    petitionerRole = UserRole.STUDENT,
+                    petitionerName = "Carlos Emanuel Salgado Trujillo"
+                )
+            )
+        )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Home with reservations (Dark Theme)")
+@Composable
+fun AdminHomeScreenWithPending_Dark_Reservations() {
+    SigesmobileTheme(darkTheme = true) {
+        AdminHomeScreen(
+            userName = "John Doe",
+            userRole = UserRole.ADMIN,
+            isLoading = false,
+            error = null,
+            hasNextNotificationPage = false,
+            reservationsThisMonthCount = 3,
+            pendingReservationsCount = 1,
+            notifications = emptyList(),
+            pendingReservations = listOf(
+                ReservationUIItem(
+                    id = 1,
+                    title = "Aula 1",
+                    dateStart = LocalDateTime(2026, 1, 28, 10, 0),
+                    dateEnd = LocalDateTime(2026, 1, 28, 12, 0),
                     status = ReservationStatus.PENDING,
                     meta1 = "10:00 - 11:00",
                     meta2 = "Edificio 1",

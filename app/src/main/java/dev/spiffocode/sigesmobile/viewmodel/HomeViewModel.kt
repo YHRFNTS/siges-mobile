@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.toKotlinLocalDateTime
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
@@ -37,7 +39,8 @@ data class ReservationUIItem(
     val petitionerName: String,
     val petitionerRole: UserRole,
     val title: String,
-    val date: String,
+    val dateStart: LocalDateTime,
+    val dateEnd: LocalDateTime,
     val status: ReservationStatus,
     val meta1: String,
     val meta2: String
@@ -138,29 +141,16 @@ class HomeViewModel @Inject constructor(
 
     fun clearError() = _uiState.update { it.copy(error = null) }
 
-
-    private fun formatReservationDate(reservation: ReservationResponse): String {
-        val date  = reservation.date
-        val start = reservation.startTime.truncatedTo(ChronoUnit.MINUTES)
-        val end   = reservation.endTime.truncatedTo(ChronoUnit.MINUTES)
-        return "$date · $start – $end"
-    }
-
-    private fun formatRole(role: UserRole): String = when (role) {
-        UserRole.INSTITUTIONAL_STAFF -> "Personal Institucional"
-        UserRole.STUDENT             -> "Estudiante"
-        UserRole.ADMIN               -> "Administrador"
-    }
-
     private fun ReservationResponse.toUiItem() = ReservationUIItem(
-        id          = id,
-        title       = reservable?.name ?: "—",
+        id  = id,
+        title = reservable?.name ?: "—",
         petitionerName = "$petitioner.firstName $petitioner.lastName",
         petitionerRole = petitioner?.role ?: UserRole.STUDENT,
-        date        = formatReservationDate(this),
-        status      = status,
-        meta1       = reservable?.building?.name ?: "",
-        meta2       = "${ChronoUnit.MINUTES.between(startTime, endTime)} min"
+        dateStart =  date.atTime(startTime).toKotlinLocalDateTime(),
+        dateEnd = date.atTime(endTime).toKotlinLocalDateTime(),
+        status = status,
+        meta1 = reservable?.building?.name ?: "",
+        meta2 = "${ChronoUnit.MINUTES.between(startTime, endTime)} min"
     )
 
     private fun ReservableDto.toUiItem() = AvailableResourceUIItem(

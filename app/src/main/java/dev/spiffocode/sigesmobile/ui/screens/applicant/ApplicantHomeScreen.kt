@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,10 +22,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationResponse
@@ -37,15 +36,12 @@ import dev.spiffocode.sigesmobile.ui.components.homescreen.HomeHeader
 import dev.spiffocode.sigesmobile.ui.components.homescreen.QuickActionsGrid
 import dev.spiffocode.sigesmobile.ui.components.homescreen.RequestCard
 import dev.spiffocode.sigesmobile.ui.components.homescreen.SectionHeader
-import dev.spiffocode.sigesmobile.ui.theme.Background
-import dev.spiffocode.sigesmobile.ui.theme.Plum
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
-import dev.spiffocode.sigesmobile.ui.theme.TextSecondary
 import dev.spiffocode.sigesmobile.viewmodel.AvailableResourceUIItem
 import dev.spiffocode.sigesmobile.viewmodel.HomeViewModel
 import dev.spiffocode.sigesmobile.viewmodel.NotificationsViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ReservationUIItem
-import java.sql.Date
+import kotlinx.datetime.LocalDateTime
 import java.util.Collections.emptyList
 
 @Composable
@@ -107,7 +103,7 @@ fun ApplicantHomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Background)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
     ) {
         HomeHeader(
@@ -142,14 +138,14 @@ fun ApplicantHomeScreen(
             when {
                 isLoading -> {
                     Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Plum, modifier = Modifier.size(24.dp))
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                     }
                 }
                 myRecentReservations.isEmpty() -> {
                     Text(
                         text     = "No tienes solicitudes recientes.",
-                        color    = TextSecondary,
-                        fontSize = 13.sp,
+                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                     )
                 }
@@ -161,7 +157,8 @@ fun ApplicantHomeScreen(
                         myRecentReservations.forEach { reservation ->
                             RequestCard(
                                 title       = reservation.title,
-                                date        = reservation.date,
+                                startDateTime = reservation.dateStart,
+                                endDateTime = reservation.dateEnd,
                                 status      = reservation.status,
                                 meta1       = reservation.meta1,
                                 meta2       = reservation.meta2,
@@ -183,8 +180,8 @@ fun ApplicantHomeScreen(
             if (availableSpaces.isEmpty() && !isLoading) {
                 Text(
                     text     = "No hay recursos disponibles en este momento.",
-                    color    = TextSecondary,
-                    fontSize = 13.sp,
+                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
             } else {
@@ -207,8 +204,8 @@ fun ApplicantHomeScreen(
             error?.let { error ->
                 Text(
                     text     = error,
-                    color    = Color.Red,
-                    fontSize = 12.sp,
+                    color    = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
             }
@@ -248,7 +245,8 @@ fun ApplicantHomeScreenWithReservations() {
                 ReservationUIItem(
                     id = 1,
                     title = "Aula 1",
-                    date = Date.valueOf("2026-06-25").toString(),
+                    dateStart = LocalDateTime(2026, 1, 28, 10, 0),
+                    dateEnd = LocalDateTime(2026, 1, 28, 12, 0),
                     status = ReservationStatus.PENDING,
                     meta1 = "10:00 - 11:00",
                     meta2 = "Edificio 1",
