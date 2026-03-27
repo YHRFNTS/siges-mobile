@@ -51,6 +51,22 @@ class EditReservationViewModel @Inject constructor(
         }
     }
 
+    fun loadReservation(id: Long) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            when (val result = repository.getReservation(id)) {
+                is NetworkResult.Success -> {
+                    loadFromReservation(result.data)
+                    _uiState.update { it.copy(isLoading = false) }
+                }
+                is NetworkResult.Error -> _uiState.update {
+                    it.copy(isLoading = false, error = result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
     fun onDateChange(value: LocalDate)       = _uiState.update { it.copy(date = value, error = null) }
     fun onStartTimeChange(value: LocalTime)  = _uiState.update { it.copy(startTime = value, error = null) }
     fun onEndTimeChange(value: LocalTime)    = _uiState.update { it.copy(endTime = value, error = null) }

@@ -111,7 +111,13 @@ fun ApplicantHomeScreen(
             userRole         = userRole,
             notifications    = notifications,
             notificationsHasNextPage = hasNextNotificationPage,
-            onNotificationClick = {onClickNotification(it)},
+            onNotificationClick = { notification ->
+                onClickNotification(notification)
+                val resId = notification.reservation?.id ?: notification.metadata?.reservationId
+                if (resId != null) {
+                    onNavigateToDetail(resId)
+                }
+            },
             onMarkAllNotificationsRead = markAllNotificationsAsRead,
             onLoadMoreNotifications = onLoadMoreNotifications
         )

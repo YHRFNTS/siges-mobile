@@ -263,10 +263,11 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                 arguments = listOf(navArgument("reservationId") { type = NavType.LongType })
             ) { backStack ->
                 val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
-                val viewModel     = hiltViewModel<ReservationDetailViewModel>()
-                LaunchedEffect(reservationId) { viewModel.loadReservation(reservationId) }
-                // ReservationDetailScreen(viewModel = viewModel)
-                Text("Detalle de Solicitud (en construcción)", modifier = Modifier.padding(24.dp))
+                dev.spiffocode.sigesmobile.ui.screens.applicant.ReservationDetailScreen(
+                    reservationId = reservationId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEdit = { id -> navController.navigate(Routes.editRequest(id)) }
+                )
             }
 
             composable(
@@ -274,9 +275,11 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                 arguments = listOf(navArgument("reservationId") { type = NavType.LongType })
             ) { backStack ->
                 val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
-                val viewModel     = hiltViewModel<EditReservationViewModel>()
-                // EditReservationScreen(viewModel = viewModel)
-                Text("Editar Solicitud (en construcción)", modifier = Modifier.padding(24.dp))
+                dev.spiffocode.sigesmobile.ui.screens.applicant.EditReservationScreen(
+                    reservationId = reservationId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onSaveSuccess = { navController.popBackStack() }
+                )
             }
 
             // ── Admin ─────────────────────────────────────────────────────────
