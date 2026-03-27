@@ -42,6 +42,7 @@ import dev.spiffocode.sigesmobile.ui.screens.profile.EditProfileScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.NotificationPrefsScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.EditProfileScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.NotificationPrefsScreen
+import dev.spiffocode.sigesmobile.ui.screens.profile.ChangePasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.ProfileScreen
 import dev.spiffocode.sigesmobile.ui.theme.Lav
 import dev.spiffocode.sigesmobile.ui.theme.Plum
@@ -77,8 +78,7 @@ object Routes {
     const val PROFILE            = "profile"
     const val EDIT_PROFILE       = "edit_profile"
     const val NOTIFICATION_PREFS = "notification_prefs"
-    const val CHANGE_PASSWORD    = "change_password/{token}"
-    fun changePassword(token: String) = "change_password/$token"
+    const val CHANGE_PASSWORD    = "change_password"
 }
 
 
@@ -308,7 +308,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                     viewModel                  = hiltViewModel(),
                     onNavigateToEditProfile    = { navController.navigate(Routes.EDIT_PROFILE) },
                     onNavigateToNotifications  = { navController.navigate(Routes.NOTIFICATION_PREFS) },
-                    onNavigateToChangePassword = { navController.navigate(Routes.FORGOT_PASSWORD) },
+                    onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) },
                     onLogoutSuccess            = {
                         navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } }
                     }
@@ -323,13 +323,8 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                  NotificationPrefsScreen(viewModel = hiltViewModel(), onNavigateBack = { navController.popBackStack() })
             }
 
-            composable(
-                route     = Routes.CHANGE_PASSWORD,
-                arguments = listOf(navArgument("token") { type = NavType.StringType })
-            ) { backStack ->
-                val token = backStack.arguments?.getString("token") ?: ""
-                // ChangePasswordScreen(token = token, viewModel = hiltViewModel())
-                Text("Cambiar Contraseña (en construcción)", modifier = Modifier.padding(24.dp))
+            composable(Routes.CHANGE_PASSWORD) {
+                ChangePasswordScreen(onNavigateBack = { navController.popBackStack() })
             }
         }
     }

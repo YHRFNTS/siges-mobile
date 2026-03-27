@@ -75,6 +75,13 @@ class SessionManager @Inject constructor(
         context.dataStore.edit { it[Keys.ACCESS_TOKEN] = token }
     }
 
+    suspend fun updateTokens(accessToken: String, refreshToken: String) {
+        context.dataStore.edit {
+            it[Keys.ACCESS_TOKEN] = accessToken
+            it[Keys.REFRESH_TOKEN] = refreshToken
+        }
+    }
+
     suspend fun updateProfilePictureUrl(url: String) {
         context.dataStore.edit { it[Keys.PROFILE_PICTURE_URL] = url }
     }

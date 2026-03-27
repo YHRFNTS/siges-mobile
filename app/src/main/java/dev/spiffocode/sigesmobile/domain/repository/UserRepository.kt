@@ -2,12 +2,14 @@ package dev.spiffocode.sigesmobile.domain.repository
 
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.data.remote.api.UserApiService
+import dev.spiffocode.sigesmobile.data.remote.dto.AuthenticatedResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationPreferenceResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationPreferenceUpdateRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.PageUserResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.ProfilePictureResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.PushTokenRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.ShowMode
+import dev.spiffocode.sigesmobile.data.remote.dto.UpdatePasswordDto
 import dev.spiffocode.sigesmobile.data.remote.dto.UserInfoUpdateRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.UserResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.UserRole
@@ -71,4 +73,10 @@ class UserRepository @Inject constructor(
         preferences: List<NotificationPreferenceUpdateRequest>
     ): NetworkResult<List<NotificationPreferenceResponse>> =
         safeApiCall { api.updateNotificationPreferences(preferences) }
+
+    suspend fun updatePassword(
+        currentPassword: String,
+        newPassword: String
+    ) : NetworkResult<AuthenticatedResponse> =
+        safeApiCall { api.updatePassword(UpdatePasswordDto(currentPassword, newPassword)) }
 }

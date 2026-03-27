@@ -49,6 +49,11 @@ data class PageUserResponse(
     @SerializedName("sort")             val sort: SortObject?
 )
 
+data class UpdatePasswordDto(
+    @SerializedName("oldPassword") val currentPassword: String,
+    @SerializedName("newPassword")     val newPassword: String,
+)
+
 
 enum class UserRole { ADMIN, STUDENT, INSTITUTIONAL_STAFF }
 
