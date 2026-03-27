@@ -126,8 +126,7 @@ fun EditProfileScreenContent(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                
-                // Camera icon overlay
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

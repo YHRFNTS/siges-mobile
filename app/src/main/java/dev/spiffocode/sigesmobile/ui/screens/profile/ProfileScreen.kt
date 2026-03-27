@@ -13,13 +13,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.ui.layout.ContentScale
-import coil.compose.AsyncImage
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,22 +33,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil.compose.AsyncImage
 import dev.spiffocode.sigesmobile.ui.components.profile.ProfileMenuItem
 import dev.spiffocode.sigesmobile.ui.theme.Background
-import dev.spiffocode.sigesmobile.ui.theme.Coral
-import dev.spiffocode.sigesmobile.ui.theme.Lav
-import dev.spiffocode.sigesmobile.ui.theme.Mint
-import dev.spiffocode.sigesmobile.ui.theme.Plum
-import dev.spiffocode.sigesmobile.ui.theme.Rose
+import dev.spiffocode.sigesmobile.ui.theme.SigesTheme
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
-import dev.spiffocode.sigesmobile.ui.theme.Teal
-import dev.spiffocode.sigesmobile.ui.theme.TextPrimary
-import dev.spiffocode.sigesmobile.ui.theme.TextSecondary
 import dev.spiffocode.sigesmobile.viewmodel.ProfileMenuViewModel
 
 @Composable
@@ -61,10 +55,46 @@ fun ProfileScreen(
     onLogoutSuccess: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
+
+    ProfileScreen(
+        isLoggedOut = state.isLoggedOut,
+        isLoading = state.isLoading,
+        profilePictureUrl = viewModel.profilePictureUrl,
+        fullName = viewModel.fullName,
+        initials = viewModel.initials,
+        roleLabel = viewModel.roleLabel,
+        identifier = viewModel.identifier,
+        error = state.error,
+        onNavigateToEditProfile = onNavigateToEditProfile,
+        onNavigateToNotifications = onNavigateToNotifications,
+        onNavigateToChangePassword = onNavigateToChangePassword,
+        onLogoutSuccess = onLogoutSuccess,
+        logout = viewModel::logout
+
+    )
+}
+
+
+@Composable
+fun ProfileScreen(
+    isLoggedOut: Boolean,
+    isLoading: Boolean,
+    profilePictureUrl: String,
+    logout: () -> Unit = {},
+    fullName: String,
+    initials: String,
+    roleLabel: String,
+    identifier: String,
+    error: String?,
+    onNavigateToEditProfile: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToChangePassword: () -> Unit = {},
+    onLogoutSuccess: () -> Unit = {}
+) {
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(state.isLoggedOut) {
-        if (state.isLoggedOut) onLogoutSuccess()
+    LaunchedEffect(isLoggedOut) {
+        if (isLoggedOut) onLogoutSuccess()
     }
 
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -76,9 +106,9 @@ fun ProfileScreen(
             confirmButton    = {
                 TextButton(onClick = {
                     showLogoutDialog = false
-                    viewModel.logout()
+                    logout()
                 }) {
-                    Text("Cerrar sesión", color = Coral)
+                    Text("Cerrar sesión", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton    = {
@@ -98,24 +128,24 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(50.dp))
 
         ProfileHeader(
-            fullName = viewModel.fullName,
-            initials = viewModel.initials,
-            roleLabel = viewModel.roleLabel,
-            identifier = viewModel.identifier,
-            profilePictureUrl = viewModel.profilePictureUrl
+            fullName = fullName,
+            initials = initials,
+            roleLabel = roleLabel,
+            identifier = identifier,
+            profilePictureUrl = profilePictureUrl
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         ProfileMenu(
-            isLoading                  = state.isLoading,
+            isLoading                  = isLoading,
             onNavigateToEditProfile    = onNavigateToEditProfile,
             onNavigateToNotifications  = onNavigateToNotifications,
             onNavigateToChangePassword = onNavigateToChangePassword,
             onLogoutClick              = { showLogoutDialog = true }
         )
 
-        state.error?.let {
+        error?.let {
             Text(
                 text     = it,
                 color    = Color.Red,
@@ -152,13 +182,14 @@ private fun ProfileHeader(
                 modifier         = Modifier
                     .size(88.dp)
                     .clip(CircleShape)
-                    .background(Brush.linearGradient(colors = listOf(Plum, Lav))),
+                    .background(Brush.linearGradient(colors = listOf(MaterialTheme.colorScheme.onPrimary,
+                        MaterialTheme.colorScheme.onSecondary))),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text       = initials.ifBlank { "?" },
                     fontSize   = 32.sp,
-                    color      = Color.White,
+                    color      = MaterialTheme.colorScheme.background,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -170,13 +201,13 @@ private fun ProfileHeader(
             text       = fullName.ifBlank { "—" },
             fontSize   = 22.sp,
             fontWeight = FontWeight.Bold,
-            color      = TextPrimary
+            color      = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text     = if (identifier.isNotBlank()) "$roleLabel · $identifier" else roleLabel,
             fontSize = 13.sp,
-            color    = TextSecondary
+            color    = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -195,8 +226,8 @@ private fun ProfileMenu(
             title         = "Mi Perfil",
             subtitle      = "Ver y editar datos personales",
             icon          = Icons.Default.Person,
-            iconBgColor   = Lav,
-            iconTintColor = Plum,
+            iconBgColor   = SigesTheme.extendedColors.statusFinished,
+            iconTintColor = SigesTheme.extendedColors.onStatusFinished,
             onClick       = onNavigateToEditProfile
         )
 
@@ -204,8 +235,8 @@ private fun ProfileMenu(
             title         = "Notificaciones",
             subtitle      = "Configurar alertas y push",
             icon          = Icons.Outlined.Notifications,
-            iconBgColor   = Mint,
-            iconTintColor = Teal,
+            iconBgColor   = SigesTheme.extendedColors.statusApproved,
+            iconTintColor = SigesTheme.extendedColors.onStatusApproved,
             onClick       = onNavigateToNotifications
         )
 
@@ -213,8 +244,8 @@ private fun ProfileMenu(
             title         = "Cambiar Contraseña",
             subtitle      = "Actualizar credenciales",
             icon          = Icons.Default.Lock,
-            iconBgColor   = Lav,
-            iconTintColor = Plum,
+            iconBgColor   = SigesTheme.extendedColors.statusFinished,
+            iconTintColor = SigesTheme.extendedColors.onStatusFinished,
             onClick       = onNavigateToChangePassword
         )
 
@@ -222,8 +253,8 @@ private fun ProfileMenu(
             title         = "Cerrar Sesión",
             subtitle      = "Salir de la aplicación",
             icon          = Icons.AutoMirrored.Filled.ExitToApp,
-            iconBgColor   = Rose,
-            iconTintColor = Coral,
+            iconBgColor   = SigesTheme.extendedColors.statusDenied,
+            iconTintColor = SigesTheme.extendedColors.onStatusDenied,
             onClick       = onLogoutClick
         )
     }
@@ -234,8 +265,14 @@ private fun ProfileMenu(
 fun ProfileScreenPreview() {
     SigesmobileTheme {
         ProfileScreen(
-            onLogoutSuccess            = {},
-            onNavigateToChangePassword = {}
+            identifier = "20243ds158",
+            profilePictureUrl = "https://mockimage.tw/photo/720x640/6ef1ea/ff8800",
+            isLoggedOut = false,
+            isLoading = false,
+            fullName = "Ana Martínez López",
+            initials = "AM",
+            roleLabel = "Estudiante",
+            error = null
         )
     }
 }

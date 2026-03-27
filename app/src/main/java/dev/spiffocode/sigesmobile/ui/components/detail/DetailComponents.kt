@@ -1,18 +1,31 @@
 package dev.spiffocode.sigesmobile.ui.components.detail
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
-import dev.spiffocode.sigesmobile.ui.helpers.toColor
+import dev.spiffocode.sigesmobile.ui.components.homescreen.StatusLabel
 import dev.spiffocode.sigesmobile.ui.helpers.toBgColor
+import dev.spiffocode.sigesmobile.ui.helpers.toColor
 import dev.spiffocode.sigesmobile.ui.helpers.toText
-import dev.spiffocode.sigesmobile.ui.theme.SigesExtendedColors
+import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 
 @Composable
 fun SectionTitle(
@@ -72,20 +85,16 @@ fun StatusHeaderCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
-            // Badge
-            Surface(
-                color = bgColor.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(4.dp)
+
+            Box(
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.large)
+                    .background(status.toBgColor())
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
-                Text(
-                    text = textValue.uppercase(),
-                    color = textColor,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
+                StatusLabel(status = status)
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
             
             Text(
@@ -104,6 +113,18 @@ fun StatusHeaderCard(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun StatusHeaderCardPreview() {
+    SigesmobileTheme {
+        StatusHeaderCard(
+            status = ReservationStatus.PENDING,
+            title = "Aula 1",
+            subtitle = "Docencia 1"
+        )
     }
 }
 

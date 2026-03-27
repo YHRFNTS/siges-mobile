@@ -68,7 +68,6 @@ fun NewRequestScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Navigate to detail when creation is successful
     LaunchedEffect(uiState.createdReservation) {
         uiState.createdReservation?.let {
             viewModel.resetForm()
@@ -135,7 +134,6 @@ fun NewRequestScreenContent(
                     .verticalScroll(scrollState)
                     .padding(24.dp)
             ) {
-                // Type Tabs
                 Text(
                     text = "TIPO DE RECURSO *",
                     style = MaterialTheme.typography.labelSmall,
@@ -150,7 +148,6 @@ fun NewRequestScreenContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Resource Selection
                 ResourceSelectionSection(
                     searchQuery = state.searchQuery,
                     onSearchQueryChange = onSearchQueryChange,
@@ -164,7 +161,6 @@ fun NewRequestScreenContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Date Picker
                 DatePickerField(
                     date = state.date,
                     onDateChange = onDateChange
@@ -172,7 +168,6 @@ fun NewRequestScreenContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Time Pickers
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -194,7 +189,6 @@ fun NewRequestScreenContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Companions (Attendees)
                 OutlinedTextField(
                     value = state.companions,
                     onValueChange = onCompanionsChange,
@@ -213,7 +207,6 @@ fun NewRequestScreenContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Purpose
                 OutlinedTextField(
                     value = state.purpose,
                     onValueChange = onPurposeChange,
@@ -232,13 +225,12 @@ fun NewRequestScreenContent(
 
                 Spacer(modifier = Modifier.height(48.dp))
 
-                // Submit Button
                 Button(
                     onClick = onSubmit,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = MaterialTheme.shapes.large,
                     enabled = !state.isLoading
                 ) {
                     if (state.isLoading) {
@@ -257,7 +249,6 @@ fun NewRequestScreenContent(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Error Snackbar / Message
             if (state.error != null) {
                 Snackbar(
                     modifier = Modifier

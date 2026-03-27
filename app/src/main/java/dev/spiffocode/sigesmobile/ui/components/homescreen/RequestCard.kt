@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
@@ -91,7 +90,7 @@ fun RequestCard(
                 )
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(MaterialTheme.shapes.medium)
                         .background(status.toBgColor())
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {

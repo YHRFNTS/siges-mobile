@@ -251,7 +251,6 @@ fun ReservationDetailScreenContent(
                 }
             }
 
-            // Messages
             if (state.error != null || state.actionSuccess != null) {
                 Snackbar(
                     modifier = Modifier.padding(16.dp).align(Alignment.BottomCenter),
