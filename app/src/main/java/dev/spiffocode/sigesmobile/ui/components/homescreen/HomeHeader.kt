@@ -41,7 +41,8 @@ public fun HomeHeader(
     notifications: List<NotificationResponse>,
     notificationsHasNextPage: Boolean,
     onNotificationClick: (NotificationResponse) -> Unit = {},
-    onMarkAllNotificationsRead: () -> Unit = {}
+    onMarkAllNotificationsRead: () -> Unit = {},
+    onLoadMoreNotifications: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -68,7 +69,8 @@ public fun HomeHeader(
                     notifications = notifications,
                     hasNextPage  = notificationsHasNextPage,
                     onNotificationClick = onNotificationClick,
-                    onMarkAllRead = onMarkAllNotificationsRead
+                    onMarkAllRead = onMarkAllNotificationsRead,
+                    onLoadMoreItems = onLoadMoreNotifications
                 )
             }
 

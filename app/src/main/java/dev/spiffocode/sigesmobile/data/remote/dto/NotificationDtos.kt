@@ -39,11 +39,11 @@ data class NotificationResponse(
     @SerializedName("metadata")    val metadata: NotificationMetadata?
 )
 data class NotificationMetadata(
-    @SerializedName("platform")      val platform: NotificationPlatform?,
-    @SerializedName("reservationId") val reservationId: Long?,
-    @SerializedName("reservableId")  val reservableId: Long?,
-    @SerializedName("issuedByName")  val issuedByName: String?,
-    @SerializedName("issuedById")    val issuedById: Long?
+    @SerializedName("platform")      val platform: NotificationPlatform? = null,
+    @SerializedName("reservationId") val reservationId: Long? = null,
+    @SerializedName("reservableId")  val reservableId: Long? = null,
+    @SerializedName("issuedByName")  val issuedByName: String? = null,
+    @SerializedName("issuedById")    val issuedById: Long? = null
 )
 
 enum class NotificationPlatform {

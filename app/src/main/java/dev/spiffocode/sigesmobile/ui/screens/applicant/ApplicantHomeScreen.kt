@@ -110,7 +110,8 @@ fun ApplicantHomeScreen(
             notifications    = notifState.notifications,
             notificationsHasNextPage = notifState.hasNextPage,
             onNotificationClick = {notificationsViewModel.onClick(it)},
-            onMarkAllNotificationsRead = {notificationsViewModel.markAllRead()}
+            onMarkAllNotificationsRead = {notificationsViewModel.markAllRead()},
+            onLoadMoreNotifications = {notificationsViewModel.loadNextPage()}
         )
 
         Column(

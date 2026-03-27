@@ -13,18 +13,25 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import dev.spiffocode.sigesmobile.data.remote.dto.NotificationMetadata
+import dev.spiffocode.sigesmobile.data.remote.dto.NotificationReadStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationType
+import dev.spiffocode.sigesmobile.ui.helpers.toHumanString
 import dev.spiffocode.sigesmobile.ui.navigation.Routes
+import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
+import kotlinx.datetime.toKotlinLocalDateTime
+import java.time.LocalDateTime
 
 
 @Composable
 fun NotificationItem(
     notification: NotificationResponse,
-    onClick: () -> Unit,
+    onClick: () -> Unit = {},
     navController: NavController = rememberNavController()
 ) {
     DropdownMenuItem(
@@ -36,16 +43,16 @@ fun NotificationItem(
                             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
                                 append(it)
                             }
+                            append(" -")
                         }
                         append(" ${notification.message}")
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = notification.sentAt.toString(),
+                    text = notification.sentAt.toKotlinLocalDateTime().toHumanString(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -72,4 +79,25 @@ fun NotificationItem(
             }
         }
     )
+}
+
+@Composable
+@Preview(showBackground = true)
+fun NotificationItemPreview(){
+    SigesmobileTheme {
+        NotificationItem(
+            notification = NotificationResponse(
+                id = 1,
+                title = "Título de la notificación",
+                message = "Se creó la reservación",
+                readStatus = NotificationReadStatus.UNREAD,
+                type = NotificationType.RESERVATION_CREATED,
+                sentAt = LocalDateTime.now(),
+                reservation = null,
+                metadata = NotificationMetadata(
+                    issuedByName = "John Doe"
+                )
+            ),
+        )
+    }
 }

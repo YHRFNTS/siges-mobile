@@ -36,6 +36,7 @@ fun NotificationsButton(
     hasNextPage: Boolean,
     onNotificationClick: (NotificationResponse) -> Unit = {},
     onMarkAllRead: () -> Unit = {},
+    onLoadMoreItems: () -> Unit = {},
     shape: CornerBasedShape = MaterialTheme.shapes.medium,
     padding: Dp = 20.dp,
 ) {
@@ -47,7 +48,7 @@ fun NotificationsButton(
                 .size(38.dp)
                 .clip(shape)
                 .background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f))
-                .clickable { expanded = true },
+                .clickable { expanded = !expanded },
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -70,7 +71,7 @@ fun NotificationsButton(
                                 brush = Brush.radialGradient(
                                     colors = listOf(
                                         errorColor,
-                                        errorColor.copy(alpha = 0.4f),
+                                        errorColor.copy(alpha = 0.6f),
                                         errorColor.copy(alpha = 0f)
                                     ),
                                     center = Offset(size.width / 2f, size.height / 2f),
@@ -86,13 +87,14 @@ fun NotificationsButton(
             onMarkAllRead = onMarkAllRead,
             notifications = notifications,
             expanded = expanded,
-            hasNextPage = hasNextPage
+            hasNextPage = hasNextPage,
+            onLoadMoreItems = onLoadMoreItems
         )
     }
 }
 
 @Composable
-@Preview
+@Preview(showBackground = true, backgroundColor = 0xffe1cfff)
 fun NotificationsButtonEmptyPreview(){
     SigesmobileTheme {
         NotificationsButton(
@@ -104,7 +106,7 @@ fun NotificationsButtonEmptyPreview(){
 
 
 @Composable
-@Preview
+@Preview(showBackground = true, backgroundColor = 0xffe1cfff)
 fun NotificationsButtonOnePagePreview(){
     SigesmobileTheme {
         NotificationsButton(

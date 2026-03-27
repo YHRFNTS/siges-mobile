@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.hilt.android)
+    implementation(libs.kotlinx.datetime)
     ksp(libs.hilt.android.compiler)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
