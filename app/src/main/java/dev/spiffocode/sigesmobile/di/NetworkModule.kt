@@ -11,6 +11,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.spiffocode.sigesmobile.data.remote.AuthInterceptor
 import dev.spiffocode.sigesmobile.data.remote.DurationTypeAdapter
+import dev.spiffocode.sigesmobile.data.remote.LocalDateTypeAdapter
+import dev.spiffocode.sigesmobile.data.remote.LocalTimeTypeAdapter
 import dev.spiffocode.sigesmobile.data.remote.TokenAuthenticator
 import dev.spiffocode.sigesmobile.data.remote.api.AuthApiService
 import dev.spiffocode.sigesmobile.data.remote.api.BuildingApiService
@@ -32,8 +34,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
-import kotlin.jvm.java
-import kotlin.time.Duration
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -65,19 +65,13 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideGson(): Gson = GsonBuilder()
-        .registerTypeAdapter(LocalTime::class.java, object : JsonDeserializer<LocalTime> {
-            override fun deserialize(json: JsonElement, type: Type, ctx: JsonDeserializationContext) =
-                LocalTime.parse(json.asString)
-        })
-        .registerTypeAdapter(LocalDate::class.java, object : JsonDeserializer<LocalDate> {
-            override fun deserialize(json: JsonElement, type: Type, ctx: JsonDeserializationContext) =
-                LocalDate.parse(json.asString)
-        })
         .registerTypeAdapter(LocalDateTime::class.java, object : JsonDeserializer<LocalDateTime> {
             override fun deserialize(json: JsonElement, type: Type, ctx: JsonDeserializationContext) =
                 LocalDateTime.parse(json.asString)
         })
         .registerTypeAdapter(java.time.Duration::class.java, DurationTypeAdapter())
+        .registerTypeAdapter(LocalTime::class.java, LocalTimeTypeAdapter())
+        .registerTypeAdapter(LocalDate::class.java, LocalDateTypeAdapter())
         .create()
 
     @Provides
