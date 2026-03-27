@@ -17,6 +17,7 @@ data class SigesExtendedColors(
     val onStatusFinished: Color,
     val available: Color,
     val maintenance: Color,
+    val loaned: Color,
     val quickActionSearch: Color,
     val quickActionNew: Color,
     val quickActionHistory: Color,

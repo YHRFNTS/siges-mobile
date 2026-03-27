@@ -1,5 +1,7 @@
 package dev.spiffocode.sigesmobile.ui.screens.applicant
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,8 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,18 +28,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableType
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
-import dev.spiffocode.sigesmobile.ui.components.applicantHS.AvailableItemCard
-import dev.spiffocode.sigesmobile.ui.components.applicantHS.HomeHeader
-import dev.spiffocode.sigesmobile.ui.components.applicantHS.RequestCard
-import dev.spiffocode.sigesmobile.ui.components.applicantHS.SectionHeader
+import dev.spiffocode.sigesmobile.ui.components.homescreen.AvailableItemCard
+import dev.spiffocode.sigesmobile.ui.components.homescreen.HomeHeader
+import dev.spiffocode.sigesmobile.ui.components.homescreen.RequestCard
+import dev.spiffocode.sigesmobile.ui.components.homescreen.SectionHeader
 import dev.spiffocode.sigesmobile.ui.theme.Background
 import dev.spiffocode.sigesmobile.ui.theme.Plum
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.ui.theme.TextSecondary
-import dev.spiffocode.sigesmobile.viewmodel.AvailableSpaceUIItem
+import dev.spiffocode.sigesmobile.viewmodel.AvailableResourceUIItem
 import dev.spiffocode.sigesmobile.viewmodel.HomeViewModel
+import dev.spiffocode.sigesmobile.viewmodel.NotificationsViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ReservationUIItem
 import java.sql.Date
 
@@ -61,7 +65,7 @@ fun ApplicantHomeScreen(
         userRole = state.userRole,
         isLoading = state.isLoading,
         myRecentReservations = state.myRecentReservations,
-        availableSpaces = state.availableSpaces,
+        availableSpaces = state.availableResources,
         error = state.error,
         onNavigateToAvailability = onNavigateToAvailability,
         onNavigateToNewRequest = onNavigateToNewRequest,
@@ -79,7 +83,7 @@ fun ApplicantHomeScreen(
     userRole: String,
     isLoading: Boolean,
     myRecentReservations: List<ReservationUIItem>,
-    availableSpaces: List<AvailableSpaceUIItem>,
+    availableSpaces: List<AvailableResourceUIItem>,
     error: String?,
     onNavigateToAvailability: () -> Unit = {},
     onNavigateToNewRequest: () -> Unit = {},
@@ -88,6 +92,11 @@ fun ApplicantHomeScreen(
     onNavigateToNotifications: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
+
+    val activity = LocalActivity.current as ComponentActivity
+    val notificationsViewModel: NotificationsViewModel = viewModel(activity)
+
+    val notifState by notificationsViewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -98,7 +107,10 @@ fun ApplicantHomeScreen(
         HomeHeader(
             userName         = userName,
             userRole         = userRole,
-            onNotifications  = onNavigateToNotifications
+            notifications    = notifState.notifications,
+            notificationsHasNextPage = notifState.hasNextPage,
+            onNotificationClick = {notificationsViewModel.onClick(it)},
+            onMarkAllNotificationsRead = {notificationsViewModel.markAllRead()}
         )
 
         Column(
@@ -178,7 +190,8 @@ fun ApplicantHomeScreen(
                             title  = it.title,
                             meta   = it.meta,
                             status = it.status,
-                            icon   = Icons.Default.Home
+                            resourceType = it.reservableType,
+                            resourceCategory = it.category
                         )
                     }
                 }
@@ -249,10 +262,12 @@ fun ApplicantHomeScreenWithSpaces() {
             isLoading        = false,
             myRecentReservations = emptyList(),
             availableSpaces = listOf(
-                AvailableSpaceUIItem(
-                    title = "Aula 1",
+                AvailableResourceUIItem(
+                    title = "Lab de cómputo 1",
                     meta = "Capacidad: 30 personas",
-                    status = ReservableStatus.AVAILABLE
+                    status = ReservableStatus.AVAILABLE,
+                    reservableType = ReservableType.SPACE,
+                    category = "Aulas"
                 )
             ),
             error = null

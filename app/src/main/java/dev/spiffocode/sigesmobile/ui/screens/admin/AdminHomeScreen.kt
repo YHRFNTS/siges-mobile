@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
-import dev.spiffocode.sigesmobile.ui.components.applicantHS.SectionHeader
+import dev.spiffocode.sigesmobile.ui.components.homescreen.SectionHeader
 import dev.spiffocode.sigesmobile.ui.theme.Background
 import dev.spiffocode.sigesmobile.ui.theme.Coral
 import dev.spiffocode.sigesmobile.ui.theme.Lemon

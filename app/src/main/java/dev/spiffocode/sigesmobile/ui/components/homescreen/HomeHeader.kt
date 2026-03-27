@@ -1,7 +1,6 @@
-package dev.spiffocode.sigesmobile.ui.components.applicantHS
+package dev.spiffocode.sigesmobile.ui.components.homescreen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,15 +8,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,11 +23,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.spiffocode.sigesmobile.ui.theme.Coral
+import dev.spiffocode.sigesmobile.data.remote.dto.NotificationResponse
 import dev.spiffocode.sigesmobile.ui.theme.Lav
 import dev.spiffocode.sigesmobile.ui.theme.Plum
+import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.ui.theme.Sky
 import dev.spiffocode.sigesmobile.ui.theme.Slate
 import dev.spiffocode.sigesmobile.ui.theme.TextPrimary
@@ -40,7 +38,10 @@ import dev.spiffocode.sigesmobile.ui.theme.TextPrimary
 public fun HomeHeader(
     userName: String,
     userRole: String,
-    onNotifications: () -> Unit
+    notifications: List<NotificationResponse>,
+    notificationsHasNextPage: Boolean,
+    onNotificationClick: (NotificationResponse) -> Unit = {},
+    onMarkAllNotificationsRead: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -63,29 +64,12 @@ public fun HomeHeader(
                         fontWeight = FontWeight.Bold
                     )
                 }
-
-                Box(
-                    modifier         = Modifier
-                        .size(38.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White.copy(alpha = 0.5f))
-                        .clickable { onNotifications() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Outlined.Notifications,
-                        contentDescription = "Notificaciones",
-                        tint               = TextPrimary,
-                        modifier           = Modifier.size(20.dp)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .align(Alignment.TopEnd)
-                            .offset(x = (-6).dp, y = 6.dp)
-                            .background(Coral, shape = CircleShape)
-                    )
-                }
+                NotificationsButton(
+                    notifications = notifications,
+                    hasNextPage  = notificationsHasNextPage,
+                    onNotificationClick = onNotificationClick,
+                    onMarkAllRead = onMarkAllNotificationsRead
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -102,5 +86,18 @@ public fun HomeHeader(
                 Text(userRole, fontSize = 12.sp, color = Plum, fontWeight = FontWeight.SemiBold)
             }
         }
+    }
+}
+
+@Composable
+@Preview
+fun HomeHeaderPreview(){
+    SigesmobileTheme {
+        HomeHeader(
+            userName = "Caryuter",
+            userRole = "Student",
+            notifications = emptyList(),
+            notificationsHasNextPage = false
+        )
     }
 }

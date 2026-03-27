@@ -9,6 +9,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -20,7 +21,7 @@ private val LightColorScheme = lightColorScheme(
     onPrimaryContainer = deepBlue,
     secondary        = TealLight,
     onSecondary      = Color.White,
-    secondaryContainer = Mint,
+    secondaryContainer = Sky,
     onSecondaryContainer = Color(0xFF00201C),
     surfaceVariant   = Lemon,
     error          = Coral,
@@ -79,6 +80,7 @@ val LightExtendedColors = SigesExtendedColors(
     // Disponibilidad
     available   = Color(0xFF2E7D32),
     maintenance = Color(0xFFE53935),
+    loaned = Color(0xFF93781E),
 
     // Quick actions
     quickActionSearch   = Color(0xFFEDE7F6),  // lila claro
@@ -103,6 +105,7 @@ val DarkExtendedColors = SigesExtendedColors(
     // Disponibilidad
     available   = Color(0xFF81C784),
     maintenance = Color(0xFFEF9A9A),
+    loaned = Color(0xFFFDDE86),
 
     // Quick actions → versiones oscuras
     quickActionSearch   = Color(0xFF2D1F5E),
@@ -118,6 +121,7 @@ val LocalSigesExtendedColors = staticCompositionLocalOf {
 object SigesTheme {
     val extendedColors: SigesExtendedColors
         @Composable
+        @ReadOnlyComposable
         get() = LocalSigesExtendedColors.current
 }
 

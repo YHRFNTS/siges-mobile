@@ -1,4 +1,4 @@
-package dev.spiffocode.sigesmobile.ui.components.applicantHS
+package dev.spiffocode.sigesmobile.ui.components.homescreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

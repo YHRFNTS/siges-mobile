@@ -34,10 +34,21 @@ data class NotificationResponse(
     @SerializedName("message")     val message: String,
     @SerializedName("readStatus")  val readStatus: NotificationReadStatus,
     @SerializedName("type")        val type: NotificationType,
-    @SerializedName("sentAt")      val sentAt: String?,
+    @SerializedName("sentAt")      val sentAt: LocalDateTime,
     @SerializedName("reservation") val reservation: ReservationSummaryResponse?,
-    @SerializedName("metadata")    val metadata: Map<String, String>?
+    @SerializedName("metadata")    val metadata: NotificationMetadata?
 )
+data class NotificationMetadata(
+    @SerializedName("platform")      val platform: NotificationPlatform?,
+    @SerializedName("reservationId") val reservationId: Long?,
+    @SerializedName("reservableId")  val reservableId: Long?,
+    @SerializedName("issuedByName")  val issuedByName: String?,
+    @SerializedName("issuedById")    val issuedById: Long?
+)
+
+enum class NotificationPlatform {
+    WEB, MOBILE
+}
 
 data class PageNotificationResponse(
     @SerializedName("content")          val content: List<NotificationResponse>,

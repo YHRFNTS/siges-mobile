@@ -15,9 +15,9 @@ val TextPrimaryLogin = Color(0xFF2D3142)
 val TextSecondaryLogin = Color(0xFF6B7280)
 
 // ApplicantHomeScreen Colors
-val Lav = Color(0xFFE8DFF5)
-val Sky = Color(0xFFD9E8F5)
-val Mint = Color(0xFFD4F1E8)
+val Lav = Color(0xFFE1CFFF)
+val Sky = Color(0xFFd9e8f5)
+val Mint = Color(0xFFDFF5D9)
 val Peach = Color(0xFFFFE5D9)
 val Lemon = Color(0xFFFFF4D4)
 val Plum = Color(0xFF6B5B95)

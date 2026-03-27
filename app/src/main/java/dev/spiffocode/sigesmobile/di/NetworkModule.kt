@@ -17,6 +17,7 @@ import dev.spiffocode.sigesmobile.data.remote.api.EquipmentApiService
 import dev.spiffocode.sigesmobile.data.remote.api.NotificationApiService
 import dev.spiffocode.sigesmobile.data.remote.api.PasswordRecoveryApiService
 import dev.spiffocode.sigesmobile.data.remote.api.ReportApiService
+import dev.spiffocode.sigesmobile.data.remote.api.ReservableApiService
 import dev.spiffocode.sigesmobile.data.remote.api.ReservationApiService
 import dev.spiffocode.sigesmobile.data.remote.api.SpaceApiService
 import dev.spiffocode.sigesmobile.data.remote.api.UserApiService
@@ -127,4 +128,9 @@ object NetworkModule {
     @Singleton
     fun provideReportApiService(retrofit: Retrofit): ReportApiService =
         retrofit.create(ReportApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideReservablesApiService(retrofit: Retrofit): ReservableApiService =
+        retrofit.create(ReservableApiService::class.java)
 }

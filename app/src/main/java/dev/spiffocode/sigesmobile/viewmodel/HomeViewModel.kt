@@ -5,15 +5,16 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableDto
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableType
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ShowMode
-import dev.spiffocode.sigesmobile.data.remote.dto.SpaceDto
 import dev.spiffocode.sigesmobile.data.remote.dto.UserRole
 import dev.spiffocode.sigesmobile.domain.repository.ReportRepository
+import dev.spiffocode.sigesmobile.domain.repository.ReservableRepository
 import dev.spiffocode.sigesmobile.domain.repository.ReservationRepository
-import dev.spiffocode.sigesmobile.domain.repository.SpaceRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,10 +24,12 @@ import kotlinx.coroutines.launch
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
-data class AvailableSpaceUIItem(
+data class AvailableResourceUIItem(
     val title: String,
     val meta: String,
-    val status: ReservableStatus
+    val status: ReservableStatus,
+    val reservableType: ReservableType,
+    val category: String
 )
 
 data class ReservationUIItem(
@@ -49,7 +52,7 @@ data class HomeUiState(
     val pendingReservations: List<ReservationResponse> = emptyList(),
 
     val myRecentReservations: List<ReservationUIItem> = emptyList(),
-    val availableSpaces: List<AvailableSpaceUIItem> = emptyList(),
+    val availableResources: List<AvailableResourceUIItem> = emptyList(),
 
     val error: String? = null
 )
@@ -58,7 +61,7 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     private val reservationRepository: ReservationRepository,
     private val reportRepository: ReportRepository,
-    private val spaceRepository: SpaceRepository,
+    private val resourceRepository: ReservableRepository,
     private val session: SessionManager
 ) : ViewModel() {
 
@@ -114,7 +117,7 @@ class HomeViewModel @Inject constructor(
             reservationRepository.getReservations(size = 3, sort = "date,desc")
         }
         val spacesJob = viewModelScope.async {
-            spaceRepository.searchSpaces(size = 5, studentsAvailable = true, showMode = ShowMode.ACTIVE)
+            resourceRepository.searchSpaces(size = 5, studentsAvailable = true, showMode = ShowMode.ACTIVE)
         }
 
         val reservationsResult = myReservationsJob.await()
@@ -124,7 +127,7 @@ class HomeViewModel @Inject constructor(
             it.copy(
                 isLoading            = false,
                 myRecentReservations = if (reservationsResult is NetworkResult.Success) reservationsResult.data.content.map {item -> item.toUiItem() } else emptyList(),
-                availableSpaces      = if (spacesResult is NetworkResult.Success) spacesResult.data.content.map { item -> item.toUiItem() } else emptyList(),
+                availableResources      = if (spacesResult is NetworkResult.Success) spacesResult.data.content.map { item -> item.toUiItem() } else emptyList(),
                 error                = if (reservationsResult is NetworkResult.Error) reservationsResult.message else null
             )
         }
@@ -157,9 +160,11 @@ class HomeViewModel @Inject constructor(
         meta2       = "${ChronoUnit.MINUTES.between(startTime, endTime)} min"
     )
 
-    private fun SpaceDto.toUiItem() = AvailableSpaceUIItem(
+    private fun ReservableDto.toUiItem() = AvailableResourceUIItem(
         title  = name,
-        meta   = capacity?.let { "Capacidad: $it personas" } ?: spaceType?.name ?: "",
-        status = status
+        meta   = capacity?.let { "Capacidad para $it personas" } ?: inventoryIdNum ?: "",
+        status = status,
+        reservableType = reservableType,
+        category = type?.name ?: spaceType?.name ?: "",
     )
 }

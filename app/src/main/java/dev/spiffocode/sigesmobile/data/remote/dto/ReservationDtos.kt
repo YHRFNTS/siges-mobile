@@ -41,21 +41,6 @@ enum class ReservationType { GROUP, SINGLE }
 
 enum class ReservationStatus { PENDING, APPROVED, REJECTED, CANCELLED, IN_PROGRESS, FINISHED }
 
-data class ReservableDto(
-    @SerializedName("id")                     val id: Long,
-    @SerializedName("name")                   val name: String,
-    @SerializedName("status")                 val status: String,
-    @SerializedName("description")            val description: String?,
-    @SerializedName("availableForStudents")   val availableForStudents: Boolean,
-    @SerializedName("building")               val building: BuildingDto?,
-    @SerializedName("createdAt")              val createdAt: LocalDateTime?,
-    @SerializedName("updatedAt")              val updatedAt: LocalDateTime?,
-    @SerializedName("createdBy")              val createdBy: String?,
-    @SerializedName("deletedAt")              val deletedAt: LocalDateTime?,
-    @SerializedName("availabilitySlots")      val availabilitySlots: List<AvailabilitySlotDto>?,
-    @SerializedName("availabilityExceptions") val availabilityExceptions: List<AvailabilityExceptionDto>?
-)
-
 data class NoteItem(
     @SerializedName("id")        val id: Long,
     @SerializedName("comment")   val comment: String,
