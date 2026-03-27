@@ -1,13 +1,10 @@
 package dev.spiffocode.sigesmobile.viewmodel
 
-import android.net.Network
-import android.util.Log.i
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationResponse
-import dev.spiffocode.sigesmobile.data.remote.dto.NotificationType
 import dev.spiffocode.sigesmobile.domain.repository.NotificationRepository
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,12 +51,10 @@ class NotificationsViewModel @Inject constructor(
 
     private fun observeFcmUpdates() {
         viewModelScope.launch {
-            // Tu FCM repository expone un Flow que emite
-            // cada vez que llega una nueva notificación push
             notificationsRepository.incomingNotifications.collect { newNotif ->
                 _uiState.update { current ->
                     current.copy(
-                        notifications = listOf(newNotif.toUi()) + current.notifications,
+                        notifications = listOf(newNotif) + current.notifications,
                         totalElements = current.totalElements + 1
                     )
                 }
@@ -74,18 +69,24 @@ class NotificationsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingMore = true) }
             val nextPage = current.currentPage + 1
-            notificationsRepository
-                .listNotifications(page = nextPage, size = 20)
-                .onSuccess { page ->
+            try {
+                val notifications = notificationsRepository
+                    .listNotifications(page = nextPage, size = 20)
+
+                if(notifications is NetworkResult.Success){
                     _uiState.update {
                         it.copy(
-                            notifications = it.notifications + page.content.map { dto -> dto.toUi() },
-                            hasNextPage = !page.last,
+                            notifications = it.notifications + notifications.data.content,
+                            hasNextPage = notifications.data.last,
                             currentPage = nextPage,
                             isLoadingMore = false
                         )
                     }
                 }
+
+            } finally {
+                _uiState.update { it.copy(isLoadingMore = false) }
+            }
         }
     }
 
