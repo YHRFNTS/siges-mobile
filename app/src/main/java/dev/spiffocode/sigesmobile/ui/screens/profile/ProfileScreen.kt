@@ -13,6 +13,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -99,7 +101,8 @@ fun ProfileScreen(
             fullName = viewModel.fullName,
             initials = viewModel.initials,
             roleLabel = viewModel.roleLabel,
-            identifier = viewModel.identifier
+            identifier = viewModel.identifier,
+            profilePictureUrl = viewModel.profilePictureUrl
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -128,25 +131,37 @@ private fun ProfileHeader(
     fullName: String,
     initials: String,
     roleLabel: String,
-    identifier: String
+    identifier: String,
+    profilePictureUrl: String? = null
 ) {
     Column(
         modifier            = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier         = Modifier
-                .size(88.dp)
-                .clip(CircleShape)
-                .background(Brush.linearGradient(colors = listOf(Plum, Lav))),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text       = initials.ifBlank { "?" },
-                fontSize   = 32.sp,
-                color      = Color.White,
-                fontWeight = FontWeight.Bold
+        if (!profilePictureUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = profilePictureUrl,
+                contentDescription = "Foto de perfil",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(88.dp)
+                    .clip(CircleShape)
             )
+        } else {
+            Box(
+                modifier         = Modifier
+                    .size(88.dp)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(colors = listOf(Plum, Lav))),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text       = initials.ifBlank { "?" },
+                    fontSize   = 32.sp,
+                    color      = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(14.dp))

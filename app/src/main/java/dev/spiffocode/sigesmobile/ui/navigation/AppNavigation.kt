@@ -38,6 +38,10 @@ import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ExpiredLinkScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ForgotPasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ResetPasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.UsedLinkScreen
+import dev.spiffocode.sigesmobile.ui.screens.profile.EditProfileScreen
+import dev.spiffocode.sigesmobile.ui.screens.profile.NotificationPrefsScreen
+import dev.spiffocode.sigesmobile.ui.screens.profile.EditProfileScreen
+import dev.spiffocode.sigesmobile.ui.screens.profile.NotificationPrefsScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.ProfileScreen
 import dev.spiffocode.sigesmobile.ui.theme.Lav
 import dev.spiffocode.sigesmobile.ui.theme.Plum
@@ -312,13 +316,11 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             }
 
             composable(Routes.EDIT_PROFILE) {
-                // EditProfileScreen(viewModel = hiltViewModel(), onNavigateBack = { navController.popBackStack() })
-                Text("Editar Perfil (en construcción)", modifier = Modifier.padding(24.dp))
+                 EditProfileScreen(viewModel = hiltViewModel(), onNavigateBack = { navController.popBackStack() })
             }
 
             composable(Routes.NOTIFICATION_PREFS) {
-                // NotificationPrefsScreen(viewModel = hiltViewModel(), onNavigateBack = { navController.popBackStack() })
-                Text("Notificaciones (en construcción)", modifier = Modifier.padding(24.dp))
+                 NotificationPrefsScreen(viewModel = hiltViewModel(), onNavigateBack = { navController.popBackStack() })
             }
 
             composable(

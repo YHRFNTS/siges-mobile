@@ -54,6 +54,9 @@ class ProfileMenuViewModel @Inject constructor(
             ?: session.registrationNumber
             ?: ""
 
+    val profilePictureUrl: String?
+        get() = session.profilePictureUrl
+
 
     fun logout() {
         viewModelScope.launch {

@@ -29,6 +29,7 @@ class SessionManager @Inject constructor(
         val EMAIL               = stringPreferencesKey("email")
         val EMPLOYEE_NUMBER     = stringPreferencesKey("employee_number")
         val REGISTRATION_NUMBER = stringPreferencesKey("registration_number")
+        val PROFILE_PICTURE_URL = stringPreferencesKey("profile_picture_url")
     }
 
     val accessTokenFlow: Flow<String?>  = context.dataStore.data.map { it[Keys.ACCESS_TOKEN] }
@@ -42,6 +43,7 @@ class SessionManager @Inject constructor(
     val email: String?              get() = runBlocking { context.dataStore.data.map { it[Keys.EMAIL] }.first() }
     val employeeNumber: String?     get() = runBlocking { context.dataStore.data.map { it[Keys.EMPLOYEE_NUMBER] }.first() }
     val registrationNumber: String? get() = runBlocking { context.dataStore.data.map { it[Keys.REGISTRATION_NUMBER] }.first() }
+    val profilePictureUrl: String?  get() = runBlocking { context.dataStore.data.map { it[Keys.PROFILE_PICTURE_URL] }.first() }
 
     val isLoggedIn: Boolean get() = accessToken != null
 
@@ -53,7 +55,8 @@ class SessionManager @Inject constructor(
         lastName: String,
         email: String,
         employeeNumber: String? = null,
-        registrationNumber: String? = null
+        registrationNumber: String? = null,
+        profilePictureUrl: String? = null
     ) {
         context.dataStore.edit { prefs ->
             prefs[Keys.ACCESS_TOKEN]  = accessToken
@@ -64,11 +67,16 @@ class SessionManager @Inject constructor(
             prefs[Keys.EMAIL]         = email
             if (employeeNumber != null)     prefs[Keys.EMPLOYEE_NUMBER]     = employeeNumber
             if (registrationNumber != null) prefs[Keys.REGISTRATION_NUMBER] = registrationNumber
+            if (profilePictureUrl != null)  prefs[Keys.PROFILE_PICTURE_URL] = profilePictureUrl
         }
     }
 
     suspend fun updateAccessToken(token: String) {
         context.dataStore.edit { it[Keys.ACCESS_TOKEN] = token }
+    }
+
+    suspend fun updateProfilePictureUrl(url: String) {
+        context.dataStore.edit { it[Keys.PROFILE_PICTURE_URL] = url }
     }
 
     suspend fun clearSession() {

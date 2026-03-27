@@ -43,7 +43,8 @@ class AuthRepository @Inject constructor(
                     lastName           = user.lastName,
                     email              = user.email,
                     employeeNumber     = user.employeeNumber,
-                    registrationNumber = user.registrationNumber
+                    registrationNumber = user.registrationNumber,
+                    profilePictureUrl  = user.profilePictureUrl
                 )
             }
         }

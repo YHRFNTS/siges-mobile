@@ -15,6 +15,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
+import dev.spiffocode.sigesmobile.data.local.SessionManager
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 data class EditProfileUiState(
     val isLoading: Boolean = false,
@@ -27,18 +31,25 @@ data class EditProfileUiState(
     val employeeNumber: String? = null,
     val registrationNumber: String? = null,
     val isSaved: Boolean = false,
+    val isUploadingPicture: Boolean = false,
+    val profilePictureUrl: String? = null,
     val error: String? = null
 )
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
-    private val repository: UserRepository
+    private val repository: UserRepository,
+    private val session: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditProfileUiState())
     val uiState: StateFlow<EditProfileUiState> = _uiState.asStateFlow()
 
     private var userId: Long = -1L
+
+    init {
+        _uiState.update { it.copy(profilePictureUrl = session.profilePictureUrl) }
+    }
 
     fun loadUser(user: UserResponse) {
         userId = user.id
@@ -51,7 +62,8 @@ class EditProfileViewModel @Inject constructor(
                 email              = user.email,
                 role               = user.role,
                 employeeNumber     = user.employeeNumber,
-                registrationNumber = user.registrationNumber
+                registrationNumber = user.registrationNumber,
+                profilePictureUrl  = user.profilePictureUrl ?: session.profilePictureUrl
             )
         }
     }
@@ -97,6 +109,26 @@ class EditProfileViewModel @Inject constructor(
                     }
                     NetworkResult.Loading -> Unit
                 }
+            }
+        }
+    }
+
+    fun uploadProfilePicture(imageBytes: ByteArray, mimeType: String = "image/jpeg") {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isUploadingPicture = true, error = null) }
+            val requestBody = imageBytes.toRequestBody(mimeType.toMediaTypeOrNull())
+            val filePart = MultipartBody.Part.createFormData("file", "profile_pic.jpg", requestBody)
+
+            when (val result = repository.updateProfilePicture(filePart)) {
+                is NetworkResult.Success -> {
+                    val newUrl = result.data.profilePictureUrl
+                    session.updateProfilePictureUrl(newUrl)
+                    _uiState.update { it.copy(isUploadingPicture = false, profilePictureUrl = newUrl) }
+                }
+                is NetworkResult.Error -> _uiState.update {
+                    it.copy(isUploadingPicture = false, error = result.message ?: "Error al subir imagen.")
+                }
+                NetworkResult.Loading -> Unit
             }
         }
     }
