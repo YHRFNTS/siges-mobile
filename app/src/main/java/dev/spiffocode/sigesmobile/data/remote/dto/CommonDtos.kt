@@ -40,7 +40,7 @@ data class ProblemDetail(
 data class BuildingDto(
     @SerializedName("id")        val id: Long,
     @SerializedName("name")      val name: String,
-    @SerializedName("deletedAt") val deletedAt: LocalDateTime?
+    @SerializedName("deletedAt") val deletedAt: LocalDateTime? = null
 )
 
 data class EquipmentTypeDto(

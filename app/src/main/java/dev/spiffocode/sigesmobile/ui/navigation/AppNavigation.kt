@@ -251,8 +251,11 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             }
 
             composable(Routes.NEW_REQUEST) {
-                // CreateReservationScreen(viewModel = hiltViewModel())
-                Text("Nueva Solicitud (en construcción)", modifier = Modifier.padding(24.dp))
+                dev.spiffocode.sigesmobile.ui.screens.applicant.NewRequestScreen(
+                    viewModel = hiltViewModel(),
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToDetail = { id -> navController.navigate(Routes.requestDetail(id)) }
+                )
             }
 
             composable(

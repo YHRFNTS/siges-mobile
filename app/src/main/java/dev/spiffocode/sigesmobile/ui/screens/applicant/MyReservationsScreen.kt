@@ -37,14 +37,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableDto
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableType
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservationType
+import dev.spiffocode.sigesmobile.data.remote.dto.SpaceTypeDto
 import dev.spiffocode.sigesmobile.ui.components.FilterSelector
 import dev.spiffocode.sigesmobile.ui.components.InfiniteScrollList
 import dev.spiffocode.sigesmobile.ui.components.homescreen.RequestCard
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.MyReservationsTab
 import dev.spiffocode.sigesmobile.viewmodel.MyReservationsViewModel
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toJavaLocalDate
+import kotlinx.datetime.toJavaLocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -281,6 +289,45 @@ fun MyReservationsScreenPreviewEmpty(){
         MyReservationsScreen(
             isLoading = false,
             reservations = emptyList(),
+            selectedTab = MyReservationsTab.ALL,
+            selectedReservableId = null,
+            totalPages = 1,
+            currentPage = 0,
+            error = null
+        )
+    }
+}
+
+
+@Composable
+@Preview
+fun MyReservationsScreenPreviewWithItems(){
+    SigesmobileTheme {
+        MyReservationsScreen(
+            isLoading = false,
+            reservations = listOf(
+                ReservationResponse(
+                    id = 1,
+                    reservable = ReservableDto(
+                        id = 1,
+                        name = "Aula 1",
+                        reservableType = ReservableType.SPACE,
+                        availableForStudents = true,
+                        status = ReservableStatus.AVAILABLE,
+                        capacity = 10,
+                        spaceType = SpaceTypeDto(
+                            id = 1,
+                            name = "Aulas"
+                        )
+                    ),
+                    date = LocalDate(2026,1,28).toJavaLocalDate(),
+                    startTime = kotlinx.datetime.LocalTime(10,0).toJavaLocalTime(),
+                    endTime = kotlinx.datetime.LocalTime(12,0).toJavaLocalTime(),
+                    status = ReservationStatus.PENDING,
+                    type = ReservationType.GROUP,
+                    companions = 7
+                )
+            ),
             selectedTab = MyReservationsTab.ALL,
             selectedReservableId = null,
             totalPages = 1,

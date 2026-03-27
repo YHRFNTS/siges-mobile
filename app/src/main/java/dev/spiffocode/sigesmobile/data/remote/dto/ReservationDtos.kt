@@ -51,20 +51,20 @@ data class NoteItem(
 
 data class ReservationResponse(
     @SerializedName("id")          val id: Long,
-    @SerializedName("petitioner")  val petitioner: UserResponse?,
-    @SerializedName("reservable")  val reservable: ReservableDto?,
-    @SerializedName("notes")       val notes: List<NoteItem>?,
+    @SerializedName("petitioner")  val petitioner: UserResponse? = null,
+    @SerializedName("reservable")  val reservable: ReservableDto? = null,
+    @SerializedName("notes")       val notes: List<NoteItem>? = null,
     @SerializedName("status")      val status: ReservationStatus,
     @SerializedName("date")        val date: LocalDate,
     @SerializedName("startTime")   val startTime: LocalTime,
     @SerializedName("endTime")     val endTime: LocalTime,
     @SerializedName("type")        val type: ReservationType,
-    @SerializedName("companions")  val companions: Int?,
-    @SerializedName("approvedAt")  val approvedAt: LocalDateTime?,
-    @SerializedName("rejectedAt")  val rejectedAt: LocalDateTime?,
-    @SerializedName("cancelledAt") val cancelledAt: LocalDateTime?,
-    @SerializedName("finishedAt")  val finishedAt: LocalDateTime?,
-    @SerializedName("createdAt")   val createdAt: LocalDateTime?
+    @SerializedName("companions")  val companions: Int? = null,
+    @SerializedName("approvedAt")  val approvedAt: LocalDateTime? = null,
+    @SerializedName("rejectedAt")  val rejectedAt: LocalDateTime? = null,
+    @SerializedName("cancelledAt") val cancelledAt: LocalDateTime? = null,
+    @SerializedName("finishedAt")  val finishedAt: LocalDateTime? = null,
+    @SerializedName("createdAt")   val createdAt: LocalDateTime? = null
 )
 
 data class PageReservationResponse(
