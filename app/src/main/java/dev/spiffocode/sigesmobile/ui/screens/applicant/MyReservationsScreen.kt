@@ -1,22 +1,48 @@
 package dev.spiffocode.sigesmobile.ui.screens.applicant
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableType
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
+import dev.spiffocode.sigesmobile.ui.components.FilterSelector
 import dev.spiffocode.sigesmobile.ui.components.InfiniteScrollList
 import dev.spiffocode.sigesmobile.ui.components.homescreen.RequestCard
+import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.MyReservationsTab
 import dev.spiffocode.sigesmobile.viewmodel.MyReservationsViewModel
 
@@ -30,6 +56,44 @@ fun MyReservationsScreen(
     onNavigateToDetail: (Long) -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
+
+    MyReservationsScreen(
+        isLoading = state.isLoading,
+        reservations = state.reservations,
+        selectedTab = state.selectedTab,
+        selectedReservableId = state.selectedReservableId,
+        totalPages = state.totalPages,
+        currentPage = state.currentPage,
+        error = state.error,
+        selectTab = viewModel::selectTab,
+        filterByReservable = viewModel::filterByReservable,
+        loadPage = viewModel::loadPage,
+        showBackButton = showBackButton,
+        onNavigateBack = onNavigateBack,
+        onNavigateToNewRequest = onNavigateToNewRequest,
+        onNavigateToDetail = onNavigateToDetail
+    )
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MyReservationsScreen(
+    isLoading: Boolean,
+    reservations: List<ReservationResponse>,
+    selectedTab: MyReservationsTab,
+    selectedReservableId: Long?,
+    totalPages: Int,
+    currentPage: Int,
+    error: String?,
+    selectTab: (MyReservationsTab) -> Unit = {},
+    filterByReservable: (Long?) -> Unit = {},
+    loadPage: (Int) -> Unit = {},
+    showBackButton: Boolean = false,
+    onNavigateBack: () -> Unit = {},
+    onNavigateToNewRequest: () -> Unit = {},
+    onNavigateToDetail: (Long) -> Unit = {}
+) {
 
     Scaffold(
         floatingActionButton = {
@@ -79,38 +143,48 @@ fun MyReservationsScreen(
             )
 
             // Tabs
-            val selectedTabIndex = when (state.selectedTab) {
+            val selectedTabIndex = when (selectedTab) {
                 MyReservationsTab.ALL -> 0
                 MyReservationsTab.PENDING -> 1
                 MyReservationsTab.APPROVED -> 2
             }
 
-            TabRow(
+            SecondaryTabRow(
                 selectedTabIndex = selectedTabIndex,
+                modifier = Modifier.padding(horizontal = 24.dp),
                 containerColor = MaterialTheme.colorScheme.background,
                 contentColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 24.dp),
-                indicator = { tabPositions ->
-                    TabRowDefaults.SecondaryIndicator(
-                        Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex])
-                    )
-                },
                 divider = {}
             ) {
                 Tab(
-                    selected = state.selectedTab == MyReservationsTab.ALL,
-                    onClick = { viewModel.selectTab(MyReservationsTab.ALL) },
-                    text = { Text("Todas", fontWeight = if (state.selectedTab == MyReservationsTab.ALL) FontWeight.Bold else FontWeight.Normal) }
+                    selected = selectedTab == MyReservationsTab.ALL,
+                    onClick = { selectTab(MyReservationsTab.ALL) },
+                    text = {
+                        Text(
+                            "Todas",
+                            fontWeight = if (selectedTab == MyReservationsTab.ALL) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
                 )
                 Tab(
-                    selected = state.selectedTab == MyReservationsTab.PENDING,
-                    onClick = { viewModel.selectTab(MyReservationsTab.PENDING) },
-                    text = { Text("Pendientes", fontWeight = if (state.selectedTab == MyReservationsTab.PENDING) FontWeight.Bold else FontWeight.Normal) }
+                    selected = selectedTab == MyReservationsTab.PENDING,
+                    onClick = { selectTab(MyReservationsTab.PENDING) },
+                    text = {
+                        Text(
+                            "Pendientes",
+                            fontWeight = if (selectedTab == MyReservationsTab.PENDING) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
                 )
                 Tab(
-                    selected = state.selectedTab == MyReservationsTab.APPROVED,
-                    onClick = { viewModel.selectTab(MyReservationsTab.APPROVED) },
-                    text = { Text("Aprobadas", fontWeight = if (state.selectedTab == MyReservationsTab.APPROVED) FontWeight.Bold else FontWeight.Normal) }
+                    selected = selectedTab == MyReservationsTab.APPROVED,
+                    onClick = { selectTab(MyReservationsTab.APPROVED) },
+                    text = {
+                        Text(
+                            "Aprobadas",
+                            fontWeight = if (selectedTab == MyReservationsTab.APPROVED) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
                 )
             }
 
@@ -118,63 +192,46 @@ fun MyReservationsScreen(
 
             // Resource Filter
             var expandedFilter by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
+
+            FilterSelector(
+                value = if (selectedReservableId == null) "Todos los recursos" else "Recurso ID: ${selectedReservableId}",
                 expanded = expandedFilter,
-                onExpandedChange = { expandedFilter = !expandedFilter },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = 24.dp),
+                onExpandedChange = {expandedFilter = it},
             ) {
-                OutlinedTextField(
-                    value = if (state.selectedReservableId == null) "Todos los recursos" else "Recurso ID: ${state.selectedReservableId}",
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedFilter) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    textStyle = MaterialTheme.typography.bodyMedium,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                    )
+                DropdownMenuItem(
+                    text = { Text("Todos los recursos") },
+                    onClick = {
+                        filterByReservable(null)
+                        expandedFilter = false
+                    }
                 )
-                ExposedDropdownMenu(
-                    expanded = expandedFilter,
-                    onDismissRequest = { expandedFilter = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Todos los recursos") },
-                        onClick = {
-                            viewModel.filterByReservable(null)
-                            expandedFilter = false
-                        }
-                    )
-                    // At the moment MyReservationsViewModel doesn't expose a list of reservables to pick from,
-                    // so we only provide the reset option based on the API limits.
-                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Content List
-            if (state.isLoading && state.currentPage == 0) {
+            if (isLoading && currentPage == 0) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-            } else if (state.error != null) {
+            } else if (error != null) {
                 Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                    Text(state.error!!, color = MaterialTheme.colorScheme.error)
+                    Text(error, color = MaterialTheme.colorScheme.error)
                 }
-            } else if (state.reservations.isEmpty()) {
+            } else if (reservations.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No se encontraron solicitudes", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
-                val hasNextPage = state.currentPage < (state.totalPages - 1)
+                val hasNextPage = currentPage < (totalPages - 1)
 
                 InfiniteScrollList(
-                    elements = state.reservations,
+                    elements = reservations,
                     key = { _, res -> res.id },
-                    loadMoreItems = { viewModel.loadPage(state.currentPage + 1) },
+                    loadMoreItems = { loadPage(currentPage + 1) },
                     hasNextPage = hasNextPage,
                     modifier = Modifier
                         .fillMaxSize()
@@ -185,7 +242,7 @@ fun MyReservationsScreen(
                             ReservableType.EQUIPMENT -> "Equipo"
                             null -> "--"
                         }
-                        
+
                         // Calculate duration heuristically based on start and end times assuming same day
                         val durationMins = java.time.Duration.between(reservation.startTime, reservation.endTime).toMinutes()
                         val durationDisplay = if (durationMins >= 60) {
@@ -195,7 +252,7 @@ fun MyReservationsScreen(
                         } else {
                             "$durationMins min"
                         }
-                        
+
                         RequestCard(
                             title = reservation.reservable?.name ?: "Recurso no especificado",
                             startDateTime = reservation.date.atTime(reservation.startTime).let {
@@ -214,5 +271,21 @@ fun MyReservationsScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+@Preview
+fun MyReservationsScreenPreviewEmpty(){
+    SigesmobileTheme {
+        MyReservationsScreen(
+            isLoading = false,
+            reservations = emptyList(),
+            selectedTab = MyReservationsTab.ALL,
+            selectedReservableId = null,
+            totalPages = 1,
+            currentPage = 0,
+            error = null
+        )
     }
 }

@@ -2,7 +2,7 @@ package dev.spiffocode.sigesmobile.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -19,6 +19,7 @@ import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 @Composable
 public fun SearchBar(
     searchQuery: String,
+    shape: CornerBasedShape = MaterialTheme.shapes.medium,
     onSearchQueryChange: (String) -> Unit
 ){
 
@@ -28,7 +29,7 @@ public fun SearchBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = shape,
         placeholder = { Text("Buscar por nombre...") },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar", tint = MaterialTheme.colorScheme.primary) },
         singleLine = true,
