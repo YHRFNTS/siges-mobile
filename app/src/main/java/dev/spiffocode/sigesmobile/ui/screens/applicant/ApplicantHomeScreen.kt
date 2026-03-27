@@ -1,7 +1,5 @@
 package dev.spiffocode.sigesmobile.ui.screens.applicant
 
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,12 +27,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.spiffocode.sigesmobile.data.remote.dto.NotificationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableType
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
+import dev.spiffocode.sigesmobile.data.remote.dto.UserRole
 import dev.spiffocode.sigesmobile.ui.components.homescreen.AvailableItemCard
 import dev.spiffocode.sigesmobile.ui.components.homescreen.HomeHeader
+import dev.spiffocode.sigesmobile.ui.components.homescreen.QuickActionsGrid
 import dev.spiffocode.sigesmobile.ui.components.homescreen.RequestCard
 import dev.spiffocode.sigesmobile.ui.components.homescreen.SectionHeader
 import dev.spiffocode.sigesmobile.ui.theme.Background
@@ -46,17 +46,20 @@ import dev.spiffocode.sigesmobile.viewmodel.HomeViewModel
 import dev.spiffocode.sigesmobile.viewmodel.NotificationsViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ReservationUIItem
 import java.sql.Date
+import java.util.Collections.emptyList
 
 @Composable
 fun ApplicantHomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
+    notificationsViewModel: NotificationsViewModel = hiltViewModel(),
     onNavigateToAvailability: () -> Unit = {},
     onNavigateToNewRequest: () -> Unit = {},
     onNavigateToMyRequests: () -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {}
+    onNavigateToDetail: (Long) -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
+
+    val notifState by notificationsViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { viewModel.loadHome() }
 
@@ -67,11 +70,15 @@ fun ApplicantHomeScreen(
         myRecentReservations = state.myRecentReservations,
         availableSpaces = state.availableResources,
         error = state.error,
+        notifications = notifState.notifications,
+        hasNextNotificationPage = notifState.hasNextPage,
+        onClickNotification = notificationsViewModel::onClick,
+        markAllNotificationsAsRead = notificationsViewModel::markAllRead,
+        onLoadMoreNotifications = notificationsViewModel::loadNextPage,
         onNavigateToAvailability = onNavigateToAvailability,
         onNavigateToNewRequest = onNavigateToNewRequest,
         onNavigateToMyRequests = onNavigateToMyRequests,
-        onNavigateToDetail = onNavigateToDetail,
-        onNavigateToNotifications = onNavigateToNotifications
+        onNavigateToDetail = onNavigateToDetail
     )
 
 }
@@ -80,23 +87,22 @@ fun ApplicantHomeScreen(
 @Composable
 fun ApplicantHomeScreen(
     userName: String,
-    userRole: String,
+    userRole: UserRole,
     isLoading: Boolean,
     myRecentReservations: List<ReservationUIItem>,
     availableSpaces: List<AvailableResourceUIItem>,
     error: String?,
+    notifications: List<NotificationResponse>,
+    hasNextNotificationPage: Boolean,
+    onClickNotification: (NotificationResponse) -> Unit = {},
+    markAllNotificationsAsRead: () -> Unit = {},
+    onLoadMoreNotifications: () -> Unit = {},
     onNavigateToAvailability: () -> Unit = {},
     onNavigateToNewRequest: () -> Unit = {},
     onNavigateToMyRequests: () -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {}
+    onNavigateToDetail: (Long) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
-
-    val activity = LocalActivity.current as ComponentActivity
-    val notificationsViewModel: NotificationsViewModel = viewModel(activity)
-
-    val notifState by notificationsViewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -107,11 +113,11 @@ fun ApplicantHomeScreen(
         HomeHeader(
             userName         = userName,
             userRole         = userRole,
-            notifications    = notifState.notifications,
-            notificationsHasNextPage = notifState.hasNextPage,
-            onNotificationClick = {notificationsViewModel.onClick(it)},
-            onMarkAllNotificationsRead = {notificationsViewModel.markAllRead()},
-            onLoadMoreNotifications = {notificationsViewModel.loadNextPage()}
+            notifications    = notifications,
+            notificationsHasNextPage = hasNextNotificationPage,
+            onNotificationClick = {onClickNotification(it)},
+            onMarkAllNotificationsRead = markAllNotificationsAsRead,
+            onLoadMoreNotifications = onLoadMoreNotifications
         )
 
         Column(
@@ -121,8 +127,8 @@ fun ApplicantHomeScreen(
         ) {
             QuickActionsGrid(
                 onNavigateToAvailability = onNavigateToAvailability,
-                onNavigateToNewRequest   = onNavigateToNewRequest,
-                onNavigateToMyRequests   = onNavigateToMyRequests
+                onNavigateToNewRequest = onNavigateToNewRequest,
+                onNavigateToMyRequests = onNavigateToMyRequests
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -217,12 +223,14 @@ fun ApplicantHomeScreen(
 fun ApplicantHomeScreenPreview() {
     SigesmobileTheme {
         ApplicantHomeScreen(
-            userName         = "John Doe",
-            userRole         = "Estudiante",
-            isLoading        = false,
+            userName = "John Doe",
+            userRole = UserRole.STUDENT,
+            isLoading = false,
             myRecentReservations = emptyList(),
+            error = null,
             availableSpaces = emptyList(),
-            error = null
+            notifications = emptyList(),
+            hasNextNotificationPage = false
         )
     }
 }
@@ -234,7 +242,7 @@ fun ApplicantHomeScreenWithReservations() {
     SigesmobileTheme {
         ApplicantHomeScreen(
             userName         = "John Doe",
-            userRole         = "Estudiante",
+            userRole         = UserRole.STUDENT,
             isLoading        = false,
             myRecentReservations = listOf(
                 ReservationUIItem(
@@ -243,11 +251,15 @@ fun ApplicantHomeScreenWithReservations() {
                     date = Date.valueOf("2026-06-25").toString(),
                     status = ReservationStatus.PENDING,
                     meta1 = "10:00 - 11:00",
-                    meta2 = "Edificio 1"
+                    meta2 = "Edificio 1",
+                    petitionerRole = UserRole.STUDENT,
+                    petitionerName = "José"
                 )
             ),
+            error = null,
             availableSpaces = emptyList(),
-            error = null
+            notifications = emptyList(),
+            hasNextNotificationPage = false
         )
     }
 }
@@ -258,10 +270,9 @@ fun ApplicantHomeScreenWithReservations() {
 fun ApplicantHomeScreenWithSpaces() {
     SigesmobileTheme {
         ApplicantHomeScreen(
-            userName         = "John Doe",
-            userRole         = "Estudiante",
-            isLoading        = false,
-            myRecentReservations = emptyList(),
+            userName = "John Doe",
+            userRole = UserRole.STUDENT,
+            isLoading = false,
             availableSpaces = listOf(
                 AvailableResourceUIItem(
                     title = "Lab de cómputo 1",
@@ -271,7 +282,10 @@ fun ApplicantHomeScreenWithSpaces() {
                     category = "Aulas"
                 )
             ),
-            error = null
+            error = null,
+            myRecentReservations = emptyList(),
+            notifications = emptyList(),
+            hasNextNotificationPage = false,
         )
     }
 }

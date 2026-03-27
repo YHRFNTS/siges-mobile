@@ -1,4 +1,4 @@
-package dev.spiffocode.sigesmobile.ui.screens.applicant
+package dev.spiffocode.sigesmobile.ui.components.homescreen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,13 +12,12 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import dev.spiffocode.sigesmobile.ui.components.homescreen.QuickCard
+import dev.spiffocode.sigesmobile.ui.theme.SigesTheme
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 
 @Composable
@@ -35,14 +34,14 @@ fun QuickActionsGrid(
                 title   = "Disponibilidad",
                 desc    = "Ver espacios y equipos",
                 icon    = Icons.Default.Search,
-                iconBg  = MaterialTheme.colorScheme.primaryContainer,
+                iconBg  = SigesTheme.extendedColors.quickActionSearch,
                 onClick = onNavigateToAvailability
             )
             QuickCard(
                 title   = "Nueva Solicitud",
                 desc    = "Reservar recurso",
                 icon    = Icons.Default.Add,
-                iconBg  = MaterialTheme.colorScheme.secondaryContainer,
+                iconBg  = SigesTheme.extendedColors.quickActionNew,
                 onClick = onNavigateToNewRequest
             )
         }
@@ -52,14 +51,14 @@ fun QuickActionsGrid(
                 title   = "Mis Solicitudes",
                 desc    = "Historial personal",
                 icon    = Icons.AutoMirrored.Filled.List,
-                iconBg  = MaterialTheme.colorScheme.tertiaryContainer,
+                iconBg  = SigesTheme.extendedColors.quickActionHistory,
                 onClick = onNavigateToMyRequests
             )
             QuickCard(
                 title   = "Calendario",
                 desc    = "Ver reservas",
                 icon    = Icons.Default.DateRange,
-                iconBg  = MaterialTheme.colorScheme.surfaceVariant,
+                iconBg  = SigesTheme.extendedColors.quickActionCalendar,
                 onClick = onNavigateToAvailability
             )
         }

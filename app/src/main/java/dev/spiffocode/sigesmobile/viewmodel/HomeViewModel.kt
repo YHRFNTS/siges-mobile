@@ -34,6 +34,8 @@ data class AvailableResourceUIItem(
 
 data class ReservationUIItem(
     val id: Long,
+    val petitionerName: String,
+    val petitionerRole: UserRole,
     val title: String,
     val date: String,
     val status: ReservationStatus,
@@ -45,11 +47,11 @@ data class HomeUiState(
     val isLoading: Boolean = false,
 
     val userName: String = "",
-    val userRole: String = "",
+    val userRole: UserRole = UserRole.STUDENT,
 
     val pendingCount: Int = 0,
     val thisMonthCount: Int = 0,
-    val pendingReservations: List<ReservationResponse> = emptyList(),
+    val pendingReservations: List<ReservationUIItem> = emptyList(),
 
     val myRecentReservations: List<ReservationUIItem> = emptyList(),
     val availableResources: List<AvailableResourceUIItem> = emptyList(),
@@ -72,13 +74,12 @@ class HomeViewModel @Inject constructor(
 
     fun loadHome() {
         viewModelScope.launch {
-            // TODO: guardar firstName en SessionManager al hacer login para evitar
-            //       una llamada extra aquí.
             _uiState.update {
                 it.copy(
                     isLoading = true,
                     error     = null,
-                    userRole  = session.role ?: " - "
+                    userName  = session.firstName ?: " - ",
+                    userRole  = session.role?.let { role -> UserRole.valueOf(role) } ?: UserRole.STUDENT
                 )
             }
 
@@ -106,7 +107,7 @@ class HomeViewModel @Inject constructor(
                 isLoading           = false,
                 pendingCount        = if (pendingResult is NetworkResult.Success) pendingResult.data.totalElements.toInt() else 0,
                 thisMonthCount      = if (monthResult is NetworkResult.Success) monthResult.data.pendingRequests else 0,
-                pendingReservations = if (pendingResult is NetworkResult.Success) pendingResult.data.content else emptyList(),
+                pendingReservations = if (pendingResult is NetworkResult.Success) pendingResult.data.content.map { item -> item.toUiItem() } else emptyList(),
                 error               = if (pendingResult is NetworkResult.Error) pendingResult.message else null
             )
         }
@@ -154,6 +155,8 @@ class HomeViewModel @Inject constructor(
     private fun ReservationResponse.toUiItem() = ReservationUIItem(
         id          = id,
         title       = reservable?.name ?: "—",
+        petitionerName = "$petitioner.firstName $petitioner.lastName",
+        petitionerRole = petitioner?.role ?: UserRole.STUDENT,
         date        = formatReservationDate(this),
         status      = status,
         meta1       = reservable?.building?.name ?: "",

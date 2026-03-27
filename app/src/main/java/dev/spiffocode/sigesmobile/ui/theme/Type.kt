@@ -22,6 +22,12 @@ val Typography = Typography(
         fontSize = 32.sp,
         letterSpacing = 4.sp
     ),
+    displaySmall = TextStyle(
+        fontFamily = dmSerifDisplay,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 30.sp,
+        letterSpacing = 4.sp
+    ),
     // Nombre del usuario en Home/Perfil
     headlineLarge = TextStyle(
         fontFamily = dmSerifDisplay,
@@ -53,6 +59,10 @@ val Typography = Typography(
     // Metadata de íconos en cards
     bodySmall = TextStyle(
         fontWeight = FontWeight.Normal,
+        fontSize = 12.sp
+    ),
+    labelLarge = TextStyle(
+        fontWeight = FontWeight.SemiBold,
         fontSize = 12.sp
     ),
     // Labels de sección en formularios/detalle (uppercase)

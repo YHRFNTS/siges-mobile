@@ -83,10 +83,10 @@ val LightExtendedColors = SigesExtendedColors(
     loaned = Color(0xFF93781E),
 
     // Quick actions
-    quickActionSearch   = Color(0xFFEDE7F6),  // lila claro
-    quickActionNew      = Color(0xFFE8F5E9),  // verde menta claro
-    quickActionHistory  = Color(0xFFFFEBEE),  // rosa claro
-    quickActionCalendar = Color(0xFFFFFDE7),  // amarillo claro
+    quickActionSearch   = Color(0xFFD4C0FD),  // lila claro
+    quickActionNew      = Color(0xFFCEF8D1),  // verde menta claro
+    quickActionHistory  = Color(0xFFFCD2D8),  // rosa claro
+    quickActionCalendar = Color(0xFFFCF5C5),  // amarillo claro
 )
 
 val DarkExtendedColors = SigesExtendedColors(
