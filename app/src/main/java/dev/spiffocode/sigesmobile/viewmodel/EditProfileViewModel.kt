@@ -3,6 +3,7 @@ package dev.spiffocode.sigesmobile.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.data.remote.dto.UserInfoUpdateRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.UserResponse
@@ -13,12 +14,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import javax.inject.Inject
-import dev.spiffocode.sigesmobile.data.local.SessionManager
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.time.LocalDate
+import javax.inject.Inject
 
 data class EditProfileUiState(
     val isLoading: Boolean = false,
@@ -49,6 +49,17 @@ class EditProfileViewModel @Inject constructor(
 
     init {
         _uiState.update { it.copy(profilePictureUrl = session.profilePictureUrl) }
+        _uiState.update {
+            it.copy(
+                firstName         = session.firstName ?: "",
+                lastName          = session.lastName ?: "",
+                email             = session.email ?: "",
+                role              = session.role?.let {role -> UserRole.valueOf(role)} ?: UserRole.STUDENT,
+                employeeNumber    = session.employeeNumber,
+                registrationNumber = session.registrationNumber,
+                profilePictureUrl = session.profilePictureUrl
+            )
+        }
     }
 
     fun loadUser(user: UserResponse) {
