@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.EquipmentDto
 import dev.spiffocode.sigesmobile.data.remote.dto.EquipmentTypeDto
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableType
 import dev.spiffocode.sigesmobile.data.remote.dto.SpaceDto
 import dev.spiffocode.sigesmobile.data.remote.dto.SpaceTypeDto
@@ -48,6 +49,8 @@ import dev.spiffocode.sigesmobile.ui.components.homescreen.AvailableItemCard
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.AvailabilityTab
 import dev.spiffocode.sigesmobile.viewmodel.AvailabilityViewModel
+import kotlin.time.Duration.Companion.days
+import kotlin.time.toJavaDuration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,7 +134,10 @@ fun AvailabilityScreen(
                         onClick = onNavigateBack,
                         modifier = Modifier
                             .padding(start = 8.dp)
-                            .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp))
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer,
+                                RoundedCornerShape(12.dp)
+                            )
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -152,28 +158,28 @@ fun AvailabilityScreen(
             containerColor = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.primary,
             divider = {},
-        ){
-                Tab(
-                    selected = selectedTab == AvailabilityTab.SPACES,
-                    onClick = { onSelectTab(AvailabilityTab.SPACES) },
-                    text = {
-                        Text(
-                            "Espacios",
-                            fontWeight = if (selectedTab == AvailabilityTab.SPACES) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-                )
-                Tab(
-                    selected = selectedTab == AvailabilityTab.EQUIPMENTS,
-                    onClick = { onSelectTab(AvailabilityTab.EQUIPMENTS) },
-                    text = {
-                        Text(
-                            "Equipos",
-                            fontWeight = if (selectedTab == AvailabilityTab.EQUIPMENTS) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-                )
-            }
+        ) {
+            Tab(
+                selected = selectedTab == AvailabilityTab.SPACES,
+                onClick = { onSelectTab(AvailabilityTab.SPACES) },
+                text = {
+                    Text(
+                        "Espacios",
+                        fontWeight = if (selectedTab == AvailabilityTab.SPACES) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            )
+            Tab(
+                selected = selectedTab == AvailabilityTab.EQUIPMENTS,
+                onClick = { onSelectTab(AvailabilityTab.EQUIPMENTS) },
+                text = {
+                    Text(
+                        "Equipos",
+                        fontWeight = if (selectedTab == AvailabilityTab.EQUIPMENTS) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
         SearchBar(
@@ -191,18 +197,18 @@ fun AvailabilityScreen(
         ) {
 
 
-
             var expandedType by remember { mutableStateOf(false) }
 
             FilterSelector(
                 value = if (selectedTab == AvailabilityTab.SPACES) {
                     spaceTypes.find { it.id == selectedSpaceTypeId }?.name ?: "Tipo de espacio"
                 } else {
-                    equipmentTypes.find { it.id == selectedEquipmentTypeId }?.name ?: "Tipo de equipo"
+                    equipmentTypes.find { it.id == selectedEquipmentTypeId }?.name
+                        ?: "Tipo de equipo"
                 },
                 modifier = Modifier.weight(1f),
                 expanded = expandedType,
-                onExpandedChange = { expandedType = it},
+                onExpandedChange = { expandedType = it },
             ) {
                 DropdownMenuItem(
                     text = { Text("Todos") },
@@ -263,7 +269,6 @@ fun AvailabilityScreen(
                     )
                 }
             }
-            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -273,7 +278,10 @@ fun AvailabilityScreen(
                 CircularProgressIndicator()
             }
         } else if (error != null) {
-            Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(error, color = MaterialTheme.colorScheme.error)
             }
         } else {
@@ -282,7 +290,10 @@ fun AvailabilityScreen(
             if (selectedTab == AvailabilityTab.SPACES) {
                 if (spaces.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No se encontraron espacios", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            "No se encontraron espacios",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 } else {
                     InfiniteScrollList(
@@ -291,7 +302,7 @@ fun AvailabilityScreen(
                         loadMoreItems = { loadPage(currentPage + 1) },
                         hasNextPage = hasNextPage,
                         modifier = Modifier
-                            .fillMaxSize()
+                            .fillMaxWidth()
                             .padding(horizontal = 24.dp),
                         content = { space ->
                             AvailableItemCard(
@@ -309,7 +320,10 @@ fun AvailabilityScreen(
             } else {
                 if (equipments.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No se encontraron equipos", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            "No se encontraron equipos",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 } else {
                     InfiniteScrollList(
@@ -318,7 +332,7 @@ fun AvailabilityScreen(
                         loadMoreItems = { loadPage(currentPage + 1) },
                         hasNextPage = hasNextPage,
                         modifier = Modifier
-                            .fillMaxSize()
+                            .fillMaxWidth()
                             .padding(horizontal = 24.dp),
                         content = { eq ->
                             AvailableItemCard(
@@ -336,6 +350,7 @@ fun AvailabilityScreen(
             }
         }
     }
+}
 
 @Composable
 @Preview
@@ -354,6 +369,90 @@ fun AvailabilityScreenPreview(){
             ),
             searchQuery = "",
             selectedTab = AvailabilityTab.SPACES,
+            selectedSpaceTypeId = null,
+            selectedEquipmentTypeId = null,
+            sortBy = null,
+            isLoading = false,
+            totalPages = 1,
+            currentPage = 0,
+            error = null
+        )
+    }
+}
+
+
+@Composable
+@Preview
+fun AvailabilityScreenWithSpacesPreview(){
+    SigesmobileTheme {
+        AvailabilityScreen(
+            spaces = listOf(
+                SpaceDto(
+                    id = 1,
+                    name = "Sala de Juntas A",
+                    capacity = 15,
+                    status = ReservableStatus.AVAILABLE,
+                    availableForStudents = true,
+                    bookInAdvanceDuration = 3.days.toJavaDuration()
+                )
+            ),
+            equipments = emptyList(),
+            equipmentTypes = listOf(
+                EquipmentTypeDto(id = 1, name = "Cables"),
+                EquipmentTypeDto(id = 2, name = "Computadoras")
+            ),
+            spaceTypes = listOf(
+                SpaceTypeDto(id = 1, name = "Auditorios"),
+                SpaceTypeDto(id = 2, name = "Laboratorios")
+            ),
+            searchQuery = "",
+            selectedTab = AvailabilityTab.SPACES,
+            selectedSpaceTypeId = null,
+            selectedEquipmentTypeId = null,
+            sortBy = null,
+            isLoading = false,
+            totalPages = 1,
+            currentPage = 0,
+            error = null
+        )
+    }
+}
+
+
+@Composable
+@Preview
+fun AvailabilityScreenWithEquipmentsPreview(){
+    SigesmobileTheme {
+        AvailabilityScreen(
+            spaces = listOf(
+                SpaceDto(
+                    id = 1,
+                    name = "Sala de Juntas A",
+                    capacity = 15,
+                    status = ReservableStatus.AVAILABLE,
+                    availableForStudents = true,
+                    bookInAdvanceDuration = 3.days.toJavaDuration()
+                )
+            ),
+            equipments = listOf(
+                EquipmentDto(
+                    id = 1,
+                    name = "Proyector",
+                    status = ReservableStatus.AVAILABLE,
+                    type = EquipmentTypeDto(id = 1, name = "Cables"),
+                    availableForStudents = true
+                )
+            ),
+            equipmentTypes = listOf(
+                EquipmentTypeDto(id = 1, name = "Cables"),
+                EquipmentTypeDto(id = 2, name = "Computadoras")
+            ),
+            spaceTypes = listOf(
+                SpaceTypeDto(id = 1, name = "Auditorios"),
+                SpaceTypeDto(id = 2, name = "Laboratorios")
+            ),
+            searchQuery = "",
+            selectedTab = AvailabilityTab.EQUIPMENTS,
             selectedSpaceTypeId = null,
             selectedEquipmentTypeId = null,
             sortBy = null,

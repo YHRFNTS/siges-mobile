@@ -72,7 +72,7 @@ data class SpaceDto(
     @SerializedName("availabilitySlots")      val availabilitySlots: List<AvailabilitySlotDto>? = null,
     @SerializedName("availabilityExceptions") val availabilityExceptions: List<AvailabilityExceptionDto>? = null,
     @SerializedName("spaceType")              val spaceType: SpaceTypeDto? = null,
-    @SerializedName("bookInAdvanceDuration")  val bookInAdvanceDuration: Duration,
+    @SerializedName("bookInAdvanceDuration")  val bookInAdvanceDuration: Duration? = null,
     @SerializedName("capacity")               val capacity: Int? = null,
     @SerializedName("assets")                 val assets: List<SpaceAssetDto>? = null
 )

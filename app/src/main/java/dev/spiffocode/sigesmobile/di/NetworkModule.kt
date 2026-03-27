@@ -10,6 +10,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.spiffocode.sigesmobile.data.remote.AuthInterceptor
+import dev.spiffocode.sigesmobile.data.remote.DurationTypeAdapter
 import dev.spiffocode.sigesmobile.data.remote.TokenAuthenticator
 import dev.spiffocode.sigesmobile.data.remote.api.AuthApiService
 import dev.spiffocode.sigesmobile.data.remote.api.BuildingApiService
@@ -31,6 +32,8 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
+import kotlin.jvm.java
+import kotlin.time.Duration
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -74,6 +77,7 @@ object NetworkModule {
             override fun deserialize(json: JsonElement, type: Type, ctx: JsonDeserializationContext) =
                 LocalDateTime.parse(json.asString)
         })
+        .registerTypeAdapter(java.time.Duration::class.java, DurationTypeAdapter())
         .create()
 
     @Provides
