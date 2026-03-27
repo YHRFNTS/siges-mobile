@@ -144,7 +144,7 @@ class HomeViewModel @Inject constructor(
     private fun ReservationResponse.toUiItem() = ReservationUIItem(
         id  = id,
         title = reservable?.name ?: "—",
-        petitionerName = "$petitioner.firstName $petitioner.lastName",
+        petitionerName = "${petitioner?.firstName} ${petitioner?.lastName}",
         petitionerRole = petitioner?.role ?: UserRole.STUDENT,
         dateStart =  date.atTime(startTime).toKotlinLocalDateTime(),
         dateEnd = date.atTime(endTime).toKotlinLocalDateTime(),
