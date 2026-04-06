@@ -35,7 +35,7 @@ public fun LoginHeader(modifier: Modifier = Modifier) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
-                modifier         = Modifier.size(100.dp).background(MaterialTheme.colorScheme.surfaceVariant, shape = CircleShape).padding(16.dp),
+                modifier         = Modifier.size(100.dp).background(MaterialTheme.colorScheme.background, shape = CircleShape).padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Image(

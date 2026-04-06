@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -17,7 +18,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,17 +40,10 @@ import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ExpiredLinkScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ForgotPasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ResetPasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.UsedLinkScreen
-import dev.spiffocode.sigesmobile.ui.screens.profile.EditProfileScreen
-import dev.spiffocode.sigesmobile.ui.screens.profile.NotificationPrefsScreen
-import dev.spiffocode.sigesmobile.ui.screens.profile.EditProfileScreen
-import dev.spiffocode.sigesmobile.ui.screens.profile.NotificationPrefsScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.ChangePasswordScreen
+import dev.spiffocode.sigesmobile.ui.screens.profile.EditProfileScreen
+import dev.spiffocode.sigesmobile.ui.screens.profile.NotificationPrefsScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.ProfileScreen
-import dev.spiffocode.sigesmobile.ui.theme.Lav
-import dev.spiffocode.sigesmobile.ui.theme.Plum
-import dev.spiffocode.sigesmobile.ui.theme.TextSecondary
-import dev.spiffocode.sigesmobile.viewmodel.EditReservationViewModel
-import dev.spiffocode.sigesmobile.viewmodel.ReservationDetailViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ResetPasswordError
 import dev.spiffocode.sigesmobile.viewmodel.ResetPasswordViewModel
 
@@ -375,7 +368,7 @@ private fun SigesBottomBar(
     currentRoute: String?,
     items: List<Triple<String, String, ImageVector>>
 ) {
-    NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 8.dp) {
         items.forEach { (route, title, icon) ->
             val isSelected = currentRoute?.substringBefore("?") == route.substringBefore("?")
             NavigationBarItem(
@@ -392,11 +385,11 @@ private fun SigesBottomBar(
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor   = Plum,
-                    selectedTextColor   = Plum,
-                    indicatorColor      = Lav,
-                    unselectedIconColor = TextSecondary,
-                    unselectedTextColor = TextSecondary
+                    selectedIconColor   = MaterialTheme.colorScheme.primary,
+                    selectedTextColor   = MaterialTheme.colorScheme.primary,
+                    indicatorColor      = MaterialTheme.colorScheme.surface,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurface,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }

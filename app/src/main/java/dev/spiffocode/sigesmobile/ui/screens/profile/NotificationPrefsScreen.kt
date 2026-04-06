@@ -1,16 +1,13 @@
 package dev.spiffocode.sigesmobile.ui.screens.profile
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,16 +30,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationPreferenceResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationType
-import dev.spiffocode.sigesmobile.ui.components.LabeledSwitch
-import dev.spiffocode.sigesmobile.ui.theme.Background
-import dev.spiffocode.sigesmobile.ui.theme.Plum
+import dev.spiffocode.sigesmobile.ui.components.profile.NotificationPreferenceItem
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.NotificationPrefsViewModel
 
@@ -108,10 +102,10 @@ fun NotificationPrefsScreen(
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Background)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        containerColor = Background
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
@@ -145,7 +139,7 @@ fun NotificationPrefsScreen(
                         .fillMaxWidth()
                         .height(54.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Plum),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     enabled = !isSaving
                 ) {
                     if (isSaving) {
@@ -166,73 +160,11 @@ fun NotificationPrefsScreen(
     }
 }
 
-@Composable
-fun NotificationPreferenceItem(
-    preference: NotificationPreferenceResponse,
-    onToggleInApp: (Boolean) -> Unit = {},
-    onToggleEmail: (Boolean) -> Unit = {}
-) {
-    val (title, description) = preference.type.toDisplayInfo()
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-        Spacer(modifier = Modifier.width(16.dp))
-
-
-        LabeledSwitch(
-            text = "Email",
-            checked = preference.emailEnabled,
-            onChange = onToggleEmail
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        LabeledSwitch(
-            text = "App",
-            checked = preference.inAppEnabled,
-            onChange = onToggleInApp
-        )
-    }
-}
-
-@Composable
-@Preview
-fun NotificationPreferenceItemPreview(){
-    SigesmobileTheme {
-        NotificationPreferenceItem(
-            preference = NotificationPreferenceResponse(
-                type = NotificationType.COMMENT_ON_RESERVATION,
-                inAppEnabled = true,
-                emailEnabled = false
-            )
-        )
-    }
-}
-
 
 @Composable
 @Preview
 fun NotificationPrefsScreenPreview() {
-    SigesmobileTheme {
+    SigesmobileTheme{
         NotificationPrefsScreen(
             isSaved = false,
             isSaving = false,

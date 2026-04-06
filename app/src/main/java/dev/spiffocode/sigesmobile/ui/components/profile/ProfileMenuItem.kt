@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Lock
@@ -33,6 +32,7 @@ import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 fun ProfileMenuItem(
     title: String,
     subtitle: String,
+    backgroundColor: Color = MaterialTheme.colorScheme.background,
     icon: ImageVector,
     iconBgColor: Color,
     iconTintColor: Color,
@@ -42,13 +42,15 @@ fun ProfileMenuItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(vertical = 24.dp),
+            .padding(vertical = 24.dp)
+            .background(backgroundColor),
+
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .clip(MaterialTheme.shapes.small)
                 .background(iconBgColor),
             contentAlignment = Alignment.Center
         ) {
