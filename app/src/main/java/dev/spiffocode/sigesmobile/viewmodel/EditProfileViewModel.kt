@@ -6,7 +6,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.data.remote.dto.UserInfoUpdateRequest
-import dev.spiffocode.sigesmobile.data.remote.dto.UserResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.UserRole
 import dev.spiffocode.sigesmobile.domain.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +24,7 @@ data class EditProfileUiState(
     val firstName: String = "",
     val lastName: String = "",
     val phoneNumber: String = "",
-    val birthDate: LocalDate? = LocalDate.now(),
+    val birthDate: LocalDate = LocalDate.now(),
     val email: String = "",
     val role: UserRole? = UserRole.STUDENT,
     val employeeNumber: String? = null,
@@ -58,26 +57,11 @@ class EditProfileViewModel @Inject constructor(
                 employeeNumber    = session.employeeNumber,
                 registrationNumber = session.registrationNumber,
                 profilePictureUrl = session.profilePictureUrl,
-                phoneNumber       = session.phoneNumber ?: ""
+                phoneNumber       = session.phoneNumber ?: "",
+                birthDate         = LocalDate.parse(session.birthDate)
             )
         }
-    }
-
-    fun loadUser(user: UserResponse) {
-        userId = user.id
-        _uiState.update {
-            it.copy(
-                firstName          = user.firstName,
-                lastName           = user.lastName,
-                phoneNumber        = user.phoneNumber ?: "",
-                birthDate          = user.birthDate,
-                email              = user.email,
-                role               = user.role,
-                employeeNumber     = user.employeeNumber,
-                registrationNumber = user.registrationNumber,
-                profilePictureUrl  = user.profilePictureUrl ?: session.profilePictureUrl
-            )
-        }
+        userId = session.id?.toLong() ?: -1
     }
 
     fun onFirstNameChange(value: String)    = _uiState.update { it.copy(firstName = value, error = null) }
@@ -94,8 +78,6 @@ class EditProfileViewModel @Inject constructor(
                 _uiState.update { it.copy(error = "El apellido no puede estar vacío.") }
             state.phoneNumber.isBlank() ->
                 _uiState.update { it.copy(error = "El teléfono no puede estar vacío.") }
-            state.birthDate == null ->
-                _uiState.update { it.copy(error = "La fecha de nacimiento no puede estar vacía.") }
             else -> viewModelScope.launch {
                 _uiState.update { it.copy(isLoading = true, error = null) }
                 when (val result = repository.updateCommonInfo(
