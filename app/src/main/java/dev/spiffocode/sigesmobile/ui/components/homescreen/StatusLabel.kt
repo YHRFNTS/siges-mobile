@@ -13,3 +13,10 @@ public fun StatusLabel(
 ){
     Text(status.toText(), style = MaterialTheme.typography.labelLarge, color = status.toColor())
 }
+
+@Composable
+public fun ResourceStatusLabel(
+    status: dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
+){
+    Text(status.toText(), style = MaterialTheme.typography.labelLarge, color = status.toColor())
+}

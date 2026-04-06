@@ -62,6 +62,10 @@ object Routes {
     const val MY_REQUESTS    = "requests?showBackButton={showBackButton}"
     fun myRequests(showBack: Boolean) = "requests?showBackButton=$showBack"
     const val NEW_REQUEST    = "new_request"
+    const val SPACE_DETAIL   = "space_detail/{id}"
+    const val EQUIPMENT_DETAIL = "equipment_detail/{id}"
+    fun spaceDetail(id: Long) = "space_detail/$id"
+    fun equipmentDetail(id: Long) = "equipment_detail/$id"
     const val REQUEST_DETAIL = "request_detail/{reservationId}"
     const val EDIT_REQUEST   = "edit_request/{reservationId}"
     fun requestDetail(id: Long) = "request_detail/$id"
@@ -234,7 +238,8 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                     showBackButton = showBack,
                     viewModel = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToDetail = { id -> navController.navigate(Routes.requestDetail(id)) }
+                    onNavigateToSpaceDetail = { id -> navController.navigate(Routes.spaceDetail(id)) },
+                    onNavigateToEquipmentDetail = { id -> navController.navigate(Routes.equipmentDetail(id)) }
                 )
             }
 
@@ -257,6 +262,30 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                     viewModel = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToDetail = { id -> navController.navigate(Routes.requestDetail(id)) }
+                )
+            }
+
+            composable(
+                route     = Routes.SPACE_DETAIL,
+                arguments = listOf(navArgument("id") { type = NavType.LongType })
+            ) { backStack ->
+                val spaceId = backStack.arguments?.getLong("id") ?: return@composable
+                dev.spiffocode.sigesmobile.ui.screens.applicant.SpaceDetailScreen(
+                    spaceId = spaceId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToReserve = { navController.navigate(Routes.NEW_REQUEST) }
+                )
+            }
+
+            composable(
+                route     = Routes.EQUIPMENT_DETAIL,
+                arguments = listOf(navArgument("id") { type = NavType.LongType })
+            ) { backStack ->
+                val equipmentId = backStack.arguments?.getLong("id") ?: return@composable
+                dev.spiffocode.sigesmobile.ui.screens.applicant.EquipmentDetailScreen(
+                    equipmentId = equipmentId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToReserve = { navController.navigate(Routes.NEW_REQUEST) }
                 )
             }
 

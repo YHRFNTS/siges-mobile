@@ -58,7 +58,8 @@ fun AvailabilityScreen(
     showBackButton: Boolean = false,
     viewModel: AvailabilityViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {}
+    onNavigateToSpaceDetail: (Long) -> Unit = {},
+    onNavigateToEquipmentDetail: (Long) -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -84,7 +85,8 @@ fun AvailabilityScreen(
         onSearchQueryChange = viewModel::onSearchQueryChange,
         showBackButton = showBackButton,
         onNavigateBack = onNavigateBack,
-        onNavigateToDetail = onNavigateToDetail
+        onNavigateToSpaceDetail = onNavigateToSpaceDetail,
+        onNavigateToEquipmentDetail = onNavigateToEquipmentDetail
     )
 }
 
@@ -113,7 +115,8 @@ fun AvailabilityScreen(
     onSearchQueryChange: (String) -> Unit = {},
     showBackButton: Boolean = false,
     onNavigateBack: () -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {}
+    onNavigateToSpaceDetail: (Long) -> Unit = {},
+    onNavigateToEquipmentDetail: (Long) -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -311,7 +314,7 @@ fun AvailabilityScreen(
                                 status = space.status,
                                 resourceCategory = space.spaceType?.name ?: "Espacio",
                                 resourceType = ReservableType.SPACE,
-                                onClick = { onNavigateToDetail(space.id) }
+                                onClick = { onNavigateToSpaceDetail(space.id) }
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                         }
@@ -341,7 +344,7 @@ fun AvailabilityScreen(
                                 status = eq.status,
                                 resourceCategory = eq.type?.name ?: "Equipo",
                                 resourceType = ReservableType.EQUIPMENT,
-                                onClick = { onNavigateToDetail(eq.id) }
+                                onClick = { onNavigateToEquipmentDetail(eq.id) }
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                         }

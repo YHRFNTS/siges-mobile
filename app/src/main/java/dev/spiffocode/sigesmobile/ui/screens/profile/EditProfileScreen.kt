@@ -1,5 +1,6 @@
 package dev.spiffocode.sigesmobile.ui.screens.profile
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -88,62 +90,96 @@ fun EditProfileScreenContent(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .widthIn(max = 480.dp)
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
-            ProfileImagePicker(
-                fallbackInitial = state.firstName.firstOrNull()?.uppercase()?.first(),
-                profilePictureUrl = state.profilePictureUrl,
-                isUploadingPicture = state.isUploadingPicture,
-                onUploadPicture = onUploadProfilePicture
-            )
-            
-            Spacer(modifier = Modifier.height(32.dp))
-
-            ProfileField(label = "Nombre", value = state.firstName, onValueChange = onFirstNameChange)
-            ProfileField(label = "Apellidos", value = state.lastName, onValueChange = onLastNameChange)
-            ProfileField(label = "Tipo de Usuario", value = state.role?.name ?: "", readOnly = true)
-            
-            if (!state.employeeNumber.isNullOrBlank()) {
-                ProfileField(label = "Número de Empleado", value = state.employeeNumber, readOnly = true)
-            }
-            if (!state.registrationNumber.isNullOrBlank()) {
-                ProfileField(label = "Matrícula", value = state.registrationNumber, readOnly = true)
-            }
-            
-            ProfileField(label = "Correo Electrónico", value = state.email, readOnly = true)
-            ProfileField(label = "Teléfono", value = state.phoneNumber, onValueChange = onPhoneNumberChange)
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Button(
-                onClick = onSaveClick,
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                shape = MaterialTheme.shapes.small,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                enabled = !state.isLoading && !state.isUploadingPicture
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.background)
-                } else {
-                    Text("Guardar Cambios", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(24.dp))
+                ProfileImagePicker(
+                    fallbackInitial = state.firstName.firstOrNull()?.uppercase()?.first(),
+                    profilePictureUrl = state.profilePictureUrl,
+                    isUploadingPicture = state.isUploadingPicture,
+                    onUploadPicture = onUploadProfilePicture
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                ProfileField(
+                    label = "Nombre",
+                    value = state.firstName,
+                    onValueChange = onFirstNameChange
+                )
+                ProfileField(
+                    label = "Apellidos",
+                    value = state.lastName,
+                    onValueChange = onLastNameChange
+                )
+                ProfileField(
+                    label = "Tipo de Usuario",
+                    value = state.role?.name ?: "",
+                    readOnly = true
+                )
+
+                if (!state.employeeNumber.isNullOrBlank()) {
+                    ProfileField(
+                        label = "Número de Empleado",
+                        value = state.employeeNumber,
+                        readOnly = true
+                    )
                 }
+                if (!state.registrationNumber.isNullOrBlank()) {
+                    ProfileField(
+                        label = "Matrícula",
+                        value = state.registrationNumber,
+                        readOnly = true
+                    )
+                }
+
+                ProfileField(label = "Correo Electrónico", value = state.email, readOnly = true)
+                ProfileField(
+                    label = "Teléfono",
+                    value = state.phoneNumber,
+                    onValueChange = onPhoneNumberChange
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Button(
+                    onClick = onSaveClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = MaterialTheme.shapes.small,
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    enabled = !state.isLoading && !state.isUploadingPicture
+                ) {
+                    if (state.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.background
+                        )
+                    } else {
+                        Text("Guardar Cambios", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+
+                state.error?.let {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(text = it, color = Color.Red, fontSize = 14.sp)
+                }
+
+                Spacer(modifier = Modifier.height(40.dp))
             }
-            
-            state.error?.let {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(text = it, color = Color.Red, fontSize = 14.sp)
-            }
-            
-            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }

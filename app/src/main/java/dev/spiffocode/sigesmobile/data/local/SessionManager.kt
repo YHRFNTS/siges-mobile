@@ -30,6 +30,7 @@ class SessionManager @Inject constructor(
         val EMPLOYEE_NUMBER     = stringPreferencesKey("employee_number")
         val REGISTRATION_NUMBER = stringPreferencesKey("registration_number")
         val PROFILE_PICTURE_URL = stringPreferencesKey("profile_picture_url")
+        val PHONE_NUMBER        = stringPreferencesKey("phone_number")
     }
 
     val accessTokenFlow: Flow<String?>  = context.dataStore.data.map { it[Keys.ACCESS_TOKEN] }
@@ -45,6 +46,9 @@ class SessionManager @Inject constructor(
     val registrationNumber: String? get() = runBlocking { context.dataStore.data.map { it[Keys.REGISTRATION_NUMBER] }.first() }
     val profilePictureUrl: String?  get() = runBlocking { context.dataStore.data.map { it[Keys.PROFILE_PICTURE_URL] }.first() }
 
+    val phoneNumber: String?        get() = runBlocking { context.dataStore.data.map { it[Keys.PHONE_NUMBER] }.first() }
+
+
     val isLoggedIn: Boolean get() = accessToken != null
 
     suspend fun saveSession(
@@ -56,7 +60,8 @@ class SessionManager @Inject constructor(
         email: String,
         employeeNumber: String? = null,
         registrationNumber: String? = null,
-        profilePictureUrl: String? = null
+        profilePictureUrl: String? = null,
+        phoneNumber: String
     ) {
         context.dataStore.edit { prefs ->
             prefs[Keys.ACCESS_TOKEN]  = accessToken
@@ -65,6 +70,7 @@ class SessionManager @Inject constructor(
             prefs[Keys.FIRST_NAME]    = firstName
             prefs[Keys.LAST_NAME]     = lastName
             prefs[Keys.EMAIL]         = email
+            prefs[Keys.PHONE_NUMBER]  = phoneNumber
             if (employeeNumber != null)     prefs[Keys.EMPLOYEE_NUMBER]     = employeeNumber
             if (registrationNumber != null) prefs[Keys.REGISTRATION_NUMBER] = registrationNumber
             if (profilePictureUrl != null)  prefs[Keys.PROFILE_PICTURE_URL] = profilePictureUrl

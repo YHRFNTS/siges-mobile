@@ -72,7 +72,7 @@ data class AvailabilityExceptionDto(
 open class UserResponse(
     @SerializedName("id")                val id: Long,
     @SerializedName("email")             val email: String,
-    @SerializedName("phoneNumber")       val phoneNumber: String?,
+    @SerializedName("phoneNumber")       val phoneNumber: String,
     @SerializedName("firstName")         val firstName: String,
     @SerializedName("lastName")          val lastName: String,
     @SerializedName("birthDate")         val birthDate: LocalDate,

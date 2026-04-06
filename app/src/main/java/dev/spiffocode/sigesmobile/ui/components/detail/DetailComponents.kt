@@ -20,11 +20,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
+import dev.spiffocode.sigesmobile.ui.components.homescreen.ResourceStatusLabel
 import dev.spiffocode.sigesmobile.ui.components.homescreen.StatusLabel
 import dev.spiffocode.sigesmobile.ui.helpers.toBgColor
-import dev.spiffocode.sigesmobile.ui.helpers.toColor
-import dev.spiffocode.sigesmobile.ui.helpers.toText
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 
 @Composable
@@ -74,9 +74,6 @@ fun StatusHeaderCard(
     subtitle: String,
     modifier: Modifier = Modifier
 ) {
-    val bgColor = status.toBgColor()
-    val textColor = status.toColor()
-    val textValue = status.toText()
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -129,6 +126,87 @@ fun StatusHeaderCardPreview() {
 }
 
 @Composable
+fun ResourceHeaderCard(
+    status: ReservableStatus,
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier
+) {
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+
+            Box(
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.large)
+                    .background(status.toBgColor())
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                ResourceStatusLabel(status = status)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+            
+            if (subtitle.isNotBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ResourceHeaderCardMaintenancePreview() {
+    SigesmobileTheme {
+        ResourceHeaderCard(
+            status = ReservableStatus.MAINTENANCE,
+            title = "Proyector EPSON",
+            subtitle = "Equipos audiovisuales"
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ResourceHeaderCardPreview() {
+    SigesmobileTheme {
+        ResourceHeaderCard(
+            status = ReservableStatus.AVAILABLE,
+            title = "Proyector EPSON",
+            subtitle = "Equipos audiovisuales"
+        )
+    }
+}
+
+@Preview
+@Composable
+fun InfoRowPreview() {
+    SigesmobileTheme {
+        InfoRow(
+            label = "Capacidad",
+            value = "5"
+        )
+    }
+}
+
+@Composable
 fun ObservationBox(
     observation: String,
     authorAndDate: String,
@@ -154,5 +232,16 @@ fun ObservationBox(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+@Preview
+@Composable
+fun ObservationBoxPreview(){
+    SigesmobileTheme {
+        ObservationBox(
+            observation = "El equipo venía defectuoso",
+            authorAndDate = "Carlos Emanuel Salgado Trujillo - 12 de agosto "
+        )
     }
 }

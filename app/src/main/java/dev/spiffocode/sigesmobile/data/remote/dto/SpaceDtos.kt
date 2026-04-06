@@ -19,14 +19,14 @@ data class SpaceTypeDto(
 data class SpaceAssetDto(
     @SerializedName("id")           val id: Long,
     @SerializedName("name")         val name: String,
-    @SerializedName("description")  val description: String?,
+    @SerializedName("description")  val description: String? = null,
     @SerializedName("inventoryNum") val inventoryNum: String,
-    @SerializedName("space")        val space: SpaceSummaryDto?,
-    @SerializedName("type")         val type: EquipmentTypeDto?,
-    @SerializedName("createdAt")    val createdAt: LocalDateTime?,
-    @SerializedName("updatedAt")    val updatedAt: LocalDateTime?,
-    @SerializedName("createdBy")    val createdBy: String?,
-    @SerializedName("deletedAt")    val deletedAt: LocalDateTime?
+    @SerializedName("space")        val space: SpaceSummaryDto? = null,
+    @SerializedName("type")         val type: EquipmentTypeDto? = null,
+    @SerializedName("createdAt")    val createdAt: LocalDateTime? = null,
+    @SerializedName("updatedAt")    val updatedAt: LocalDateTime? = null,
+    @SerializedName("createdBy")    val createdBy: String? = null,
+    @SerializedName("deletedAt")    val deletedAt: LocalDateTime? = null
 )
 
 data class PageSpaceAssetDto(

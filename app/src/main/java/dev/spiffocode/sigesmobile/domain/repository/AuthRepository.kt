@@ -29,7 +29,8 @@ class AuthRepository @Inject constructor(
                 role         = auth.role.name,
                 firstName    = "",
                 lastName     = "",
-                email        = ""
+                email        = "",
+                phoneNumber  = ""
             )
 
             val profileResult = safeApiCall { userApi.lookupByIdentifier(identifier.trim()) }
@@ -44,7 +45,8 @@ class AuthRepository @Inject constructor(
                     email              = user.email,
                     employeeNumber     = user.employeeNumber,
                     registrationNumber = user.registrationNumber,
-                    profilePictureUrl  = user.profilePictureUrl
+                    profilePictureUrl  = user.profilePictureUrl,
+                    phoneNumber        = user.phoneNumber
                 )
             }
         }

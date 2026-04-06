@@ -57,7 +57,8 @@ class EditProfileViewModel @Inject constructor(
                 role              = session.role?.let {role -> UserRole.valueOf(role)} ?: UserRole.STUDENT,
                 employeeNumber    = session.employeeNumber,
                 registrationNumber = session.registrationNumber,
-                profilePictureUrl = session.profilePictureUrl
+                profilePictureUrl = session.profilePictureUrl,
+                phoneNumber       = session.phoneNumber ?: ""
             )
         }
     }
