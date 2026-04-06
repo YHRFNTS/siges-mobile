@@ -7,17 +7,18 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,18 +32,19 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import dev.spiffocode.sigesmobile.data.local.SessionManager
+import dev.spiffocode.sigesmobile.ui.screens.admin.AdminHomeScreen
+import dev.spiffocode.sigesmobile.ui.screens.admin.AdminReservationListScreen
+import dev.spiffocode.sigesmobile.ui.screens.admin.AdminReviewDetailScreen
 import dev.spiffocode.sigesmobile.ui.screens.applicant.ApplicantHomeScreen
 import dev.spiffocode.sigesmobile.ui.screens.login.LoginScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ExpiredLinkScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ForgotPasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ResetPasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.UsedLinkScreen
+import dev.spiffocode.sigesmobile.ui.screens.profile.ChangePasswordScreen
+import dev.spiffocode.sigesmobile.ui.screens.profile.EditProfileScreen
+import dev.spiffocode.sigesmobile.ui.screens.profile.NotificationPrefsScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.ProfileScreen
-import dev.spiffocode.sigesmobile.ui.theme.Lav
-import dev.spiffocode.sigesmobile.ui.theme.Plum
-import dev.spiffocode.sigesmobile.ui.theme.TextSecondary
-import dev.spiffocode.sigesmobile.viewmodel.EditReservationViewModel
-import dev.spiffocode.sigesmobile.viewmodel.ReservationDetailViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ResetPasswordError
 import dev.spiffocode.sigesmobile.viewmodel.ResetPasswordViewModel
 
@@ -56,29 +58,36 @@ object Routes {
     fun resetPassword(token: String, email: String) = "reset_password/$token/$email"
 
     const val HOME           = "home"
-    const val AVAILABILITY   = "availability"
-    const val MY_REQUESTS    = "requests"
+    const val AVAILABILITY   = "availability?showBackButton={showBackButton}"
+    fun availability(showBack: Boolean) = "availability?showBackButton=$showBack"
+    const val MY_REQUESTS    = "requests?showBackButton={showBackButton}"
+    fun myRequests(showBack: Boolean) = "requests?showBackButton=$showBack"
     const val NEW_REQUEST    = "new_request"
+    const val SPACE_DETAIL   = "space_detail/{id}"
+    const val EQUIPMENT_DETAIL = "equipment_detail/{id}"
+    fun spaceDetail(id: Long) = "space_detail/$id"
+    fun equipmentDetail(id: Long) = "equipment_detail/$id"
     const val REQUEST_DETAIL = "request_detail/{reservationId}"
     const val EDIT_REQUEST   = "edit_request/{reservationId}"
     fun requestDetail(id: Long) = "request_detail/$id"
     fun editRequest(id: Long)   = "edit_request/$id"
 
-    const val ADMIN_HOME         = "admin_home"
-    const val ADMIN_ALL_REQUESTS = "admin_all_requests"
+    const val ADMIN_HOME           = "admin_home"
+    const val ADMIN_ALL_REQUESTS   = "admin_all_requests"
+    const val ADMIN_REVIEW_DETAIL  = "admin_review/{reservationId}"
+    fun adminReviewDetail(id: Long) = "admin_review/$id"
 
     const val PROFILE            = "profile"
     const val EDIT_PROFILE       = "edit_profile"
     const val NOTIFICATION_PREFS = "notification_prefs"
-    const val CHANGE_PASSWORD    = "change_password/{token}"
-    fun changePassword(token: String) = "change_password/$token"
+    const val CHANGE_PASSWORD    = "change_password"
 }
 
 
 sealed class BottomNavItem(val route: String, val title: String, val icon: ImageVector) {
     object Home         : BottomNavItem(Routes.HOME, "Inicio", Icons.Default.Home)
-    object Availability : BottomNavItem(Routes.AVAILABILITY, "Buscar", Icons.Default.Search)
-    object Requests     : BottomNavItem(Routes.MY_REQUESTS, "Solicitudes", Icons.Default.List)
+    object Availability : BottomNavItem(Routes.availability(false), "Buscar", Icons.Default.Search)
+    object Requests     : BottomNavItem(Routes.myRequests(false), "Solicitudes", Icons.Default.List)
     object Profile      : BottomNavItem(Routes.PROFILE, "Perfil", Icons.Default.Person)
 }
 
@@ -95,11 +104,16 @@ private val noBottomBarPrefixes = setOf(
     Routes.USED_LINK,
     "reset_password",
     "change_password",
+    "admin_review",
 )
 
 
 @Composable
-fun AppNavigation(sessionManager: SessionManager, navController: NavController = rememberNavController()) {
+fun AppNavigation(
+    sessionManager: SessionManager,
+    windowSizeClass: WindowSizeClass,
+    navController: NavController = rememberNavController()
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -136,12 +150,14 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                         val dest = if (sessionManager.role == "ADMIN") Routes.ADMIN_HOME else Routes.HOME
                         navController.navigate(dest) { popUpTo(Routes.LOGIN) { inclusive = true } }
                     },
-                    onNavigateToForgotPassword = { navController.navigate(Routes.FORGOT_PASSWORD) }
+                    onNavigateToForgotPassword = { navController.navigate(Routes.FORGOT_PASSWORD) },
+                    windowSizeClass            = windowSizeClass
                 )
             }
 
             composable(Routes.FORGOT_PASSWORD) {
                 ForgotPasswordScreen(
+                    windowSizeClass = windowSizeClass,
                     viewModel      = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -175,8 +191,9 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                 }
 
                 ResetPasswordScreen(
+                    windowSizeClass   = windowSizeClass,
                     token             = token,
-                    emailFromLink = email,
+                    emailFromLink     = email,
                     viewModel         = viewModel,
                     onNavigateToLogin = {
                         navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } }
@@ -191,6 +208,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                 )
             ) {
                 ExpiredLinkScreen(
+                    windowSizeClass = windowSizeClass,
                     onNavigateToForgotPassword = {
                         navController.navigate(Routes.FORGOT_PASSWORD) { popUpTo(Routes.LOGIN) }
                     }
@@ -204,6 +222,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                 )
             ) {
                 UsedLinkScreen(
+                    windowSizeClass = windowSizeClass,
                     onNavigateToLogin = {
                         navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } }
                     }
@@ -212,27 +231,78 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
 
             composable(Routes.HOME) {
                 ApplicantHomeScreen(
+                    windowSizeClass          = windowSizeClass,
                     viewModel                = hiltViewModel(),
-                    onNavigateToAvailability = { navController.navigate(Routes.AVAILABILITY) },
+                    onNavigateToAvailability = { navController.navigate(Routes.availability(true)) },
                     onNavigateToNewRequest   = { navController.navigate(Routes.NEW_REQUEST) },
-                    onNavigateToMyRequests   = { navController.navigate(Routes.MY_REQUESTS) },
+                    onNavigateToMyRequests   = { navController.navigate(Routes.myRequests(true)) },
                     onNavigateToDetail       = { id -> navController.navigate(Routes.requestDetail(id)) }
                 )
             }
 
-            composable(Routes.AVAILABILITY) {
-                // AvailabilityScreen(viewModel = hiltViewModel())
-                Text("Disponibilidad (en construcción)", modifier = Modifier.padding(24.dp))
+            composable(
+                route = Routes.AVAILABILITY,
+                arguments = listOf(navArgument("showBackButton") { type = NavType.BoolType; defaultValue = false })
+            ) { backStack ->
+                val showBack = backStack.arguments?.getBoolean("showBackButton") ?: false
+                dev.spiffocode.sigesmobile.ui.screens.applicant.AvailabilityScreen(
+                    windowSizeClass = windowSizeClass,
+                    showBackButton = showBack,
+                    viewModel = hiltViewModel(),
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToSpaceDetail = { id -> navController.navigate(Routes.spaceDetail(id)) },
+                    onNavigateToEquipmentDetail = { id -> navController.navigate(Routes.equipmentDetail(id)) }
+                )
             }
 
-            composable(Routes.MY_REQUESTS) {
-                // MyReservationsScreen(viewModel = hiltViewModel())
-                Text("Mis Solicitudes (en construcción)", modifier = Modifier.padding(24.dp))
+            composable(
+                route = Routes.MY_REQUESTS,
+                arguments = listOf(navArgument("showBackButton") { type = NavType.BoolType; defaultValue = false })
+            ) { backStack ->
+                val showBack = backStack.arguments?.getBoolean("showBackButton") ?: false
+                dev.spiffocode.sigesmobile.ui.screens.applicant.MyReservationsScreen(
+                    windowSizeClass = windowSizeClass,
+                    showBackButton = showBack,
+                    viewModel = hiltViewModel(),
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToNewRequest = { navController.navigate(Routes.NEW_REQUEST) },
+                    onNavigateToDetail = { id -> navController.navigate(Routes.requestDetail(id)) }
+                )
             }
 
             composable(Routes.NEW_REQUEST) {
-                // CreateReservationScreen(viewModel = hiltViewModel())
-                Text("Nueva Solicitud (en construcción)", modifier = Modifier.padding(24.dp))
+                dev.spiffocode.sigesmobile.ui.screens.applicant.NewRequestScreen(
+                    windowSizeClass = windowSizeClass,
+                    viewModel = hiltViewModel(),
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToDetail = { id -> navController.navigate(Routes.requestDetail(id)) }
+                )
+            }
+
+            composable(
+                route     = Routes.SPACE_DETAIL,
+                arguments = listOf(navArgument("id") { type = NavType.LongType })
+            ) { backStack ->
+                val spaceId = backStack.arguments?.getLong("id") ?: return@composable
+                dev.spiffocode.sigesmobile.ui.screens.applicant.SpaceDetailScreen(
+                    windowSizeClass = windowSizeClass,
+                    spaceId = spaceId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToReserve = { navController.navigate(Routes.NEW_REQUEST) }
+                )
+            }
+
+            composable(
+                route     = Routes.EQUIPMENT_DETAIL,
+                arguments = listOf(navArgument("id") { type = NavType.LongType })
+            ) { backStack ->
+                val equipmentId = backStack.arguments?.getLong("id") ?: return@composable
+                dev.spiffocode.sigesmobile.ui.screens.applicant.EquipmentDetailScreen(
+                    windowSizeClass = windowSizeClass,
+                    equipmentId = equipmentId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToReserve = { navController.navigate(Routes.NEW_REQUEST) }
+                )
             }
 
             composable(
@@ -240,10 +310,12 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                 arguments = listOf(navArgument("reservationId") { type = NavType.LongType })
             ) { backStack ->
                 val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
-                val viewModel     = hiltViewModel<ReservationDetailViewModel>()
-                LaunchedEffect(reservationId) { viewModel.loadReservation(reservationId) }
-                // ReservationDetailScreen(viewModel = viewModel)
-                Text("Detalle de Solicitud (en construcción)", modifier = Modifier.padding(24.dp))
+                dev.spiffocode.sigesmobile.ui.screens.applicant.ReservationDetailScreen(
+                    windowSizeClass = windowSizeClass,
+                    reservationId = reservationId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEdit = { id -> navController.navigate(Routes.editRequest(id)) }
+                )
             }
 
             composable(
@@ -251,31 +323,54 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                 arguments = listOf(navArgument("reservationId") { type = NavType.LongType })
             ) { backStack ->
                 val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
-                val viewModel     = hiltViewModel<EditReservationViewModel>()
-                // EditReservationScreen(viewModel = viewModel)
-                Text("Editar Solicitud (en construcción)", modifier = Modifier.padding(24.dp))
+                dev.spiffocode.sigesmobile.ui.screens.applicant.EditReservationScreen(
+                    windowSizeClass = windowSizeClass,
+                    reservationId = reservationId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onSaveSuccess = { navController.popBackStack() }
+                )
             }
 
             // ── Admin ─────────────────────────────────────────────────────────
 
             composable(Routes.ADMIN_HOME) {
-                // AdminHomeScreen(viewModel = hiltViewModel())
-                Text("Panel Admin (en construcción)", modifier = Modifier.padding(24.dp))
+                AdminHomeScreen(
+                    windowSizeClass         = windowSizeClass,
+                    viewModel               = hiltViewModel(),
+                    onNavigateToAllRequests = { navController.navigate(Routes.ADMIN_ALL_REQUESTS) },
+                    onNavigateToDetail      = { id -> navController.navigate(Routes.adminReviewDetail(id)) }
+                )
             }
 
             composable(Routes.ADMIN_ALL_REQUESTS) {
-                // AdminReservationListScreen(viewModel = hiltViewModel())
-                Text("Todas las Solicitudes (en construcción)", modifier = Modifier.padding(24.dp))
+                AdminReservationListScreen(
+                    windowSizeClass = windowSizeClass,
+                    onNavigateToDetail = { id -> navController.navigate(Routes.adminReviewDetail(id)) }
+                )
+            }
+
+            composable(
+                route     = Routes.ADMIN_REVIEW_DETAIL,
+                arguments = listOf(navArgument("reservationId") { type = NavType.LongType })
+            ) { backStack ->
+                val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
+                AdminReviewDetailScreen(
+                    windowSizeClass = windowSizeClass,
+                    reservationId  = reservationId,
+                    viewModel      = hiltViewModel(),
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
 
             // ── Profile ───────────────────────────────────────────────────────
 
             composable(Routes.PROFILE) {
                 ProfileScreen(
+                    windowSizeClass            = windowSizeClass,
                     viewModel                  = hiltViewModel(),
                     onNavigateToEditProfile    = { navController.navigate(Routes.EDIT_PROFILE) },
                     onNavigateToNotifications  = { navController.navigate(Routes.NOTIFICATION_PREFS) },
-                    onNavigateToChangePassword = { navController.navigate(Routes.FORGOT_PASSWORD) },
+                    onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) },
                     onLogoutSuccess            = {
                         navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } }
                     }
@@ -283,22 +378,25 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             }
 
             composable(Routes.EDIT_PROFILE) {
-                // EditProfileScreen(viewModel = hiltViewModel(), onNavigateBack = { navController.popBackStack() })
-                Text("Editar Perfil (en construcción)", modifier = Modifier.padding(24.dp))
+                 EditProfileScreen(
+                     windowSizeClass = windowSizeClass,
+                     viewModel = hiltViewModel(),
+                     onNavigateBack = { navController.popBackStack() }
+                 )
             }
 
             composable(Routes.NOTIFICATION_PREFS) {
-                // NotificationPrefsScreen(viewModel = hiltViewModel(), onNavigateBack = { navController.popBackStack() })
-                Text("Notificaciones (en construcción)", modifier = Modifier.padding(24.dp))
+                 NotificationPrefsScreen(
+                     windowSizeClass = windowSizeClass,
+                     viewModel = hiltViewModel(),
+                     onNavigateBack = { navController.popBackStack() }
+                 )
             }
 
-            composable(
-                route     = Routes.CHANGE_PASSWORD,
-                arguments = listOf(navArgument("token") { type = NavType.StringType })
-            ) { backStack ->
-                val token = backStack.arguments?.getString("token") ?: ""
-                // ChangePasswordScreen(token = token, viewModel = hiltViewModel())
-                Text("Cambiar Contraseña (en construcción)", modifier = Modifier.padding(24.dp))
+            composable(Routes.CHANGE_PASSWORD) {
+                ChangePasswordScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
         }
     }
@@ -330,9 +428,9 @@ private fun SigesBottomBar(
     currentRoute: String?,
     items: List<Triple<String, String, ImageVector>>
 ) {
-    NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 8.dp) {
         items.forEach { (route, title, icon) ->
-            val isSelected = currentRoute == route
+            val isSelected = currentRoute?.substringBefore("?") == route.substringBefore("?")
             NavigationBarItem(
                 icon     = { Icon(icon, contentDescription = title) },
                 label    = { Text(title, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
@@ -347,11 +445,11 @@ private fun SigesBottomBar(
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor   = Plum,
-                    selectedTextColor   = Plum,
-                    indicatorColor      = Lav,
-                    unselectedIconColor = TextSecondary,
-                    unselectedTextColor = TextSecondary
+                    selectedIconColor   = MaterialTheme.colorScheme.primary,
+                    selectedTextColor   = MaterialTheme.colorScheme.primary,
+                    indicatorColor      = MaterialTheme.colorScheme.surface,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurface,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }

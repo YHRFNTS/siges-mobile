@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.data.remote.dto.EquipmentDto
+import dev.spiffocode.sigesmobile.data.remote.dto.EquipmentTypeDto
 import dev.spiffocode.sigesmobile.data.remote.dto.ShowMode
 import dev.spiffocode.sigesmobile.data.remote.dto.SpaceDto
 import dev.spiffocode.sigesmobile.data.remote.dto.SpaceTypeDto
@@ -28,6 +29,7 @@ data class AvailabilityUiState(
     val selectedSpaceTypeId: Long? = null,
 
     val equipments: List<EquipmentDto> = emptyList(),
+    val equipmentTypes: List<EquipmentTypeDto> = emptyList(),
     val selectedEquipmentTypeId: Long? = null,
 
     val totalPages: Int = 0,
@@ -47,6 +49,7 @@ class AvailabilityViewModel @Inject constructor(
 
     init {
         loadSpaceTypes()
+        loadEquipmentTypes()
         load()
     }
 
@@ -138,11 +141,18 @@ class AvailabilityViewModel @Inject constructor(
 
     private fun loadSpaceTypes() {
         viewModelScope.launch {
-            if (spaceRepository.getAllSpaceTypes() is NetworkResult.Success) {
-                val result = spaceRepository.getAllSpaceTypes()
-                if (result is NetworkResult.Success) {
-                    _uiState.update { it.copy(spaceTypes = result.data) }
-                }
+            when (val result = spaceRepository.getAllSpaceTypes()) {
+                is NetworkResult.Success -> _uiState.update { it.copy(spaceTypes = result.data) }
+                else -> {}
+            }
+        }
+    }
+
+    private fun loadEquipmentTypes() {
+        viewModelScope.launch {
+            when (val result = equipmentRepository.getAllEquipmentTypes()) {
+                is NetworkResult.Success -> _uiState.update { it.copy(equipmentTypes = result.data) }
+                else -> {}
             }
         }
     }

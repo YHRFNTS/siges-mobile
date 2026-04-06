@@ -1,11 +1,8 @@
 package dev.spiffocode.sigesmobile.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
-import java.time.DayOfWeek
 import java.time.Duration
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 
 enum class ReservableStatus { AVAILABLE, MAINTENANCE, LOANED }
 
@@ -15,21 +12,21 @@ enum class ShowMode { ACTIVE, INACTIVE, ALL }
 data class SpaceTypeDto(
     @SerializedName("id")          val id: Long,
     @SerializedName("name")        val name: String,
-    @SerializedName("description") val description: String?,
-    @SerializedName("deletedAt")   val deletedAt: LocalDateTime?
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("deletedAt")   val deletedAt: LocalDateTime? = null
 )
 
 data class SpaceAssetDto(
     @SerializedName("id")           val id: Long,
     @SerializedName("name")         val name: String,
-    @SerializedName("description")  val description: String?,
+    @SerializedName("description")  val description: String? = null,
     @SerializedName("inventoryNum") val inventoryNum: String,
-    @SerializedName("space")        val space: SpaceSummaryDto?,
-    @SerializedName("type")         val type: EquipmentTypeDto?,
-    @SerializedName("createdAt")    val createdAt: LocalDateTime?,
-    @SerializedName("updatedAt")    val updatedAt: LocalDateTime?,
-    @SerializedName("createdBy")    val createdBy: String?,
-    @SerializedName("deletedAt")    val deletedAt: LocalDateTime?
+    @SerializedName("space")        val space: SpaceSummaryDto? = null,
+    @SerializedName("type")         val type: EquipmentTypeDto? = null,
+    @SerializedName("createdAt")    val createdAt: LocalDateTime? = null,
+    @SerializedName("updatedAt")    val updatedAt: LocalDateTime? = null,
+    @SerializedName("createdBy")    val createdBy: String? = null,
+    @SerializedName("deletedAt")    val deletedAt: LocalDateTime? = null
 )
 
 data class PageSpaceAssetDto(
@@ -65,19 +62,19 @@ data class SpaceDto(
     @SerializedName("id")                     val id: Long,
     @SerializedName("name")                   val name: String,
     @SerializedName("status")                 val status: ReservableStatus,
-    @SerializedName("description")            val description: String?,
+    @SerializedName("description")            val description: String? = null,
     @SerializedName("availableForStudents")   val availableForStudents: Boolean,
-    @SerializedName("building")               val building: BuildingDto?,
-    @SerializedName("createdAt")              val createdAt: LocalDateTime?,
-    @SerializedName("updatedAt")              val updatedAt: LocalDateTime?,
-    @SerializedName("createdBy")              val createdBy: String?,
-    @SerializedName("deletedAt")              val deletedAt: LocalDateTime?,
-    @SerializedName("availabilitySlots")      val availabilitySlots: List<AvailabilitySlotDto>?,
-    @SerializedName("availabilityExceptions") val availabilityExceptions: List<AvailabilityExceptionDto>?,
-    @SerializedName("spaceType")              val spaceType: SpaceTypeDto?,
-    @SerializedName("bookInAdvanceDuration")  val bookInAdvanceDuration: Duration,
-    @SerializedName("capacity")               val capacity: Int?,
-    @SerializedName("assets")                 val assets: List<SpaceAssetDto>?
+    @SerializedName("building")               val building: BuildingDto? = null,
+    @SerializedName("createdAt")              val createdAt: LocalDateTime? = null,
+    @SerializedName("updatedAt")              val updatedAt: LocalDateTime? = null,
+    @SerializedName("createdBy")              val createdBy: String? = null,
+    @SerializedName("deletedAt")              val deletedAt: LocalDateTime? = null,
+    @SerializedName("availabilitySlots")      val availabilitySlots: List<AvailabilitySlotDto>? = null,
+    @SerializedName("availabilityExceptions") val availabilityExceptions: List<AvailabilityExceptionDto>? = null,
+    @SerializedName("spaceType")              val spaceType: SpaceTypeDto? = null,
+    @SerializedName("bookInAdvanceDuration")  val bookInAdvanceDuration: Duration? = null,
+    @SerializedName("capacity")               val capacity: Int? = null,
+    @SerializedName("assets")                 val assets: List<SpaceAssetDto>? = null
 )
 
 data class PageSpaceDto(

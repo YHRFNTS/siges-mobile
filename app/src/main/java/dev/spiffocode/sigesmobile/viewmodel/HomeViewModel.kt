@@ -5,21 +5,46 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableDto
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableType
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ShowMode
-import dev.spiffocode.sigesmobile.data.remote.dto.SpaceDto
 import dev.spiffocode.sigesmobile.data.remote.dto.UserRole
 import dev.spiffocode.sigesmobile.domain.repository.ReportRepository
+import dev.spiffocode.sigesmobile.domain.repository.ReservableRepository
 import dev.spiffocode.sigesmobile.domain.repository.ReservationRepository
-import dev.spiffocode.sigesmobile.domain.repository.SpaceRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.toKotlinLocalDateTime
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
+
+data class AvailableResourceUIItem(
+    val title: String,
+    val meta: String,
+    val status: ReservableStatus,
+    val reservableType: ReservableType,
+    val category: String
+)
+
+data class ReservationUIItem(
+    val id: Long,
+    val petitionerName: String,
+    val petitionerRole: UserRole,
+    val title: String,
+    val dateStart: LocalDateTime,
+    val dateEnd: LocalDateTime,
+    val status: ReservationStatus,
+    val meta1: String,
+    val meta2: String
+)
 
 data class HomeUiState(
     val isLoading: Boolean = false,
@@ -29,10 +54,10 @@ data class HomeUiState(
 
     val pendingCount: Int = 0,
     val thisMonthCount: Int = 0,
-    val pendingReservations: List<ReservationResponse> = emptyList(),
+    val pendingReservations: List<ReservationUIItem> = emptyList(),
 
-    val myRecentReservations: List<ReservationResponse> = emptyList(),
-    val availableSpaces: List<SpaceDto> = emptyList(),
+    val myRecentReservations: List<ReservationUIItem> = emptyList(),
+    val availableResources: List<AvailableResourceUIItem> = emptyList(),
 
     val error: String? = null
 )
@@ -41,7 +66,7 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     private val reservationRepository: ReservationRepository,
     private val reportRepository: ReportRepository,
-    private val spaceRepository: SpaceRepository,
+    private val resourceRepository: ReservableRepository,
     private val session: SessionManager
 ) : ViewModel() {
 
@@ -52,13 +77,12 @@ class HomeViewModel @Inject constructor(
 
     fun loadHome() {
         viewModelScope.launch {
-            // TODO: guardar firstName en SessionManager al hacer login para evitar
-            //       una llamada extra aquí.
             _uiState.update {
                 it.copy(
                     isLoading = true,
                     error     = null,
-                    userRole  = session.role?.let { role -> UserRole.valueOf(role)} ?: UserRole.STUDENT
+                    userName  = session.firstName ?: " - ",
+                    userRole  = session.role?.let { role -> UserRole.valueOf(role) } ?: UserRole.STUDENT
                 )
             }
 
@@ -86,7 +110,7 @@ class HomeViewModel @Inject constructor(
                 isLoading           = false,
                 pendingCount        = if (pendingResult is NetworkResult.Success) pendingResult.data.totalElements.toInt() else 0,
                 thisMonthCount      = if (monthResult is NetworkResult.Success) monthResult.data.pendingRequests else 0,
-                pendingReservations = if (pendingResult is NetworkResult.Success) pendingResult.data.content else emptyList(),
+                pendingReservations = if (pendingResult is NetworkResult.Success) pendingResult.data.content.map { item -> item.toUiItem() } else emptyList(),
                 error               = if (pendingResult is NetworkResult.Error) pendingResult.message else null
             )
         }
@@ -97,7 +121,7 @@ class HomeViewModel @Inject constructor(
             reservationRepository.getReservations(size = 3, sort = "date,desc")
         }
         val spacesJob = viewModelScope.async {
-            spaceRepository.searchSpaces(size = 5, studentsAvailable = true, showMode = ShowMode.ACTIVE)
+            resourceRepository.searchSpaces(size = 5, studentsAvailable = true, showMode = ShowMode.ACTIVE)
         }
 
         val reservationsResult = myReservationsJob.await()
@@ -106,8 +130,8 @@ class HomeViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 isLoading            = false,
-                myRecentReservations = if (reservationsResult is NetworkResult.Success) reservationsResult.data.content else emptyList(),
-                availableSpaces      = if (spacesResult is NetworkResult.Success) spacesResult.data.content else emptyList(),
+                myRecentReservations = if (reservationsResult is NetworkResult.Success) reservationsResult.data.content.map {item -> item.toUiItem() } else emptyList(),
+                availableResources      = if (spacesResult is NetworkResult.Success) spacesResult.data.content.map { item -> item.toUiItem() } else emptyList(),
                 error                = if (reservationsResult is NetworkResult.Error) reservationsResult.message else null
             )
         }
@@ -116,4 +140,24 @@ class HomeViewModel @Inject constructor(
     fun setUserName(name: String) = _uiState.update { it.copy(userName = name) }
 
     fun clearError() = _uiState.update { it.copy(error = null) }
+
+    private fun ReservationResponse.toUiItem() = ReservationUIItem(
+        id  = id,
+        title = reservable?.name ?: "—",
+        petitionerName = "${petitioner?.firstName} ${petitioner?.lastName}",
+        petitionerRole = petitioner?.role ?: UserRole.STUDENT,
+        dateStart =  date.atTime(startTime).toKotlinLocalDateTime(),
+        dateEnd = date.atTime(endTime).toKotlinLocalDateTime(),
+        status = status,
+        meta1 = reservable?.building?.name ?: "",
+        meta2 = "${ChronoUnit.MINUTES.between(startTime, endTime)} min"
+    )
+
+    private fun ReservableDto.toUiItem() = AvailableResourceUIItem(
+        title  = name,
+        meta   = capacity?.let { "Capacidad para $it personas" } ?: inventoryIdNum ?: "",
+        status = status,
+        reservableType = reservableType,
+        category = type?.name ?: spaceType?.name ?: "",
+    )
 }

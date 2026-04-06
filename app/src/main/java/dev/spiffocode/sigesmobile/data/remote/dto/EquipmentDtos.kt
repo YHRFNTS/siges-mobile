@@ -6,18 +6,18 @@ data class EquipmentDto(
     @SerializedName("id")                     val id: Long,
     @SerializedName("name")                   val name: String,
     @SerializedName("status")                 val status: ReservableStatus,
-    @SerializedName("description")            val description: String?,
+    @SerializedName("description")            val description: String? = null,
     @SerializedName("availableForStudents")   val availableForStudents: Boolean,
-    @SerializedName("building")               val building: BuildingDto?,
-    @SerializedName("createdAt")              val createdAt: LocalDateTime?,
-    @SerializedName("updatedAt")              val updatedAt: LocalDateTime?,
-    @SerializedName("createdBy")              val createdBy: String?,
-    @SerializedName("deletedAt")              val deletedAt: LocalDateTime?,
-    @SerializedName("availabilitySlots")      val availabilitySlots: List<AvailabilitySlotDto>?,
-    @SerializedName("availabilityExceptions") val availabilityExceptions: List<AvailabilityExceptionDto>?,
-    @SerializedName("spaceAttached")          val spaceAttached: SpaceDto?,
-    @SerializedName("type")                   val type: EquipmentTypeDto?,
-    @SerializedName("inventoryIdNum")         val inventoryIdNum: String?
+    @SerializedName("building")               val building: BuildingDto? = null,
+    @SerializedName("createdAt")              val createdAt: LocalDateTime? = null,
+    @SerializedName("updatedAt")              val updatedAt: LocalDateTime? = null,
+    @SerializedName("createdBy")              val createdBy: String? = null,
+    @SerializedName("deletedAt")              val deletedAt: LocalDateTime? = null,
+    @SerializedName("availabilitySlots")      val availabilitySlots: List<AvailabilitySlotDto>? = null,
+    @SerializedName("availabilityExceptions") val availabilityExceptions: List<AvailabilityExceptionDto>? = null,
+    @SerializedName("spaceAttached")          val spaceAttached: SpaceDto? = null,
+    @SerializedName("type")                   val type: EquipmentTypeDto? = null,
+    @SerializedName("inventoryIdNum")         val inventoryIdNum: String? = null
 )
 
 data class PageEquipmentDto(

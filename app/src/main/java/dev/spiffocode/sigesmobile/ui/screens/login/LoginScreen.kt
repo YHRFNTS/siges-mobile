@@ -1,175 +1,295 @@
 package dev.spiffocode.sigesmobile.ui.screens.login
 
-import dev.spiffocode.sigesmobile.viewmodel.LoginViewModel
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import dev.spiffocode.sigesmobile.R
-import dev.spiffocode.sigesmobile.ui.components.login.PasswordTextField
-import dev.spiffocode.sigesmobile.ui.components.login.PrimaryButton
-import dev.spiffocode.sigesmobile.ui.components.login.PrimaryTextField
-import dev.spiffocode.sigesmobile.ui.theme.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.spiffocode.sigesmobile.ui.components.login.LoginForm
+import dev.spiffocode.sigesmobile.ui.components.login.LoginHeader
+import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
+import dev.spiffocode.sigesmobile.viewmodel.LoginViewModel
 
 @Composable
 fun LoginScreen(
+    windowSizeClass: WindowSizeClass,
     viewModel: LoginViewModel = hiltViewModel(),
     onNavigateToHome: () -> Unit,
     onNavigateToForgotPassword: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect {
+            when(it) {
+                LoginViewModel.UiEvent.LoginSuccess -> onNavigateToHome()
+                LoginViewModel.UiEvent.LoginError -> Unit
+            }
+        }
+    }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFFDFCFB))
-            .verticalScroll(scrollState)
-    ) {
-        LoginHeader(modifier = Modifier.fillMaxWidth())
-        LoginForm(
-            modifier                   = Modifier.fillMaxWidth(),
-            viewModel                  = viewModel,
-            onNavigateToHome           = onNavigateToHome,
+    val isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
+
+    LoginContent(
+        isCompact = isCompact,
+        identifier = uiState.identifier,
+        onIdentifierChange = viewModel::onIdentifierChange,
+        password = uiState.password,
+        onPasswordChange = viewModel::onPasswordChange,
+        isPasswordVisible = uiState.isPasswordVisible,
+        togglePasswordVisibility = viewModel::togglePasswordVisibility,
+        rememberMe = uiState.rememberMe,
+        toggleRememberMe = viewModel::toggleRememberMe,
+        errorMessage = uiState.errorMessage,
+        onLogin = viewModel::login,
+        isLoading = uiState.isLoading,
+        onNavigateToForgotPassword = onNavigateToForgotPassword,
+    )
+
+}
+
+@Composable
+fun LoginContent(
+    isCompact: Boolean,
+    identifier: String,
+    onIdentifierChange: (String) -> Unit = {},
+    password: String,
+    onPasswordChange: (String) -> Unit = {},
+    isPasswordVisible: Boolean,
+    togglePasswordVisibility: () -> Unit = {},
+    rememberMe: Boolean,
+    toggleRememberMe: (Boolean) -> Unit = {},
+    errorMessage: String?,
+    onLogin: () -> Unit = {},
+    isLoading: Boolean,
+    onNavigateToForgotPassword: () -> Unit = {}
+) {
+    if (isCompact) {
+        MobileLoginLayout(
+            identifier = identifier,
+            onIdentifierChange = onIdentifierChange,
+            password = password,
+            onPasswordChange = onPasswordChange,
+            isPasswordVisible = isPasswordVisible,
+            togglePasswordVisibility = togglePasswordVisibility,
+            rememberMe = rememberMe,
+            toggleRememberMe = toggleRememberMe,
+            errorMessage = errorMessage,
+            onLogin = onLogin,
+            isLoading = isLoading,
+            onNavigateToForgotPassword = onNavigateToForgotPassword
+        )
+    } else {
+        ExpandedLoginLayout(
+            identifier = identifier,
+            onIdentifierChange = onIdentifierChange,
+            password = password,
+            onPasswordChange = onPasswordChange,
+            isPasswordVisible = isPasswordVisible,
+            togglePasswordVisibility = togglePasswordVisibility,
+            rememberMe = rememberMe,
+            toggleRememberMe = toggleRememberMe,
+            errorMessage = errorMessage,
+            onLogin = onLogin,
+            isLoading = isLoading,
             onNavigateToForgotPassword = onNavigateToForgotPassword
         )
     }
 }
 
 @Composable
-private fun LoginHeader(modifier: Modifier = Modifier) {
+fun MobileLoginLayout(
+    identifier: String,
+    onIdentifierChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    isPasswordVisible: Boolean,
+    togglePasswordVisibility: () -> Unit,
+    rememberMe: Boolean,
+    toggleRememberMe: (Boolean) -> Unit,
+    errorMessage: String?,
+    onLogin: () -> Unit,
+    isLoading: Boolean,
+    onNavigateToForgotPassword: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+
     Box(
-        modifier         = modifier
-            .background(Brush.linearGradient(colors = listOf(Color(0xFFE8DFF5), Color(0xFFD9E8F5))))
-            .padding(top = 80.dp, bottom = 48.dp, start = 24.dp, end = 24.dp),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier         = Modifier.size(100.dp).background(Color.White, shape = CircleShape).padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter            = painterResource(id = R.drawable.logo_siges_sinletras),
-                    contentDescription = "Logo de SIGES",
-                    modifier           = Modifier.fillMaxSize(),
-                    contentScale       = ContentScale.Fit
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("SIGES", fontSize = 32.sp, color = TextPrimaryLogin, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("SISTEMA DE GESTIÓN DE ESPACIOS Y EQUIPOS", fontSize = 12.sp, color = TextSecondaryLogin, textAlign = TextAlign.Center)
+        Column(
+            modifier = Modifier
+                .widthIn(480.dp)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(scrollState)
+        ) {
+            LoginHeader(modifier = Modifier.fillMaxWidth())
+            LoginForm(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 480.dp)
+                    .wrapContentWidth(Alignment.CenterHorizontally),
+                identifier = identifier,
+                onIdentifierChange = onIdentifierChange,
+                password = password,
+                onPasswordChange = onPasswordChange,
+                isPasswordVisible = isPasswordVisible,
+                togglePasswordVisibility = togglePasswordVisibility,
+                rememberMe = rememberMe,
+                toggleRememberMe = toggleRememberMe,
+                errorMessage = errorMessage,
+                onLogin = onLogin,
+                isLoading = isLoading,
+                onNavigateToForgotPassword = onNavigateToForgotPassword,
+            )
         }
     }
 }
 
 @Composable
-private fun LoginForm(
-    modifier: Modifier = Modifier,
-    viewModel: LoginViewModel,
-    onNavigateToHome: () -> Unit,
+fun ExpandedLoginLayout(
+    identifier: String,
+    onIdentifierChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    isPasswordVisible: Boolean,
+    togglePasswordVisibility: () -> Unit,
+    rememberMe: Boolean,
+    toggleRememberMe: (Boolean) -> Unit,
+    errorMessage: String?,
+    onLogin: () -> Unit,
+    isLoading: Boolean,
     onNavigateToForgotPassword: () -> Unit
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
 
-    Column(modifier = modifier.padding(24.dp)) {
-
-        Text("Bienvenido", fontSize = 26.sp, color = TextPrimaryLogin, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text("Ingresa tus credenciales para acceder", fontSize = 14.sp, color = TextSecondaryLogin)
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text("Usuario", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryLogin)
-        Spacer(modifier = Modifier.height(8.dp))
-        PrimaryTextField(
-            value         = state.identifier,
-            onValueChange = viewModel::onIdentifierChange,
-            placeholder   = "Correo / Matrícula / Número de empleado",
-            leadingIcon   = Icons.Default.Email
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Contraseña", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryLogin)
-        Spacer(modifier = Modifier.height(8.dp))
-        PasswordTextField(
-            value              = state.password,
-            onValueChange      = viewModel::onPasswordChange,
-            placeholder        = "••••••••",
-            leadingIcon        = Icons.Default.Lock,
-            isVisible          = state.isPasswordVisible,
-            onVisibilityToggle = viewModel::togglePasswordVisibility
-        )
-
-        state.errorMessage?.let {
-            Text(text = it, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+    Row(
+        modifier = Modifier.fillMaxSize(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Left Branding Pane
+        Box(
+            modifier = Modifier
+                .weight(1.2f)
+                .fillMaxHeight(),
+        ) {
+            LoginHeader(modifier = Modifier.fillMaxSize())
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked         = state.rememberMe,
-                    onCheckedChange = viewModel::toggleRememberMe,
-                    colors          = CheckboxDefaults.colors(checkedColor = PlumLogin)
-                )
-                Text("Recordarme", fontSize = 14.sp, color = TextPrimaryLogin)
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            TextButton(
-                onClick        = onNavigateToForgotPassword,
-                modifier       = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(0.dp)
+        
+        // Right Form Pane
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 450.dp)
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState)
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text       = "¿Olvidaste tu contraseña?",
-                    fontSize   = 14.sp,
-                    color      = PlumLogin,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign  = TextAlign.Center
+                    text = "Iniciar Sesión",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 32.dp).fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+                
+                LoginForm(
+                    modifier = Modifier.fillMaxWidth(),
+                    identifier = identifier,
+                    onIdentifierChange = onIdentifierChange,
+                    password = password,
+                    onPasswordChange = onPasswordChange,
+                    isPasswordVisible = isPasswordVisible,
+                    togglePasswordVisibility = togglePasswordVisibility,
+                    rememberMe = rememberMe,
+                    toggleRememberMe = toggleRememberMe,
+                    errorMessage = errorMessage,
+                    onLogin = onLogin,
+                    isLoading = isLoading,
+                    onNavigateToForgotPassword = onNavigateToForgotPassword,
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        PrimaryButton(
-            text      = "Iniciar Sesión",
-            onClick   = { viewModel.login(onSuccess = onNavigateToHome) },
-            isLoading = state.isLoading
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, device = "spec:width=1280dp,height=800dp,dpi=240")
 @Composable
 fun LoginScreenPreview() {
     SigesmobileTheme {
-        LoginScreen(onNavigateToHome = {}, onNavigateToForgotPassword = {})
+        LoginContent(
+            isCompact = false,
+            identifier = "usuario@utez.edu.mx",
+            password = "",
+            isLoading = false,
+            errorMessage = null,
+            isPasswordVisible = true,
+            rememberMe = false,
+        )
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenErrorPreview() {
+    SigesmobileTheme {
+        LoginContent(
+            isCompact = true,
+            identifier = "usuario@utez.edu.mx",
+            password = "",
+            isLoading = false,
+            errorMessage = "Error de conexión",
+            isPasswordVisible = true,
+            rememberMe = false,
+        )
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenLoadingErrorPreview() {
+    SigesmobileTheme {
+        LoginContent(
+            isCompact = true,
+            identifier = "usuario@utez.edu.mx",
+            password = "",
+            isLoading = true,
+            errorMessage = null,
+            isPasswordVisible = true,
+            rememberMe = false,
+        )
     }
 }

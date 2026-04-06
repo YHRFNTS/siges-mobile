@@ -40,14 +40,14 @@ data class ProblemDetail(
 data class BuildingDto(
     @SerializedName("id")        val id: Long,
     @SerializedName("name")      val name: String,
-    @SerializedName("deletedAt") val deletedAt: LocalDateTime?
+    @SerializedName("deletedAt") val deletedAt: LocalDateTime? = null
 )
 
 data class EquipmentTypeDto(
     @SerializedName("id")          val id: Long,
     @SerializedName("name")        val name: String,
-    @SerializedName("description") val description: String?,
-    @SerializedName("deletedAt")   val deletedAt: LocalDateTime?
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("deletedAt")   val deletedAt: LocalDateTime? = null
 )
 
 data class AvailabilitySlotDto(
@@ -72,7 +72,7 @@ data class AvailabilityExceptionDto(
 open class UserResponse(
     @SerializedName("id")                val id: Long,
     @SerializedName("email")             val email: String,
-    @SerializedName("phoneNumber")       val phoneNumber: String?,
+    @SerializedName("phoneNumber")       val phoneNumber: String,
     @SerializedName("firstName")         val firstName: String,
     @SerializedName("lastName")          val lastName: String,
     @SerializedName("birthDate")         val birthDate: LocalDate,

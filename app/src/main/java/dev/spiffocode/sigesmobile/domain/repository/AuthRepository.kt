@@ -24,18 +24,22 @@ class AuthRepository @Inject constructor(
             val auth = result.data
 
             session.saveSession(
+                id = "",
                 accessToken  = auth.accessToken,
                 refreshToken = auth.refreshToken,
                 role         = auth.role.name,
                 firstName    = "",
                 lastName     = "",
-                email        = ""
+                email        = "",
+                phoneNumber  = "",
+                birthDate    = ""
             )
 
             val profileResult = safeApiCall { userApi.lookupByIdentifier(identifier.trim()) }
             if (profileResult is NetworkResult.Success) {
                 val user = profileResult.data
                 session.saveSession(
+                    id                 = user.id.toString(),
                     accessToken        = auth.accessToken,
                     refreshToken       = auth.refreshToken,
                     role               = auth.role.name,
@@ -43,7 +47,10 @@ class AuthRepository @Inject constructor(
                     lastName           = user.lastName,
                     email              = user.email,
                     employeeNumber     = user.employeeNumber,
-                    registrationNumber = user.registrationNumber
+                    registrationNumber = user.registrationNumber,
+                    profilePictureUrl  = user.profilePictureUrl,
+                    phoneNumber        = user.phoneNumber,
+                    birthDate          = user.birthDate.toString()
                 )
             }
         }

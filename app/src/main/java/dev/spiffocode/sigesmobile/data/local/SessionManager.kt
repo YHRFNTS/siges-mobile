@@ -29,6 +29,10 @@ class SessionManager @Inject constructor(
         val EMAIL               = stringPreferencesKey("email")
         val EMPLOYEE_NUMBER     = stringPreferencesKey("employee_number")
         val REGISTRATION_NUMBER = stringPreferencesKey("registration_number")
+        val PROFILE_PICTURE_URL = stringPreferencesKey("profile_picture_url")
+        val PHONE_NUMBER        = stringPreferencesKey("phone_number")
+        val BIRTH_DATE          = stringPreferencesKey("birth_date")
+        val ID                  = stringPreferencesKey("user_id")
     }
 
     val accessTokenFlow: Flow<String?>  = context.dataStore.data.map { it[Keys.ACCESS_TOKEN] }
@@ -42,33 +46,59 @@ class SessionManager @Inject constructor(
     val email: String?              get() = runBlocking { context.dataStore.data.map { it[Keys.EMAIL] }.first() }
     val employeeNumber: String?     get() = runBlocking { context.dataStore.data.map { it[Keys.EMPLOYEE_NUMBER] }.first() }
     val registrationNumber: String? get() = runBlocking { context.dataStore.data.map { it[Keys.REGISTRATION_NUMBER] }.first() }
+    val profilePictureUrl: String?  get() = runBlocking { context.dataStore.data.map { it[Keys.PROFILE_PICTURE_URL] }.first() }
+
+    val phoneNumber: String?        get() = runBlocking { context.dataStore.data.map { it[Keys.PHONE_NUMBER] }.first() }
+    val birthDate: String?          get() = runBlocking { context.dataStore.data.map { it[Keys.BIRTH_DATE] }.first() }
+    val id: String?                 get() = runBlocking { context.dataStore.data.map { it[Keys.ID] }.first() }
+
+
 
     val isLoggedIn: Boolean get() = accessToken != null
 
     suspend fun saveSession(
+        id: String,
         accessToken: String,
         refreshToken: String,
         role: String,
         firstName: String,
         lastName: String,
         email: String,
+        birthDate: String,
         employeeNumber: String? = null,
-        registrationNumber: String? = null
+        registrationNumber: String? = null,
+        profilePictureUrl: String? = null,
+        phoneNumber: String
     ) {
         context.dataStore.edit { prefs ->
+            prefs[Keys.ID]            = id
             prefs[Keys.ACCESS_TOKEN]  = accessToken
             prefs[Keys.REFRESH_TOKEN] = refreshToken
             prefs[Keys.ROLE]          = role
             prefs[Keys.FIRST_NAME]    = firstName
             prefs[Keys.LAST_NAME]     = lastName
             prefs[Keys.EMAIL]         = email
+            prefs[Keys.PHONE_NUMBER]  = phoneNumber
+            prefs[Keys.BIRTH_DATE]    = birthDate
             if (employeeNumber != null)     prefs[Keys.EMPLOYEE_NUMBER]     = employeeNumber
             if (registrationNumber != null) prefs[Keys.REGISTRATION_NUMBER] = registrationNumber
+            if (profilePictureUrl != null)  prefs[Keys.PROFILE_PICTURE_URL] = profilePictureUrl
         }
     }
 
     suspend fun updateAccessToken(token: String) {
         context.dataStore.edit { it[Keys.ACCESS_TOKEN] = token }
+    }
+
+    suspend fun updateTokens(accessToken: String, refreshToken: String) {
+        context.dataStore.edit {
+            it[Keys.ACCESS_TOKEN] = accessToken
+            it[Keys.REFRESH_TOKEN] = refreshToken
+        }
+    }
+
+    suspend fun updateProfilePictureUrl(url: String) {
+        context.dataStore.edit { it[Keys.PROFILE_PICTURE_URL] = url }
     }
 
     suspend fun clearSession() {

@@ -8,6 +8,9 @@ import dev.spiffocode.sigesmobile.data.remote.dto.NotificationStatusChangeReques
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationType
 import dev.spiffocode.sigesmobile.data.remote.dto.PageNotificationResponse
 import dev.spiffocode.sigesmobile.data.remote.safeApiCall
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -54,4 +57,12 @@ class NotificationRepository @Inject constructor(
         safeApiCall {
             api.changeAllNotificationsStatus(NotificationStatusChangeRequest(NotificationReadStatus.UNREAD))
         }
+
+
+    private val _incomingNotifications = MutableSharedFlow<NotificationResponse>()
+    val incomingNotifications: SharedFlow<NotificationResponse> = _incomingNotifications.asSharedFlow()
+
+    suspend fun onFcmMessageReceived(notification: NotificationResponse) {
+        _incomingNotifications.emit(notification)
+    }
 }
