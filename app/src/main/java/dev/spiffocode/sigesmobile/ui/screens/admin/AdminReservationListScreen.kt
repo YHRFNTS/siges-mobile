@@ -1,6 +1,5 @@
 package dev.spiffocode.sigesmobile.ui.screens.admin
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +16,9 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableDto
@@ -36,7 +39,6 @@ import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationType
 import dev.spiffocode.sigesmobile.ui.components.FilterSelector
-import dev.spiffocode.sigesmobile.ui.components.InfiniteScrollList
 import dev.spiffocode.sigesmobile.ui.components.homescreen.RequestCard
 import dev.spiffocode.sigesmobile.ui.helpers.toText
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
@@ -49,12 +51,14 @@ import kotlinx.datetime.toJavaLocalTime
 
 @Composable
 fun AdminReservationListScreen(
+    windowSizeClass: WindowSizeClass,
     viewModel: AdminReservationListViewModel = hiltViewModel(),
     onNavigateToDetail: (Long) -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
 
     AdminReservationListScreen(
+        windowSizeClass = windowSizeClass,
         state = state,
         onSelectTab = viewModel::selectTab,
         onFilterByReservable = viewModel::filterByReservable,
@@ -66,6 +70,7 @@ fun AdminReservationListScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminReservationListScreen(
+    windowSizeClass: WindowSizeClass,
     state: AdminReservationListUiState,
     onSelectTab: (AdminReservationTab) -> Unit = {},
     onFilterByReservable: (Long?) -> Unit = {},
@@ -174,9 +179,15 @@ fun AdminReservationListScreen(
                 }
                 else -> {
                     val hasNextPage = state.currentPage < (state.totalPages - 1)
+                    val columns = when (windowSizeClass.widthSizeClass) {
+                        WindowWidthSizeClass.Compact -> 1
+                        WindowWidthSizeClass.Medium -> 2
+                        else -> 3
+                    }
 
-                    InfiniteScrollList(
+                    dev.spiffocode.sigesmobile.ui.components.InfiniteScrollGrid(
                         elements = state.reservations,
+                        columns = columns,
                         key = { _, res -> res.id },
                         loadMoreItems = { onLoadPage(state.currentPage + 1) },
                         hasNextPage = hasNextPage,
@@ -220,9 +231,8 @@ fun AdminReservationListScreen(
                             meta2         = durationDisplay,
                             requesterName = petitionerName,
                             requesterRole = petitionerRole,
-                            onClick       = { onNavigateToDetail(reservation.id) }
+                            onClick       = { onNavigateToDetail(reservation.id) },
                         )
-
                         Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
@@ -233,21 +243,26 @@ fun AdminReservationListScreen(
 
 // ───────────────────────────── Previews ──────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Preview(showBackground = true)
 @Composable
 fun AdminReservationListScreenEmptyPreview() {
     SigesmobileTheme {
         AdminReservationListScreen(
-            state = AdminReservationListUiState(isLoading = false)
+            state = AdminReservationListUiState(isLoading = false),
+            windowSizeClass = WindowSizeClass.calculateFromSize(size = DpSize(400.dp, 900.dp))
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Preview(showBackground = true, name = "With reservations")
 @Composable
 fun AdminReservationListScreenPreview() {
     SigesmobileTheme {
         AdminReservationListScreen(
+
+            windowSizeClass = WindowSizeClass.calculateFromSize(size = DpSize(400.dp, 900.dp)),
             state = AdminReservationListUiState(
                 isLoading = false,
                 reservations = listOf(

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,6 +57,7 @@ fun NotificationType.toDisplayInfo(): Pair<String, String> = when (this) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationPrefsScreen(
+    windowSizeClass: WindowSizeClass? = null,
     viewModel: NotificationPrefsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit
 ) {
@@ -112,49 +115,62 @@ fun NotificationPrefsScreen(
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 24.dp)
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
-
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(preferences, key = { it.type.name }) { pref ->
-                        NotificationPreferenceItem(
-                            preference = pref,
-                            onToggleInApp = { enabled -> toggleInApp(pref.type, enabled) },
-                            onToggleEmail = {enabled -> toggleEmail(pref.type, enabled)}
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = savePreferences,
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    enabled = !isSaving
+                        .widthIn(max = 480.dp)
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(horizontal = 24.dp)
                 ) {
-                    if (isSaving) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.background)
-                    } else {
-                        Text("Guardar Cambios", style = MaterialTheme.typography.titleMedium)
-                    }
-                }
-
-                error?.let {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-                }
 
-                Spacer(modifier = Modifier.height(40.dp))
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(preferences, key = { it.type.name }) { pref ->
+                            NotificationPreferenceItem(
+                                preference = pref,
+                                onToggleInApp = { enabled -> toggleInApp(pref.type, enabled) },
+                                onToggleEmail = { enabled -> toggleEmail(pref.type, enabled) }
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = savePreferences,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        enabled = !isSaving
+                    ) {
+                        if (isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.background
+                            )
+                        } else {
+                            Text("Guardar Cambios", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+
+                    error?.let {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(40.dp))
+                }
             }
         }
     }

@@ -44,8 +44,13 @@ import dev.spiffocode.sigesmobile.viewmodel.ReservationUIItem
 import kotlinx.datetime.LocalDateTime
 import java.util.Collections.emptyList
 
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import dev.spiffocode.sigesmobile.ui.components.homescreen.ResponsiveGrid
+
 @Composable
 fun ApplicantHomeScreen(
+    windowSizeClass: WindowSizeClass,
     viewModel: HomeViewModel = hiltViewModel(),
     notificationsViewModel: NotificationsViewModel = hiltViewModel(),
     onNavigateToAvailability: () -> Unit = {},
@@ -59,7 +64,15 @@ fun ApplicantHomeScreen(
 
     LaunchedEffect(Unit) { viewModel.loadHome() }
 
+    val columns = when (windowSizeClass.widthSizeClass) {
+        WindowWidthSizeClass.Compact -> 1
+        WindowWidthSizeClass.Medium -> 2
+        WindowWidthSizeClass.Expanded -> 3
+        else -> 1
+    }
+
     ApplicantHomeScreen(
+        columns = columns,
         userName = state.userName,
         userRole = state.userRole,
         isLoading = state.isLoading,
@@ -82,6 +95,7 @@ fun ApplicantHomeScreen(
 
 @Composable
 fun ApplicantHomeScreen(
+    columns: Int = 1,
     userName: String,
     userRole: UserRole,
     isLoading: Boolean,
@@ -156,21 +170,20 @@ fun ApplicantHomeScreen(
                     )
                 }
                 else -> {
-                    Column(
-                        modifier            = Modifier.padding(horizontal = 20.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        myRecentReservations.forEach { reservation ->
-                            RequestCard(
-                                title       = reservation.title,
-                                startDateTime = reservation.dateStart,
-                                endDateTime = reservation.dateEnd,
-                                status      = reservation.status,
-                                meta1       = reservation.meta1,
-                                meta2       = reservation.meta2,
-                                onClick     = { onNavigateToDetail(reservation.id) }
-                            )
-                        }
+                    ResponsiveGrid(
+                        items = myRecentReservations,
+                        columns = columns,
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    ) { reservation ->
+                        RequestCard(
+                            title       = reservation.title,
+                            startDateTime = reservation.dateStart,
+                            endDateTime = reservation.dateEnd,
+                            status      = reservation.status,
+                            meta1       = reservation.meta1,
+                            meta2       = reservation.meta2,
+                            onClick     = { onNavigateToDetail(reservation.id) }
+                        )
                     }
                 }
             }
@@ -191,19 +204,18 @@ fun ApplicantHomeScreen(
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
             } else {
-                Column(
-                    modifier            = Modifier.padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    availableSpaces.forEach {
-                        AvailableItemCard(
-                            title  = it.title,
-                            meta   = it.meta,
-                            status = it.status,
-                            resourceType = it.reservableType,
-                            resourceCategory = it.category
-                        )
-                    }
+                ResponsiveGrid(
+                    items = availableSpaces,
+                    columns = columns,
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                ) { resource ->
+                    AvailableItemCard(
+                        title  = resource.title,
+                        meta   = resource.meta,
+                        status = resource.status,
+                        resourceType = resource.reservableType,
+                        resourceCategory = resource.category
+                    )
                 }
             }
 

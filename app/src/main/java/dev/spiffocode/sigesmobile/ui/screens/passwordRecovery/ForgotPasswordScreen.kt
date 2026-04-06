@@ -32,9 +32,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.ui.components.PrimaryButton
 import dev.spiffocode.sigesmobile.ui.components.PrimaryTextField
+import dev.spiffocode.sigesmobile.ui.components.login.LoginHeader
 import dev.spiffocode.sigesmobile.ui.theme.SigesTheme
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.ForgotPasswordUiState
@@ -42,13 +49,17 @@ import dev.spiffocode.sigesmobile.viewmodel.ForgotPasswordViewModel
 
 @Composable
 fun ForgotPasswordScreen(
+    windowSizeClass: WindowSizeClass,
     onNavigateBack: () -> Unit,
     viewModel: ForgotPasswordViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
+
     ForgotPasswordContent(
+        isCompact = isCompact,
         state = state,
-        onNavigateBack,
+        onNavigateBack = onNavigateBack,
         onEmailChange = viewModel::onEmailChange,
         sendRecoveryEmail = viewModel::sendRecoveryEmail
     )
@@ -56,11 +67,37 @@ fun ForgotPasswordScreen(
 
 @Composable
 fun ForgotPasswordContent(
+    isCompact: Boolean,
     state: ForgotPasswordUiState,
     onNavigateBack: () -> Unit = {},
     onEmailChange: (String) -> Unit = {},
     sendRecoveryEmail: () -> Unit = {}
+) {
+    if (isCompact) {
+        MobileForgotPasswordLayout(
+            state = state,
+            onNavigateBack = onNavigateBack,
+            onEmailChange = onEmailChange,
+            sendRecoveryEmail = sendRecoveryEmail
+        )
+    } else {
+        ExpandedForgotPasswordLayout(
+            state = state,
+            onNavigateBack = onNavigateBack,
+            onEmailChange = onEmailChange,
+            sendRecoveryEmail = sendRecoveryEmail
+        )
+    }
+}
+
+@Composable
+fun MobileForgotPasswordLayout(
+    state: ForgotPasswordUiState,
+    onNavigateBack: () -> Unit,
+    onEmailChange: (String) -> Unit,
+    sendRecoveryEmail: () -> Unit
 ){
+    val scrollState = rememberScrollState()
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -70,6 +107,7 @@ fun ForgotPasswordContent(
                 .widthIn(max = 480.dp)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(scrollState)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -189,11 +227,165 @@ fun ForgotPasswordContent(
     }
 }
 
+@Composable
+fun ExpandedForgotPasswordLayout(
+    state: ForgotPasswordUiState,
+    onNavigateBack: () -> Unit,
+    onEmailChange: (String) -> Unit,
+    sendRecoveryEmail: () -> Unit
+){
+    val scrollState = rememberScrollState()
+
+    Row(
+        modifier = Modifier.fillMaxSize(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Left Branding Pane
+        Box(
+            modifier = Modifier
+                .weight(1.2f)
+                .fillMaxHeight(),
+        ) {
+            LoginHeader(modifier = Modifier.fillMaxSize())
+        }
+        
+        // Right Form Pane
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 480.dp)
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState)
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                IconButton(
+                    onClick = onNavigateBack,
+                    modifier = Modifier.clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Volver",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Box(
+                    modifier = Modifier.size(80.dp).clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .align(Alignment.CenterHorizontally),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Outlined.Lock,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "Recuperar Contraseña",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Ingresa tu correo institucional y te enviaremos un enlace seguro para restablecer tu acceso.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                if (!state.isSent) {
+                    Text(
+                        "Correo Institucional",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    PrimaryTextField(
+                        value = state.email,
+                        onValueChange = onEmailChange,
+                        placeholder = "usuario@utez.edu.mx",
+                        leadingIcon = Icons.Default.Email
+                    )
+
+                    state.errorMessage?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    PrimaryButton(
+                        text = "Enviar Instrucciones",
+                        onClick = sendRecoveryEmail,
+                        isLoading = state.isLoading
+                    )
+                } else {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = SigesTheme.extendedColors.statusApproved),
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "¡Correo enviado!",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = SigesTheme.extendedColors.onStatusApproved
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "Revisa la bandeja de entrada de ${state.email} para continuar.",
+                                color = SigesTheme.extendedColors.onStatusApproved,
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    PrimaryButton(text = "Volver", onClick = onNavigateBack, isLoading = false)
+                }
+            }
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun ForgotPasswordScreenPreview() {
     SigesmobileTheme {
         ForgotPasswordContent(
+            isCompact = true,
             state = ForgotPasswordUiState(
                 email = "usuario@utez.edu.mx",
                 isSent = false,
@@ -210,6 +402,7 @@ fun ForgotPasswordScreenPreview() {
 fun ForgotPasswordScreenLoadingPreview() {
     SigesmobileTheme {
         ForgotPasswordContent(
+            isCompact = true,
             state = ForgotPasswordUiState(
                 email = "usuario@utez.edu.mx",
                 isSent = false,
@@ -226,6 +419,7 @@ fun ForgotPasswordScreenLoadingPreview() {
 fun ForgotPasswordScreenSentPreview() {
     SigesmobileTheme {
         ForgotPasswordContent(
+            isCompact = true,
             state = ForgotPasswordUiState(
                 email = "usuario@utez.edu.mx",
                 isSent = true,
@@ -242,6 +436,7 @@ fun ForgotPasswordScreenSentPreview() {
 fun ForgotPasswordScreenErrorPreview() {
     SigesmobileTheme {
         ForgotPasswordContent(
+            isCompact = true,
             state = ForgotPasswordUiState(
                 email = "usuario@utez.edu.mx",
                 isSent = false,

@@ -40,8 +40,13 @@ import dev.spiffocode.sigesmobile.viewmodel.NotificationsViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ReservationUIItem
 import kotlinx.datetime.LocalDateTime
 
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import dev.spiffocode.sigesmobile.ui.components.homescreen.ResponsiveGrid
+
 @Composable
 fun AdminHomeScreen(
+    windowSizeClass: WindowSizeClass,
     viewModel: HomeViewModel = hiltViewModel(),
     notificationsViewModel: NotificationsViewModel = hiltViewModel(),
     onNavigateToAllRequests: () -> Unit = {},
@@ -51,7 +56,16 @@ fun AdminHomeScreen(
     val notificationsState by notificationsViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { viewModel.loadHome() }
+
+    val columns = when (windowSizeClass.widthSizeClass) {
+        WindowWidthSizeClass.Compact -> 1
+        WindowWidthSizeClass.Medium -> 2
+        WindowWidthSizeClass.Expanded -> 3
+        else -> 1
+    }
+
     AdminHomeScreen(
+        columns = columns,
         userName = state.userName,
         userRole = state.userRole,
         notifications = notificationsState.notifications,
@@ -72,6 +86,7 @@ fun AdminHomeScreen(
 
 @Composable
 fun AdminHomeScreen(
+    columns: Int = 1,
     userName: String,
     userRole: UserRole,
     notifications: List<NotificationResponse>,
@@ -142,23 +157,22 @@ fun AdminHomeScreen(
                     )
                 }
                 else -> {
-                    Column(
-                        modifier            = Modifier.padding(horizontal = 20.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        pendingReservations.forEach { reservation ->
-                            RequestCard(
-                                title       = reservation.title,
-                                startDateTime = reservation.dateStart,
-                                endDateTime = reservation.dateEnd,
-                                requesterName = reservation.petitionerName,
-                                requesterRole = reservation.petitionerRole.toText(),
-                                status      = reservation.status,
-                                meta1       = reservation.meta1,
-                                meta2       = reservation.meta2,
-                                onClick     = { onNavigateToDetail(reservation.id) }
-                            )
-                        }
+                    ResponsiveGrid(
+                        items = pendingReservations,
+                        columns = columns,
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    ) { reservation ->
+                        RequestCard(
+                            title       = reservation.title,
+                            startDateTime = reservation.dateStart,
+                            endDateTime = reservation.dateEnd,
+                            requesterName = reservation.petitionerName,
+                            requesterRole = reservation.petitionerRole.toText(),
+                            status      = reservation.status,
+                            meta1       = reservation.meta1,
+                            meta2       = reservation.meta2,
+                            onClick     = { onNavigateToDetail(reservation.id) }
+                        )
                     }
                 }
             }

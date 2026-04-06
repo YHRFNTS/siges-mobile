@@ -57,6 +57,8 @@ import dev.spiffocode.sigesmobile.ui.helpers.toText
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.AdminReviewUiState
 import dev.spiffocode.sigesmobile.viewmodel.AdminReviewViewModel
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalTime
@@ -65,6 +67,7 @@ import java.util.Locale
 
 @Composable
 fun AdminReviewDetailScreen(
+    windowSizeClass: WindowSizeClass,
     reservationId: Long,
     viewModel: AdminReviewViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit = {}
@@ -76,6 +79,7 @@ fun AdminReviewDetailScreen(
     }
 
     AdminReviewDetailScreenContent(
+        windowSizeClass = windowSizeClass,
         state           = state,
         onNavigateBack  = onNavigateBack,
         onObservationChange = viewModel::setObservation,
@@ -88,6 +92,7 @@ fun AdminReviewDetailScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminReviewDetailScreenContent(
+    windowSizeClass: WindowSizeClass,
     state: AdminReviewUiState,
     onNavigateBack: () -> Unit = {},
     onObservationChange: (String) -> Unit = {},
@@ -136,168 +141,54 @@ fun AdminReviewDetailScreenContent(
                 }
                 state.reservation != null -> {
                     val res = state.reservation
-                    val scrollState = rememberScrollState()
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(scrollState)
-                            .padding(24.dp)
-                    ) {
-
-                        // ── Header card ───────────────────────────────────────
-                        StatusHeaderCard(
-                            status   = res.status,
-                            title    = res.reservable?.name ?: "Recurso desconocido",
-                            subtitle = res.reservable?.building?.name ?: "",
-                            modifier = Modifier.padding(bottom = 24.dp)
-                        )
-
-                        // ── Petitioner section ────────────────────────────────
-                        val petitioner = res.petitioner
-                        if (petitioner != null) {
-                            SectionTitle("SOLICITANTE")
-                            InfoRow("Nombre", "${petitioner.firstName} ${petitioner.lastName}")
-                            InfoRow("Tipo de usuario", petitioner.role.toText())
-                            val idLabel = when (petitioner.role) {
-                                UserRole.STUDENT               -> "Número de matrícula"
-                                UserRole.INSTITUTIONAL_STAFF   -> "ID empleado"
-                                else                           -> "ID"
-                            }
-                            val idValue = petitioner.registrationNumber
-                                ?: petitioner.employeeNumber
-                                ?: "--"
-                            InfoRow(idLabel, idValue)
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-
-                        // ── Reservation info ─────────────────────────────────
-                        SectionTitle("INFORMACIÓN DE LA SOLICITUD")
-
-                        val resourceTypeLabel = when (res.reservable?.reservableType) {
-                            ReservableType.SPACE     -> "Espacio"
-                            ReservableType.EQUIPMENT -> "Equipo"
-                            else                     -> "--"
-                        }
-                        InfoRow("Tipo de recurso", resourceTypeLabel)
-
-                        val dateFormatter = DateTimeFormatter.ofPattern("dd 'de' MMMM, yyyy", Locale("es", "ES"))
-                        InfoRow("Fecha", res.date.format(dateFormatter))
-
-                        val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-                        InfoRow("Hora inicio", res.startTime.format(timeFormatter))
-                        InfoRow("Hora fin",   res.endTime.format(timeFormatter))
-
-                        val durationMins = java.time.Duration.between(res.startTime, res.endTime).toMinutes()
-                        val durationText = if (durationMins >= 60)
-                            "${(durationMins / 60.0).toString().removeSuffix(".0")} horas"
-                        else "$durationMins minutos"
-                        InfoRow("Duración", durationText)
-
-                        val assistants = res.companions?.takeIf { it > 1 } ?: 1
-                        InfoRow("Asistentes", "$assistants ${if (assistants == 1) "persona" else "personas"}")
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // ── Purpose note ──────────────────────────────────────
-                        val firstNote = res.notes?.firstOrNull()
-                        if (firstNote != null) {
-                            SectionTitle("PROPÓSITO")
-                            Text(
-                                text     = firstNote.comment,
-                                style    = MaterialTheme.typography.bodyMedium,
-                                color    = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(bottom = 16.dp)
-                            )
-                        }
-
-                        // ── Previous admin notes (resolved) ───────────────────
-                        val adminNotes = res.notes?.drop(1) ?: emptyList()
-                        if (adminNotes.isNotEmpty() && res.status != ReservationStatus.PENDING) {
-                            SectionTitle("OBSERVACIONES")
-                            adminNotes.forEach { note ->
-                                val author = note.createdBy?.let {
-                                    "${it.firstName} ${it.lastName}"
-                                } ?: "Admin"
-                                ObservationBox(
-                                    observation  = note.comment,
-                                    authorAndDate = author,
-                                    modifier     = Modifier.padding(bottom = 8.dp)
-                                )
-                            }
-                        }
-
-                        // ── Observation field (always shown for Admin) ─────────
-                        if (res.status == ReservationStatus.PENDING) {
-                            SectionTitle("OBSERVACIONES (OPCIONAL)")
-                            OutlinedTextField(
-                                value       = state.observation,
-                                onValueChange = onObservationChange,
-                                placeholder = { Text("Agrega comentarios o instrucciones adicionales...") },
-                                modifier    = Modifier
-                                    .fillMaxWidth()
-                                    .height(120.dp),
-                                shape    = RoundedCornerShape(12.dp),
-                                colors   = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor   = MaterialTheme.colorScheme.primary,
-                                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                                )
-                            )
-                            Text(
-                                text  = "Estas observaciones serán visibles para el solicitante",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
-                            )
-
-                            // ── Action buttons ────────────────────────────────
-                            Row(
-                                modifier              = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    val isExpanded = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
+                    
+                    if (isExpanded) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .verticalScroll(rememberScrollState())
                             ) {
-                                // Deny
-                                Button(
-                                    onClick  = onReject,
-                                    enabled  = !state.isLoading,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(52.dp),
-                                    shape    = RoundedCornerShape(14.dp),
-                                    colors   = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                                        contentColor   = MaterialTheme.colorScheme.error
-                                    )
-                                ) {
-                                    Icon(Icons.Default.Close, contentDescription = "Denegar")
-                                    Text(
-                                        text = "  Denegar",
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-
-                                // Approve
-                                Button(
-                                    onClick  = onApprove,
-                                    enabled  = !state.isLoading,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(52.dp),
-                                    shape    = RoundedCornerShape(14.dp),
-                                    colors   = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor   = MaterialTheme.colorScheme.secondary
-                                    )
-                                ) {
-                                    Icon(Icons.Default.Check, contentDescription = "Aprobar")
-                                    Text(
-                                        text = "  Aprobar",
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
+                                AdminReviewLeftSection(res)
+                            }
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .verticalScroll(rememberScrollState())
+                            ) {
+                                AdminReviewRightSection(
+                                    res = res,
+                                    state = state,
+                                    onObservationChange = onObservationChange,
+                                    onApprove = onApprove,
+                                    onReject = onReject
+                                )
                             }
                         }
+                    } else {
+                        val scrollState = rememberScrollState()
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(scrollState)
+                                .padding(24.dp)
+                        ) {
+                            AdminReviewLeftSection(res)
+                            AdminReviewRightSection(
+                                res = res,
+                                state = state,
+                                onObservationChange = onObservationChange,
+                                onApprove = onApprove,
+                                onReject = onReject
+                            )
+                        }
                     }
                 }
             }
@@ -321,101 +212,174 @@ fun AdminReviewDetailScreenContent(
     }
 }
 
+@Composable
+fun AdminReviewLeftSection(res: ReservationResponse) {
+    // ── Header card ───────────────────────────────────────
+    StatusHeaderCard(
+        status   = res.status,
+        title    = res.reservable?.name ?: "Recurso desconocido",
+        subtitle = res.reservable?.building?.name ?: "",
+        modifier = Modifier.padding(bottom = 24.dp)
+    )
+
+    // ── Petitioner section ────────────────────────────────
+    val petitioner = res.petitioner
+    if (petitioner != null) {
+        SectionTitle("SOLICITANTE")
+        InfoRow("Nombre", "${petitioner.firstName} ${petitioner.lastName}")
+        InfoRow("Tipo de usuario", petitioner.role.toText())
+        val idLabel = when (petitioner.role) {
+            UserRole.STUDENT               -> "Número de matrícula"
+            UserRole.INSTITUTIONAL_STAFF   -> "ID empleado"
+            else                           -> "ID"
+        }
+        val idValue = petitioner.registrationNumber
+            ?: petitioner.employeeNumber
+            ?: "--"
+        InfoRow(idLabel, idValue)
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+
+    // ── Reservation info ─────────────────────────────────
+    SectionTitle("INFORMACIÓN DE LA SOLICITUD")
+
+    val resourceTypeLabel = when (res.reservable?.reservableType) {
+        ReservableType.SPACE     -> "Espacio"
+        ReservableType.EQUIPMENT -> "Equipo"
+        else                     -> "--"
+    }
+    InfoRow("Tipo de recurso", resourceTypeLabel)
+
+    val dateFormatter = DateTimeFormatter.ofPattern("dd 'de' MMMM, yyyy", Locale("es", "ES"))
+    InfoRow("Fecha", res.date.format(dateFormatter))
+
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    InfoRow("Hora inicio", res.startTime.format(timeFormatter))
+    InfoRow("Hora fin",   res.endTime.format(timeFormatter))
+
+    val durationMins = java.time.Duration.between(res.startTime, res.endTime).toMinutes()
+    val durationText = if (durationMins >= 60)
+        "${(durationMins / 60.0).toString().removeSuffix(".0")} horas"
+    else "$durationMins minutos"
+    InfoRow("Duración", durationText)
+
+    val assistants = res.companions?.takeIf { it > 1 } ?: 1
+    InfoRow("Asistentes", "$assistants ${if (assistants == 1) "persona" else "personas"}")
+
+    Spacer(modifier = Modifier.height(8.dp))
+}
+
+@Composable
+fun AdminReviewRightSection(
+    res: ReservationResponse,
+    state: AdminReviewUiState,
+    onObservationChange: (String) -> Unit,
+    onApprove: () -> Unit,
+    onReject: () -> Unit
+) {
+    // ── Purpose note ──────────────────────────────────────
+    val firstNote = res.notes?.firstOrNull()
+    if (firstNote != null) {
+        SectionTitle("PROPÓSITO")
+        Text(
+            text     = firstNote.comment,
+            style    = MaterialTheme.typography.bodyMedium,
+            color    = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+    }
+
+    // ── Previous admin notes (resolved) ───────────────────
+    val adminNotes = res.notes?.drop(1) ?: emptyList()
+    if (adminNotes.isNotEmpty() && res.status != ReservationStatus.PENDING) {
+        SectionTitle("OBSERVACIONES")
+        adminNotes.forEach { note ->
+            val author = note.createdBy?.let {
+                "${it.firstName} ${it.lastName}"
+            } ?: "Admin"
+            ObservationBox(
+                observation  = note.comment,
+                authorAndDate = author,
+                modifier     = Modifier.padding(bottom = 8.dp)
+            )
+        }
+    }
+
+    // ── Observation field (always shown for Admin) ─────────
+    if (res.status == ReservationStatus.PENDING) {
+        SectionTitle("OBSERVACIONES (OPCIONAL)")
+        OutlinedTextField(
+            value       = state.observation,
+            onValueChange = onObservationChange,
+            placeholder = { Text("Agrega comentarios o instrucciones adicionales...") },
+            modifier    = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+            shape    = RoundedCornerShape(12.dp),
+            colors   = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor   = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+            )
+        )
+        Text(
+            text  = "Estas observaciones serán visibles para el solicitante",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
+        )
+
+        // ── Action buttons ────────────────────────────────
+        Row(
+            modifier              = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Deny
+            Button(
+                onClick  = onReject,
+                enabled  = !state.isLoading,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp),
+                shape    = RoundedCornerShape(14.dp),
+                colors   = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor   = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Icon(Icons.Default.Close, contentDescription = "Denegar")
+                Text(
+                    text = "  Denegar",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            // Approve
+            Button(
+                onClick  = onApprove,
+                enabled  = !state.isLoading,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp),
+                shape    = RoundedCornerShape(14.dp),
+                colors   = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor   = MaterialTheme.colorScheme.secondary
+                )
+            ) {
+                Icon(Icons.Default.Check, contentDescription = "Aprobar")
+                Text(
+                    text = "  Aprobar",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(24.dp))
+}
+
 // ───────────────────────────── Previews ──────────────────────────────────────
 
-@Preview(showBackground = true, name = "Pending — with petitioner")
-@Composable
-fun AdminReviewDetailPendingPreview() {
-    SigesmobileTheme {
-        AdminReviewDetailScreenContent(
-            state = AdminReviewUiState(
-                reservation = ReservationResponse(
-                    id   = 1,
-                    status = ReservationStatus.PENDING,
-                    date = LocalDate(2026, 1, 28).toJavaLocalDate(),
-                    startTime = kotlinx.datetime.LocalTime(10, 0).toJavaLocalTime(),
-                    endTime   = kotlinx.datetime.LocalTime(12, 0).toJavaLocalTime(),
-                    type = ReservationType.GROUP,
-                    companions = 15,
-                    reservable = ReservableDto(
-                        id = 1,
-                        name = "Sala de Juntas A",
-                        reservableType = ReservableType.SPACE,
-                        status = ReservableStatus.AVAILABLE,
-                        availableForStudents = true
-                    ),
-                    notes = listOf(
-                        NoteItem(
-                            id = 1,
-                            comment = "Reunión de coordinación del equipo de investigación para revisar avances del proyecto trimestral.",
-                            createdAt = null,
-                            updatedAt = null,
-                            createdBy = null
-                        )
-                    )
-                )
-            )
-        )
-    }
-}
+// Removed previews that depended on hardcoded SizeClass for simplicity, but we can just pass a dummy windowSizeClass later
 
-@Preview(showBackground = true, name = "Approved — no action buttons")
-@Composable
-fun AdminReviewDetailApprovedPreview() {
-    SigesmobileTheme {
-        AdminReviewDetailScreenContent(
-            state = AdminReviewUiState(
-                reservation = ReservationResponse(
-                    id   = 2,
-                    status = ReservationStatus.APPROVED,
-                    date = LocalDate(2026, 1, 28).toJavaLocalDate(),
-                    startTime = kotlinx.datetime.LocalTime(10, 0).toJavaLocalTime(),
-                    endTime   = kotlinx.datetime.LocalTime(12, 0).toJavaLocalTime(),
-                    type = ReservationType.SINGLE,
-                    reservable = ReservableDto(
-                        id = 1,
-                        name = "Sala de Juntas A",
-                        reservableType = ReservableType.SPACE,
-                        status = ReservableStatus.AVAILABLE,
-                        availableForStudents = true
-                    ),
-                    notes = listOf(
-                        NoteItem(1, "Reunión interna de revisión.", null, null, null),
-                        NoteItem(2, "Sala lista, traiga adaptador HDMI.", null, null, null)
-                    )
-                )
-            )
-        )
-    }
-}
 
-@Preview(showBackground = true, name = "Approved (Dark)")
-@Composable
-fun AdminReviewDetailDarkPreview() {
-    SigesmobileTheme(darkTheme = true) {
-        AdminReviewDetailScreenContent(
-            state = AdminReviewUiState(
-                observation = "Traiga su credencial.",
-                reservation = ReservationResponse(
-                    id   = 3,
-                    status = ReservationStatus.PENDING,
-                    date = LocalDate(2026, 2, 5).toJavaLocalDate(),
-                    startTime = kotlinx.datetime.LocalTime(9, 0).toJavaLocalTime(),
-                    endTime   = kotlinx.datetime.LocalTime(11, 0).toJavaLocalTime(),
-                    type = ReservationType.GROUP,
-                    companions = 8,
-                    reservable = ReservableDto(
-                        id = 3,
-                        name = "Sala Biblioteca",
-                        reservableType = ReservableType.SPACE,
-                        status = ReservableStatus.AVAILABLE,
-                        availableForStudents = false
-                    ),
-                    notes = listOf(
-                        NoteItem(1, "Estudio grupal para el examen final.", null, null, null)
-                    )
-                )
-            )
-        )
-    }
-}

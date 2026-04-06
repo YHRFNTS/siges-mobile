@@ -36,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import dev.spiffocode.sigesmobile.ui.components.passwordRecovery.ProfileField
 import dev.spiffocode.sigesmobile.ui.components.profile.ProfileImagePicker
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
@@ -45,6 +46,7 @@ import dev.spiffocode.sigesmobile.viewmodel.EditProfileViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
+    windowSizeClass: WindowSizeClass? = null,
     viewModel: EditProfileViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit
 ) {
@@ -92,12 +94,12 @@ fun EditProfileScreenContent(
     ) { paddingValues ->
         Box(
             modifier = Modifier
-                .widthIn(max = 480.dp)
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 modifier = Modifier
+                    .widthIn(max = 480.dp)
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = 24.dp)

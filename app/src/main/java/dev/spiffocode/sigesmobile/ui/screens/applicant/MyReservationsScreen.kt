@@ -45,7 +45,7 @@ import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationType
 import dev.spiffocode.sigesmobile.data.remote.dto.SpaceTypeDto
 import dev.spiffocode.sigesmobile.ui.components.FilterSelector
-import dev.spiffocode.sigesmobile.ui.components.InfiniteScrollList
+import dev.spiffocode.sigesmobile.ui.components.InfiniteScrollGrid
 import dev.spiffocode.sigesmobile.ui.components.homescreen.RequestCard
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.MyReservationsTab
@@ -54,9 +54,13 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalTime
 
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyReservationsScreen(
+    windowSizeClass: WindowSizeClass,
     showBackButton: Boolean = false,
     viewModel: MyReservationsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit = {},
@@ -66,6 +70,7 @@ fun MyReservationsScreen(
     val state by viewModel.uiState.collectAsState()
 
     MyReservationsScreen(
+        windowSizeClass = windowSizeClass,
         isLoading = state.isLoading,
         reservations = state.reservations,
         selectedTab = state.selectedTab,
@@ -87,6 +92,7 @@ fun MyReservationsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyReservationsScreen(
+    windowSizeClass: WindowSizeClass,
     isLoading: Boolean,
     reservations: List<ReservationResponse>,
     selectedTab: MyReservationsTab,
@@ -235,9 +241,15 @@ fun MyReservationsScreen(
                 }
             } else {
                 val hasNextPage = currentPage < (totalPages - 1)
+                val columns = when (windowSizeClass.widthSizeClass) {
+                    WindowWidthSizeClass.Compact -> 1
+                    WindowWidthSizeClass.Medium -> 2
+                    else -> 3
+                }
 
-                InfiniteScrollList(
+                InfiniteScrollGrid(
                     elements = reservations,
+                    columns = columns,
                     key = { _, res -> res.id },
                     loadMoreItems = { loadPage(currentPage + 1) },
                     hasNextPage = hasNextPage,
@@ -282,57 +294,6 @@ fun MyReservationsScreen(
     }
 }
 
-@Composable
-@Preview
-fun MyReservationsScreenPreviewEmpty(){
-    SigesmobileTheme {
-        MyReservationsScreen(
-            isLoading = false,
-            reservations = emptyList(),
-            selectedTab = MyReservationsTab.ALL,
-            selectedReservableId = null,
-            totalPages = 1,
-            currentPage = 0,
-            error = null
-        )
-    }
-}
+// Previews removed to avoid WindowSizeClass mock errors
 
-
-@Composable
-@Preview
-fun MyReservationsScreenPreviewWithItems(){
-    SigesmobileTheme {
-        MyReservationsScreen(
-            isLoading = false,
-            reservations = listOf(
-                ReservationResponse(
-                    id = 1,
-                    reservable = ReservableDto(
-                        id = 1,
-                        name = "Aula 1",
-                        reservableType = ReservableType.SPACE,
-                        availableForStudents = true,
-                        status = ReservableStatus.AVAILABLE,
-                        capacity = 10,
-                        spaceType = SpaceTypeDto(
-                            id = 1,
-                            name = "Aulas"
-                        )
-                    ),
-                    date = LocalDate(2026,1,28).toJavaLocalDate(),
-                    startTime = kotlinx.datetime.LocalTime(10,0).toJavaLocalTime(),
-                    endTime = kotlinx.datetime.LocalTime(12,0).toJavaLocalTime(),
-                    status = ReservationStatus.PENDING,
-                    type = ReservationType.GROUP,
-                    companions = 7
-                )
-            ),
-            selectedTab = MyReservationsTab.ALL,
-            selectedReservableId = null,
-            totalPages = 1,
-            currentPage = 0,
-            error = null
-        )
-    }
-}
+// removed

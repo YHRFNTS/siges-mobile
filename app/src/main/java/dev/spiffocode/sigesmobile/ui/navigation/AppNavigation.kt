@@ -13,6 +13,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -108,7 +109,11 @@ private val noBottomBarPrefixes = setOf(
 
 
 @Composable
-fun AppNavigation(sessionManager: SessionManager, navController: NavController = rememberNavController()) {
+fun AppNavigation(
+    sessionManager: SessionManager,
+    windowSizeClass: WindowSizeClass,
+    navController: NavController = rememberNavController()
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -145,12 +150,14 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                         val dest = if (sessionManager.role == "ADMIN") Routes.ADMIN_HOME else Routes.HOME
                         navController.navigate(dest) { popUpTo(Routes.LOGIN) { inclusive = true } }
                     },
-                    onNavigateToForgotPassword = { navController.navigate(Routes.FORGOT_PASSWORD) }
+                    onNavigateToForgotPassword = { navController.navigate(Routes.FORGOT_PASSWORD) },
+                    windowSizeClass            = windowSizeClass
                 )
             }
 
             composable(Routes.FORGOT_PASSWORD) {
                 ForgotPasswordScreen(
+                    windowSizeClass = windowSizeClass,
                     viewModel      = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -184,8 +191,9 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                 }
 
                 ResetPasswordScreen(
+                    windowSizeClass   = windowSizeClass,
                     token             = token,
-                    emailFromLink = email,
+                    emailFromLink     = email,
                     viewModel         = viewModel,
                     onNavigateToLogin = {
                         navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } }
@@ -200,6 +208,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                 )
             ) {
                 ExpiredLinkScreen(
+                    windowSizeClass = windowSizeClass,
                     onNavigateToForgotPassword = {
                         navController.navigate(Routes.FORGOT_PASSWORD) { popUpTo(Routes.LOGIN) }
                     }
@@ -213,6 +222,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
                 )
             ) {
                 UsedLinkScreen(
+                    windowSizeClass = windowSizeClass,
                     onNavigateToLogin = {
                         navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } }
                     }
@@ -221,6 +231,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
 
             composable(Routes.HOME) {
                 ApplicantHomeScreen(
+                    windowSizeClass          = windowSizeClass,
                     viewModel                = hiltViewModel(),
                     onNavigateToAvailability = { navController.navigate(Routes.availability(true)) },
                     onNavigateToNewRequest   = { navController.navigate(Routes.NEW_REQUEST) },
@@ -235,6 +246,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             ) { backStack ->
                 val showBack = backStack.arguments?.getBoolean("showBackButton") ?: false
                 dev.spiffocode.sigesmobile.ui.screens.applicant.AvailabilityScreen(
+                    windowSizeClass = windowSizeClass,
                     showBackButton = showBack,
                     viewModel = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() },
@@ -249,6 +261,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             ) { backStack ->
                 val showBack = backStack.arguments?.getBoolean("showBackButton") ?: false
                 dev.spiffocode.sigesmobile.ui.screens.applicant.MyReservationsScreen(
+                    windowSizeClass = windowSizeClass,
                     showBackButton = showBack,
                     viewModel = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() },
@@ -259,6 +272,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
 
             composable(Routes.NEW_REQUEST) {
                 dev.spiffocode.sigesmobile.ui.screens.applicant.NewRequestScreen(
+                    windowSizeClass = windowSizeClass,
                     viewModel = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToDetail = { id -> navController.navigate(Routes.requestDetail(id)) }
@@ -271,6 +285,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             ) { backStack ->
                 val spaceId = backStack.arguments?.getLong("id") ?: return@composable
                 dev.spiffocode.sigesmobile.ui.screens.applicant.SpaceDetailScreen(
+                    windowSizeClass = windowSizeClass,
                     spaceId = spaceId,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToReserve = { navController.navigate(Routes.NEW_REQUEST) }
@@ -283,6 +298,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             ) { backStack ->
                 val equipmentId = backStack.arguments?.getLong("id") ?: return@composable
                 dev.spiffocode.sigesmobile.ui.screens.applicant.EquipmentDetailScreen(
+                    windowSizeClass = windowSizeClass,
                     equipmentId = equipmentId,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToReserve = { navController.navigate(Routes.NEW_REQUEST) }
@@ -295,6 +311,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             ) { backStack ->
                 val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
                 dev.spiffocode.sigesmobile.ui.screens.applicant.ReservationDetailScreen(
+                    windowSizeClass = windowSizeClass,
                     reservationId = reservationId,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToEdit = { id -> navController.navigate(Routes.editRequest(id)) }
@@ -307,6 +324,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             ) { backStack ->
                 val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
                 dev.spiffocode.sigesmobile.ui.screens.applicant.EditReservationScreen(
+                    windowSizeClass = windowSizeClass,
                     reservationId = reservationId,
                     onNavigateBack = { navController.popBackStack() },
                     onSaveSuccess = { navController.popBackStack() }
@@ -317,6 +335,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
 
             composable(Routes.ADMIN_HOME) {
                 AdminHomeScreen(
+                    windowSizeClass         = windowSizeClass,
                     viewModel               = hiltViewModel(),
                     onNavigateToAllRequests = { navController.navigate(Routes.ADMIN_ALL_REQUESTS) },
                     onNavigateToDetail      = { id -> navController.navigate(Routes.adminReviewDetail(id)) }
@@ -325,7 +344,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
 
             composable(Routes.ADMIN_ALL_REQUESTS) {
                 AdminReservationListScreen(
-                    viewModel         = hiltViewModel(),
+                    windowSizeClass = windowSizeClass,
                     onNavigateToDetail = { id -> navController.navigate(Routes.adminReviewDetail(id)) }
                 )
             }
@@ -336,6 +355,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             ) { backStack ->
                 val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
                 AdminReviewDetailScreen(
+                    windowSizeClass = windowSizeClass,
                     reservationId  = reservationId,
                     viewModel      = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() }
@@ -346,6 +366,7 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
 
             composable(Routes.PROFILE) {
                 ProfileScreen(
+                    windowSizeClass            = windowSizeClass,
                     viewModel                  = hiltViewModel(),
                     onNavigateToEditProfile    = { navController.navigate(Routes.EDIT_PROFILE) },
                     onNavigateToNotifications  = { navController.navigate(Routes.NOTIFICATION_PREFS) },
@@ -357,15 +378,25 @@ fun AppNavigation(sessionManager: SessionManager, navController: NavController =
             }
 
             composable(Routes.EDIT_PROFILE) {
-                 EditProfileScreen(viewModel = hiltViewModel(), onNavigateBack = { navController.popBackStack() })
+                 EditProfileScreen(
+                     windowSizeClass = windowSizeClass,
+                     viewModel = hiltViewModel(),
+                     onNavigateBack = { navController.popBackStack() }
+                 )
             }
 
             composable(Routes.NOTIFICATION_PREFS) {
-                 NotificationPrefsScreen(viewModel = hiltViewModel(), onNavigateBack = { navController.popBackStack() })
+                 NotificationPrefsScreen(
+                     windowSizeClass = windowSizeClass,
+                     viewModel = hiltViewModel(),
+                     onNavigateBack = { navController.popBackStack() }
+                 )
             }
 
             composable(Routes.CHANGE_PASSWORD) {
-                ChangePasswordScreen(onNavigateBack = { navController.popBackStack() })
+                ChangePasswordScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
         }
     }

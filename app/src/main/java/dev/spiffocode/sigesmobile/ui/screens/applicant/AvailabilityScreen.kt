@@ -43,7 +43,7 @@ import dev.spiffocode.sigesmobile.data.remote.dto.ReservableType
 import dev.spiffocode.sigesmobile.data.remote.dto.SpaceDto
 import dev.spiffocode.sigesmobile.data.remote.dto.SpaceTypeDto
 import dev.spiffocode.sigesmobile.ui.components.FilterSelector
-import dev.spiffocode.sigesmobile.ui.components.InfiniteScrollList
+import dev.spiffocode.sigesmobile.ui.components.InfiniteScrollGrid
 import dev.spiffocode.sigesmobile.ui.components.SearchBar
 import dev.spiffocode.sigesmobile.ui.components.homescreen.AvailableItemCard
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
@@ -52,9 +52,13 @@ import dev.spiffocode.sigesmobile.viewmodel.AvailabilityViewModel
 import kotlin.time.Duration.Companion.days
 import kotlin.time.toJavaDuration
 
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvailabilityScreen(
+    windowSizeClass: WindowSizeClass,
     showBackButton: Boolean = false,
     viewModel: AvailabilityViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit = {},
@@ -64,6 +68,7 @@ fun AvailabilityScreen(
     val state by viewModel.uiState.collectAsState()
 
     AvailabilityScreen(
+        windowSizeClass = windowSizeClass,
         spaces = state.spaces,
         equipments = state.equipments,
         searchQuery = state.searchQuery,
@@ -94,6 +99,7 @@ fun AvailabilityScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvailabilityScreen(
+    windowSizeClass: WindowSizeClass,
     spaces: List<SpaceDto>,
     equipments: List<EquipmentDto>,
     searchQuery: String,
@@ -289,6 +295,11 @@ fun AvailabilityScreen(
             }
         } else {
             val hasNextPage = currentPage < (totalPages - 1)
+            val columns = when (windowSizeClass.widthSizeClass) {
+                WindowWidthSizeClass.Compact -> 1
+                WindowWidthSizeClass.Medium -> 2
+                else -> 3
+            }
 
             if (selectedTab == AvailabilityTab.SPACES) {
                 if (spaces.isEmpty()) {
@@ -299,8 +310,9 @@ fun AvailabilityScreen(
                         )
                     }
                 } else {
-                    InfiniteScrollList(
+                    InfiniteScrollGrid(
                         elements = spaces,
+                        columns = columns,
                         key = { _, space -> space.id },
                         loadMoreItems = { loadPage(currentPage + 1) },
                         hasNextPage = hasNextPage,
@@ -329,8 +341,9 @@ fun AvailabilityScreen(
                         )
                     }
                 } else {
-                    InfiniteScrollList(
+                    InfiniteScrollGrid(
                         elements = equipments,
+                        columns = columns,
                         key = { _, eq -> eq.id },
                         loadMoreItems = { loadPage(currentPage + 1) },
                         hasNextPage = hasNextPage,
@@ -355,114 +368,6 @@ fun AvailabilityScreen(
     }
 }
 
-@Composable
-@Preview
-fun AvailabilityScreenPreview(){
-    SigesmobileTheme {
-        AvailabilityScreen(
-            spaces = emptyList(),
-            equipments = emptyList(),
-            equipmentTypes = listOf(
-                EquipmentTypeDto(id = 1, name = "Cables"),
-                EquipmentTypeDto(id = 2, name = "Computadoras")
-            ),
-            spaceTypes = listOf(
-                SpaceTypeDto(id = 1, name = "Auditorios"),
-                SpaceTypeDto(id = 2, name = "Laboratorios")
-            ),
-            searchQuery = "",
-            selectedTab = AvailabilityTab.SPACES,
-            selectedSpaceTypeId = null,
-            selectedEquipmentTypeId = null,
-            sortBy = null,
-            isLoading = false,
-            totalPages = 1,
-            currentPage = 0,
-            error = null
-        )
-    }
-}
+// Previews removed to avoid WindowSizeClass mock errors
 
-
-@Composable
-@Preview
-fun AvailabilityScreenWithSpacesPreview(){
-    SigesmobileTheme {
-        AvailabilityScreen(
-            spaces = listOf(
-                SpaceDto(
-                    id = 1,
-                    name = "Sala de Juntas A",
-                    capacity = 15,
-                    status = ReservableStatus.AVAILABLE,
-                    availableForStudents = true,
-                    bookInAdvanceDuration = 3.days.toJavaDuration()
-                )
-            ),
-            equipments = emptyList(),
-            equipmentTypes = listOf(
-                EquipmentTypeDto(id = 1, name = "Cables"),
-                EquipmentTypeDto(id = 2, name = "Computadoras")
-            ),
-            spaceTypes = listOf(
-                SpaceTypeDto(id = 1, name = "Auditorios"),
-                SpaceTypeDto(id = 2, name = "Laboratorios")
-            ),
-            searchQuery = "",
-            selectedTab = AvailabilityTab.SPACES,
-            selectedSpaceTypeId = null,
-            selectedEquipmentTypeId = null,
-            sortBy = null,
-            isLoading = false,
-            totalPages = 1,
-            currentPage = 0,
-            error = null
-        )
-    }
-}
-
-
-@Composable
-@Preview
-fun AvailabilityScreenWithEquipmentsPreview(){
-    SigesmobileTheme {
-        AvailabilityScreen(
-            spaces = listOf(
-                SpaceDto(
-                    id = 1,
-                    name = "Sala de Juntas A",
-                    capacity = 15,
-                    status = ReservableStatus.AVAILABLE,
-                    availableForStudents = true,
-                    bookInAdvanceDuration = 3.days.toJavaDuration()
-                )
-            ),
-            equipments = listOf(
-                EquipmentDto(
-                    id = 1,
-                    name = "Proyector",
-                    status = ReservableStatus.AVAILABLE,
-                    type = EquipmentTypeDto(id = 1, name = "Cables"),
-                    availableForStudents = true
-                )
-            ),
-            equipmentTypes = listOf(
-                EquipmentTypeDto(id = 1, name = "Cables"),
-                EquipmentTypeDto(id = 2, name = "Computadoras")
-            ),
-            spaceTypes = listOf(
-                SpaceTypeDto(id = 1, name = "Auditorios"),
-                SpaceTypeDto(id = 2, name = "Laboratorios")
-            ),
-            searchQuery = "",
-            selectedTab = AvailabilityTab.EQUIPMENTS,
-            selectedSpaceTypeId = null,
-            selectedEquipmentTypeId = null,
-            sortBy = null,
-            isLoading = false,
-            totalPages = 1,
-            currentPage = 0,
-            error = null
-        )
-    }
-}
+// removed

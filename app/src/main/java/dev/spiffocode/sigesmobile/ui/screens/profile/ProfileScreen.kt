@@ -1,10 +1,13 @@
 package dev.spiffocode.sigesmobile.ui.screens.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -14,6 +17,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,6 +40,7 @@ import dev.spiffocode.sigesmobile.viewmodel.ProfileMenuViewModel
 
 @Composable
 fun ProfileScreen(
+    windowSizeClass: WindowSizeClass? = null,
     viewModel: ProfileMenuViewModel = hiltViewModel(),
     onNavigateToEditProfile: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
@@ -44,6 +50,7 @@ fun ProfileScreen(
     val state by viewModel.uiState.collectAsState()
 
     ProfileScreen(
+        windowSizeClass = windowSizeClass,
         isLoggedOut = state.isLoggedOut,
         isLoading = state.isLoading,
         profilePictureUrl = viewModel.profilePictureUrl,
@@ -64,6 +71,7 @@ fun ProfileScreen(
 
 @Composable
 fun ProfileScreen(
+    windowSizeClass: WindowSizeClass? = null,
     isLoggedOut: Boolean,
     isLoading: Boolean,
     profilePictureUrl: String,
@@ -112,39 +120,77 @@ fun ProfileScreen(
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = 480.dp)
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-        ) {
-            Spacer(modifier = Modifier.height(50.dp))
+        if (windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Expanded) {
+            Row(
+                modifier = Modifier.widthIn(max = 1000.dp).fillMaxWidth().padding(horizontal = 48.dp, vertical = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(64.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    ProfileHeader(
+                        fullName = fullName,
+                        initials = initials,
+                        roleLabel = roleLabel,
+                        identifier = identifier,
+                        profilePictureUrl = profilePictureUrl
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    Column(modifier = Modifier.verticalScroll(scrollState).padding(vertical = 16.dp)) {
+                        ProfileMenu(
+                            isLoading = isLoading,
+                            onNavigateToEditProfile = onNavigateToEditProfile,
+                            onNavigateToNotifications = onNavigateToNotifications,
+                            onNavigateToChangePassword = onNavigateToChangePassword,
+                            onLogoutClick = { showLogoutDialog = true }
+                        )
 
-            ProfileHeader(
-                fullName = fullName,
-                initials = initials,
-                roleLabel = roleLabel,
-                identifier = identifier,
-                profilePictureUrl = profilePictureUrl
-            )
+                        error?.let {
+                            Text(
+                                text = it,
+                                color = Color.Red,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 480.dp)
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+            ) {
+                Spacer(modifier = Modifier.height(50.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ProfileMenu(
-                isLoading = isLoading,
-                onNavigateToEditProfile = onNavigateToEditProfile,
-                onNavigateToNotifications = onNavigateToNotifications,
-                onNavigateToChangePassword = onNavigateToChangePassword,
-                onLogoutClick = { showLogoutDialog = true }
-            )
-
-            error?.let {
-                Text(
-                    text = it,
-                    color = Color.Red,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                ProfileHeader(
+                    fullName = fullName,
+                    initials = initials,
+                    roleLabel = roleLabel,
+                    identifier = identifier,
+                    profilePictureUrl = profilePictureUrl
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ProfileMenu(
+                    isLoading = isLoading,
+                    onNavigateToEditProfile = onNavigateToEditProfile,
+                    onNavigateToNotifications = onNavigateToNotifications,
+                    onNavigateToChangePassword = onNavigateToChangePassword,
+                    onLogoutClick = { showLogoutDialog = true }
+                )
+
+                error?.let {
+                    Text(
+                        text = it,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                    )
+                }
             }
         }
     }

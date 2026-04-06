@@ -8,11 +8,25 @@ import dev.spiffocode.sigesmobile.ui.components.passwordRecovery.ErrorBaseScreen
 import dev.spiffocode.sigesmobile.ui.theme.SigesTheme
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+
 @Composable
 fun UsedLinkScreen(
+    windowSizeClass: WindowSizeClass,
+    onNavigateToLogin: () -> Unit
+) {
+    val isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
+    UsedLinkContent(isCompact = isCompact, onNavigateToLogin = onNavigateToLogin)
+}
+
+@Composable
+fun UsedLinkContent(
+    isCompact: Boolean,
     onNavigateToLogin: () -> Unit
 ) {
     ErrorBaseScreen(
+        isCompact = isCompact,
         icon = Icons.Outlined.Info,
         iconBgColor = SigesTheme.extendedColors.statusPending,
         iconTintColor = SigesTheme.extendedColors.onStatusPending,
@@ -27,6 +41,6 @@ fun UsedLinkScreen(
 @Composable
 fun UsedLinkScreenPreview() {
     SigesmobileTheme {
-        UsedLinkScreen {  }
+        UsedLinkContent(isCompact = true) {  }
     }
 }
