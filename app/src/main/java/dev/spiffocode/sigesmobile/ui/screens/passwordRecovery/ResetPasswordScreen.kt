@@ -34,8 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import dev.spiffocode.sigesmobile.ui.components.login.PasswordTextField
-import dev.spiffocode.sigesmobile.ui.components.login.PrimaryButton
+import dev.spiffocode.sigesmobile.ui.components.PasswordTextField
+import dev.spiffocode.sigesmobile.ui.components.PrimaryButton
 import dev.spiffocode.sigesmobile.ui.theme.Background
 import dev.spiffocode.sigesmobile.ui.theme.Lav
 import dev.spiffocode.sigesmobile.ui.theme.Plum

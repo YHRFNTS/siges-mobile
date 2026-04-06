@@ -4,9 +4,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.domain.repository.AuthRepository
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,6 +29,14 @@ class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
+    public sealed class UiEvent{
+        object LoginSuccess: UiEvent();
+        object LoginError: UiEvent();
+    }
+
+    private val _uiEvent = Channel<UiEvent>();
+    val uiEvent = _uiEvent.receiveAsFlow();
+
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
@@ -35,7 +45,7 @@ class LoginViewModel @Inject constructor(
     fun togglePasswordVisibility()        = _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
     fun toggleRememberMe(checked: Boolean)= _uiState.update { it.copy(rememberMe = checked) }
 
-    fun login(onSuccess: () -> Unit) {
+    fun login() {
         val state = _uiState.value
         if (state.identifier.isBlank()) { _uiState.update { it.copy(errorMessage = "Ingresa tu usuario o correo.") }; return }
         if (state.password.isBlank())   { _uiState.update { it.copy(errorMessage = "Ingresa tu contraseña.") }; return }
@@ -43,19 +53,25 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             when (val result = authRepository.login(state.identifier.trim(), state.password)) {
-                is NetworkResult.Success -> { _uiState.update { it.copy(isLoading = false) }; onSuccess() }
-                is NetworkResult.Error   -> _uiState.update {
-                    it.copy(
-                        isLoading         = false,
-                        errorMessage      = when (result.code) {
-                            401  -> "Credenciales incorrectas."
-                            429  -> "Demasiados intentos. Espera e intenta de nuevo."
-                            500  -> "Error del servidor. Intenta más tarde."
-                            -1   -> "Sin conexión. Verifica tu internet."
-                            else -> "Error inesperado."
-                        },
-                        retryAfterSeconds = if (result.code == 429) 30 else null
-                    )
+                is NetworkResult.Success -> {
+                    _uiState.update { it.copy(isLoading = false) };
+                    _uiEvent.send(UiEvent.LoginSuccess);
+                }
+                is NetworkResult.Error   -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading         = false,
+                            errorMessage      = when (result.code) {
+                                401  -> "Credenciales incorrectas."
+                                429  -> "Demasiados intentos. Espera e intenta de nuevo."
+                                500  -> "Error del servidor. Intenta más tarde."
+                                -1   -> "Sin conexión. Verifica tu internet."
+                                else -> "Error inesperado."
+                            },
+                            retryAfterSeconds = if (result.code == 429) 30 else null
+                        )
+                    }
+                    _uiEvent.send(UiEvent.LoginError);
                 }
                 NetworkResult.Loading -> Unit
             }
