@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "769417057274",
+    "project_id": "siges-37896",
+    "storage_bucket": "siges-37896.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:769417057274:android:ac7bdbf4d71fc71fef0a43",
+        "android_client_info": {
+          "package_name": "dev.spiffocode.sigesmobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAq9td02NxaHmdH11HWwzsroVhe_OyLJlc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
