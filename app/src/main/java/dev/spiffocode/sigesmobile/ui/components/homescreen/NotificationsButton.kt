@@ -87,6 +87,7 @@ fun NotificationsButton(
             onMarkAllRead = onMarkAllRead,
             notifications = notifications,
             expanded = expanded,
+            onExpandedChange = { expanded = it },
             hasNextPage = hasNextPage,
             onLoadMoreItems = onLoadMoreItems
         )

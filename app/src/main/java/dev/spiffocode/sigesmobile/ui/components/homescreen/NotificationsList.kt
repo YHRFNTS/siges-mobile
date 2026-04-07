@@ -52,8 +52,12 @@ fun NotificationsList(
     val loaderHeight = if (hasNextPage) 44.dp else 0.dp
 
     val calculatedHeight = remember(notifications.size, hasNextPage) {
-        val listHeight = itemHeight * notifications.size.coerceAtMost(5) + loaderHeight
-        (headerHeight + listHeight).coerceAtMost(maxHeight)
+        if (notifications.isEmpty()) {
+            140.dp // High enough for the message and padding
+        } else {
+            val listHeight = itemHeight * notifications.size.coerceAtMost(5) + loaderHeight
+            (headerHeight + listHeight).coerceAtMost(maxHeight)
+        }
     }
 
     DropdownMenu(
