@@ -2,6 +2,7 @@ package dev.spiffocode.sigesmobile.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.domain.repository.AuthRepository
 import kotlinx.coroutines.channels.Channel
@@ -26,7 +27,8 @@ data class LoginUiState(
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     public sealed class UiEvent{
@@ -45,6 +47,10 @@ class LoginViewModel @Inject constructor(
     fun togglePasswordVisibility()        = _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
     fun toggleRememberMe(checked: Boolean)= _uiState.update { it.copy(rememberMe = checked) }
 
+    init {
+        _uiState.update { it.copy(rememberMe = sessionManager.rememberMe) }
+    }
+
     fun login() {
         val state = _uiState.value
         if (state.identifier.isBlank()) { _uiState.update { it.copy(errorMessage = "Ingresa tu usuario o correo.") }; return }
@@ -52,7 +58,7 @@ class LoginViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = authRepository.login(state.identifier.trim(), state.password)) {
+            when (val result = authRepository.login(state.identifier.trim(), state.password, state.rememberMe)) {
                 is NetworkResult.Success -> {
                     _uiState.update { it.copy(isLoading = false) };
                     _uiEvent.send(UiEvent.LoginSuccess);

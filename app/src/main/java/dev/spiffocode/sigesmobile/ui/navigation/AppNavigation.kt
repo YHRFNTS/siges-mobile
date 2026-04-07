@@ -128,12 +128,19 @@ fun AppNavigation(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+ 
+    LaunchedEffect(Unit) {
+        if (sessionManager.isLoggedIn && !sessionManager.rememberMe) {
+            sessionManager.clearSession()
+        }
+    }
 
     val isAdmin = sessionManager.role == "ADMIN"
     val showBottomBar = currentRoute != null &&
             noBottomBarPrefixes.none { currentRoute.startsWith(it) }
 
     val startDestination = when {
+        sessionManager.isLoggedIn && !sessionManager.rememberMe -> Routes.LOGIN
         sessionManager.isLoggedIn && isAdmin -> Routes.ADMIN_HOME
         sessionManager.isLoggedIn            -> Routes.HOME
         else                                 -> Routes.LOGIN
