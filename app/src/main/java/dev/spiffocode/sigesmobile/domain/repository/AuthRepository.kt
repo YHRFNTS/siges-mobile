@@ -17,7 +17,7 @@ class AuthRepository @Inject constructor(
     private val userApi: UserApiService,
     private val session: SessionManager
 ) {
-    suspend fun login(identifier: String, password: String): NetworkResult<AuthenticatedResponse> {
+    suspend fun login(identifier: String, password: String, rememberMe: Boolean): NetworkResult<AuthenticatedResponse> {
         val result = safeApiCall { authApi.login(LoginRequest(identifier, password)) }
 
         if (result is NetworkResult.Success) {
@@ -32,7 +32,8 @@ class AuthRepository @Inject constructor(
                 lastName     = "",
                 email        = "",
                 phoneNumber  = "",
-                birthDate    = ""
+                birthDate    = "",
+                rememberMe   = rememberMe
             )
 
             val profileResult = safeApiCall { userApi.lookupByIdentifier(identifier.trim()) }
@@ -50,7 +51,8 @@ class AuthRepository @Inject constructor(
                     registrationNumber = user.registrationNumber,
                     profilePictureUrl  = user.profilePictureUrl,
                     phoneNumber        = user.phoneNumber,
-                    birthDate          = user.birthDate.toString()
+                    birthDate          = user.birthDate.toString(),
+                    rememberMe         = rememberMe
                 )
             }
         }

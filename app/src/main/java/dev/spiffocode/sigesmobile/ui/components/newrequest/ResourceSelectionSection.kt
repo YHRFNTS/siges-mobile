@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,6 +46,7 @@ fun ResourceSelectionSection(
     searchQuery: String,
     modifier: Modifier = Modifier,
     onSearchQueryChange: (String) -> Unit = {},
+    onFocusGained: () -> Unit = {},
     searchResults: List<Any>,
     isSearching: Boolean,
     selectedSpace: SpaceDto?,
@@ -124,7 +126,13 @@ fun ResourceSelectionSection(
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(),
+                    .menuAnchor()
+                    .onFocusChanged { focus ->
+                        if (focus.isFocused) {
+                            expanded = true
+                            onFocusGained()
+                        }
+                    },
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),

@@ -27,6 +27,7 @@ import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 data class AvailableResourceUIItem(
+    val id: Long,
     val title: String,
     val meta: String,
     val status: ReservableStatus,
@@ -94,7 +95,7 @@ class HomeViewModel @Inject constructor(
         val pendingJob = viewModelScope.async {
             reservationRepository.getReservations(
                 size   = 20,
-                status = ReservationStatus.PENDING,
+                statuses = listOf(ReservationStatus.PENDING),
                 sort   = "date,asc"
             )
         }
@@ -154,10 +155,11 @@ class HomeViewModel @Inject constructor(
     )
 
     private fun ReservableDto.toUiItem() = AvailableResourceUIItem(
+        id = id,
         title  = name,
         meta   = capacity?.let { "Capacidad para $it personas" } ?: inventoryIdNum ?: "",
         status = status,
         reservableType = reservableType,
-        category = type?.name ?: spaceType?.name ?: "",
+        category = type?.name ?: spaceType?.name ?: ""
     )
 }

@@ -3,6 +3,7 @@ package dev.spiffocode.sigesmobile.data.local
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -33,6 +34,7 @@ class SessionManager @Inject constructor(
         val PHONE_NUMBER        = stringPreferencesKey("phone_number")
         val BIRTH_DATE          = stringPreferencesKey("birth_date")
         val ID                  = stringPreferencesKey("user_id")
+        val REMEMBER_ME         = booleanPreferencesKey("remember_me")
     }
 
     val accessTokenFlow: Flow<String?>  = context.dataStore.data.map { it[Keys.ACCESS_TOKEN] }
@@ -51,6 +53,7 @@ class SessionManager @Inject constructor(
     val phoneNumber: String?        get() = runBlocking { context.dataStore.data.map { it[Keys.PHONE_NUMBER] }.first() }
     val birthDate: String?          get() = runBlocking { context.dataStore.data.map { it[Keys.BIRTH_DATE] }.first() }
     val id: String?                 get() = runBlocking { context.dataStore.data.map { it[Keys.ID] }.first() }
+    val rememberMe: Boolean         get() = runBlocking { context.dataStore.data.map { it[Keys.REMEMBER_ME] ?: false }.first() }
 
 
 
@@ -68,9 +71,11 @@ class SessionManager @Inject constructor(
         employeeNumber: String? = null,
         registrationNumber: String? = null,
         profilePictureUrl: String? = null,
-        phoneNumber: String
+        phoneNumber: String,
+        rememberMe: Boolean = false
     ) {
         context.dataStore.edit { prefs ->
+            prefs[Keys.REMEMBER_ME]   = rememberMe
             prefs[Keys.ID]            = id
             prefs[Keys.ACCESS_TOKEN]  = accessToken
             prefs[Keys.REFRESH_TOKEN] = refreshToken
@@ -100,8 +105,28 @@ class SessionManager @Inject constructor(
     suspend fun updateProfilePictureUrl(url: String) {
         context.dataStore.edit { it[Keys.PROFILE_PICTURE_URL] = url }
     }
+ 
+    suspend fun updateUserInfo(
+        firstName: String,
+        lastName: String,
+        email: String,
+        phoneNumber: String,
+        birthDate: String
+    ) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.FIRST_NAME]   = firstName
+            prefs[Keys.LAST_NAME]    = lastName
+            prefs[Keys.EMAIL]        = email
+            prefs[Keys.PHONE_NUMBER] = phoneNumber
+            prefs[Keys.BIRTH_DATE]   = birthDate
+        }
+    }
 
     suspend fun clearSession() {
-        context.dataStore.edit { it.clear() }
+        context.dataStore.edit { prefs ->
+            val remember = prefs[Keys.REMEMBER_ME] ?: false
+            prefs.clear()
+            prefs[Keys.REMEMBER_ME] = remember
+        }
     }
 }

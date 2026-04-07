@@ -48,8 +48,11 @@ class ReservationDetailViewModel @Inject constructor(
         }
     }
 
-    fun approve(id: Long) = launchAction("Solicitud aprobada") {
-        repository.approveReservation(id)
+    fun approve(id: Long) {
+        val observation = _uiState.value.adminNote.trim()
+        launchAction("Solicitud aprobada") {
+            repository.approveReservation(id, observation.ifEmpty { null })
+        }
     }
 
     fun reject(id: Long) {

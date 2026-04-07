@@ -2,11 +2,13 @@ package dev.spiffocode.sigesmobile.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableDto
+import dev.spiffocode.sigesmobile.domain.repository.ReservableRepository
 import dev.spiffocode.sigesmobile.domain.repository.ReservationRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +22,8 @@ data class AdminReviewUiState(
     val isLoading: Boolean = false,
     val reservation: ReservationResponse? = null,
     val observation: String = "",
+    val rejectReason: String = "",
+    val showRejectDialog: Boolean = false,
     val error: String? = null,
     val actionSuccess: String? = null
 )
@@ -48,16 +52,18 @@ class AdminReviewViewModel @Inject constructor(
     }
 
     fun setObservation(text: String) = _uiState.update { it.copy(observation = text) }
+    fun onRejectReasonChange(text: String) = _uiState.update { it.copy(rejectReason = text) }
+
+    fun showRejectDialog() = _uiState.update { it.copy(showRejectDialog = true, rejectReason = "") }
+    fun hideRejectDialog() = _uiState.update { it.copy(showRejectDialog = false) }
 
     fun approve(id: Long) {
         val observation = _uiState.value.observation.trim()
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            // Optionally publish observation note before approving
-            if (observation.isNotEmpty()) {
-                repository.addNote(id, observation)
-            }
-            when (val result = repository.approveReservation(id)) {
+            
+            // Pass observation directly to approveReservation as approveReason
+            when (val result = repository.approveReservation(id, observation.ifEmpty { null })) {
                 is NetworkResult.Success -> _uiState.update {
                     it.copy(isLoading = false, reservation = result.data, actionSuccess = "Solicitud aprobada")
                 }
@@ -70,10 +76,15 @@ class AdminReviewViewModel @Inject constructor(
     }
 
     fun reject(id: Long) {
-        val observation = _uiState.value.observation.trim()
+        val reason = _uiState.value.rejectReason.trim()
+        if (reason.isEmpty()) {
+            _uiState.update { it.copy(error = "El motivo de rechazo es obligatorio") }
+            return
+        }
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            when (val result = repository.rejectReservation(id, observation)) {
+            _uiState.update { it.copy(isLoading = true, error = null, showRejectDialog = false) }
+            when (val result = repository.rejectReservation(id, reason)) {
                 is NetworkResult.Success -> _uiState.update {
                     it.copy(isLoading = false, reservation = result.data, actionSuccess = "Solicitud denegada")
                 }
@@ -93,8 +104,12 @@ enum class AdminReservationTab { ALL, PENDING, RESOLVED }
 data class AdminReservationListUiState(
     val isLoading: Boolean = false,
     val reservations: List<ReservationResponse> = emptyList(),
-    val selectedTab: AdminReservationTab = AdminReservationTab.ALL,
+    val selectedTab: AdminReservationTab = AdminReservationTab.PENDING,
     val selectedReservableId: Long? = null,
+    val dateFrom: java.time.LocalDate? = null,
+    val dateTo: java.time.LocalDate? = null,
+    val sort: String = "createdAt,desc",
+    val reservables: List<ReservableDto> = emptyList(),
     val totalPages: Int = 0,
     val currentPage: Int = 0,
     val error: String? = null
@@ -102,13 +117,17 @@ data class AdminReservationListUiState(
 
 @HiltViewModel
 class AdminReservationListViewModel @Inject constructor(
-    private val repository: ReservationRepository
+    private val repository: ReservationRepository,
+    private val reservableRepository: ReservableRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdminReservationListUiState())
     val uiState: StateFlow<AdminReservationListUiState> = _uiState.asStateFlow()
 
-    init { load() }
+    init {
+        load()
+        loadReservables()
+    }
 
     fun selectTab(tab: AdminReservationTab) {
         _uiState.update { it.copy(selectedTab = tab, currentPage = 0) }
@@ -117,6 +136,16 @@ class AdminReservationListViewModel @Inject constructor(
 
     fun filterByReservable(reservableId: Long?) {
         _uiState.update { it.copy(selectedReservableId = reservableId, currentPage = 0) }
+        load()
+    }
+
+    fun setDateRange(from: java.time.LocalDate?, to: java.time.LocalDate?) {
+        _uiState.update { it.copy(dateFrom = from, dateTo = to, currentPage = 0) }
+        load()
+    }
+
+    fun setSort(sortField: String, direction: String) {
+        _uiState.update { it.copy(sort = "$sortField,$direction", currentPage = 0) }
         load()
     }
 
@@ -129,10 +158,10 @@ class AdminReservationListViewModel @Inject constructor(
 
     private fun load() {
         val state = _uiState.value
-        val status: ReservationStatus? = when (state.selectedTab) {
+        val statuses: List<ReservationStatus>? = when (state.selectedTab) {
             AdminReservationTab.ALL      -> null
-            AdminReservationTab.PENDING  -> ReservationStatus.PENDING
-            AdminReservationTab.RESOLVED -> null
+            AdminReservationTab.PENDING  -> listOf(ReservationStatus.PENDING)
+            AdminReservationTab.RESOLVED -> listOf(ReservationStatus.CANCELLED, ReservationStatus.APPROVED, ReservationStatus.REJECTED)
         }
 
         viewModelScope.launch {
@@ -140,9 +169,11 @@ class AdminReservationListViewModel @Inject constructor(
             when (val result = repository.getReservations(
                 page         = state.currentPage,
                 size         = 20,
-                sort         = "date,desc",
-                status       = status,
-                reservableId = state.selectedReservableId
+                sort         = state.sort,
+                statuses       = statuses,
+                reservableId = state.selectedReservableId,
+                dateFrom     = state.dateFrom,
+                dateTo       = state.dateTo
             )) {
                 is NetworkResult.Success -> {
                     val content = if (state.selectedTab == AdminReservationTab.RESOLVED) {
@@ -163,6 +194,17 @@ class AdminReservationListViewModel @Inject constructor(
                     it.copy(isLoading = false, error = result.message)
                 }
                 NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    private fun loadReservables() {
+        viewModelScope.launch {
+            when (val result = reservableRepository.searchSpaces(size = 100)) {
+                is NetworkResult.Success -> _uiState.update {
+                    it.copy(reservables = result.data.content)
+                }
+                else -> Unit
             }
         }
     }

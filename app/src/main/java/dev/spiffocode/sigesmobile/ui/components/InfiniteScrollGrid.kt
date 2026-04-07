@@ -1,5 +1,6 @@
 package dev.spiffocode.sigesmobile.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,7 +29,8 @@ fun <T> InfiniteScrollGrid(
     key: (Int, T) -> Any,
     loadMoreItems: () -> Unit,
     hasNextPage: Boolean,
-    content: @Composable LazyGridScope.(T) -> Unit,
+    spacing: Arrangement.HorizontalOrVertical = Arrangement.spacedBy(0.dp),
+    content: @Composable LazyGridScope.(T) -> Unit
 ) {
     val gridState = rememberLazyGridState()
     LaunchedEffect(gridState, hasNextPage) {
@@ -45,7 +47,8 @@ fun <T> InfiniteScrollGrid(
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         modifier = modifier, 
-        state = gridState
+        state = gridState,
+        verticalArrangement = spacing
     ) {
         itemsIndexed(items = elements, key = { i, el -> key(i, el) }) { _, element ->
             this@LazyVerticalGrid.content(element)

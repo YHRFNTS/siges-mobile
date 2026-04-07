@@ -11,7 +11,8 @@ data class CreateReservationRequest(
     @SerializedName("startTime")    val startTime: LocalTime,
     @SerializedName("endTime")      val endTime: LocalTime,
     @SerializedName("type")         val type: ReservationType,
-    @SerializedName("companions")   val companions: Int? = null
+    @SerializedName("companions")   val companions: Int? = null,
+    @SerializedName("requestReason") val requestReason: String? = null
 )
 
 data class RescheduleReservationRequest(
@@ -26,6 +27,10 @@ data class RejectReservationRequest(
 
 data class CancelReservationRequest(
     @SerializedName("reason") val reason: String
+)
+
+data class ApproveReservationRequest(
+    @SerializedName("observation") val observation: String? = null
 )
 
 data class PublishNoteRequest(
@@ -64,7 +69,10 @@ data class ReservationResponse(
     @SerializedName("rejectedAt")  val rejectedAt: LocalDateTime? = null,
     @SerializedName("cancelledAt") val cancelledAt: LocalDateTime? = null,
     @SerializedName("finishedAt")  val finishedAt: LocalDateTime? = null,
-    @SerializedName("createdAt")   val createdAt: LocalDateTime? = null
+    @SerializedName("createdAt")   val createdAt: LocalDateTime? = null,
+    @SerializedName("requestReason") val requestReason: String? = null,
+    @SerializedName("rejectionReason") val rejectionReason: String? = null,
+    @SerializedName("approvalReason") val approvalReason: String? = null
 )
 
 data class PageReservationResponse(

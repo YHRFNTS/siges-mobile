@@ -1,5 +1,10 @@
 package dev.spiffocode.sigesmobile.ui.screens.applicant
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +23,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
@@ -31,6 +38,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -52,16 +62,21 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.EquipmentDto
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.SpaceDto
+import dev.spiffocode.sigesmobile.ui.components.newrequest.AvailabilityCalendarPicker
 import dev.spiffocode.sigesmobile.ui.components.newrequest.DatePickerField
 import dev.spiffocode.sigesmobile.ui.components.newrequest.ResourceSelectionSection
 import dev.spiffocode.sigesmobile.ui.components.newrequest.ResourceTypeTabs
 import dev.spiffocode.sigesmobile.ui.components.newrequest.TimePickerField
+import dev.spiffocode.sigesmobile.ui.components.newrequest.TimeRangePicker
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
+import dev.spiffocode.sigesmobile.viewmodel.CalendarMode
 import dev.spiffocode.sigesmobile.viewmodel.CreateReservationUiState
 import dev.spiffocode.sigesmobile.viewmodel.CreateReservationViewModel
+import dev.spiffocode.sigesmobile.viewmodel.InputMode
 import dev.spiffocode.sigesmobile.viewmodel.ResourceType
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.YearMonth
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.toJavaDuration
 
@@ -70,9 +85,28 @@ fun NewRequestScreen(
     windowSizeClass: WindowSizeClass,
     viewModel: CreateReservationViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
-    onNavigateToDetail: (Long) -> Unit
+    onNavigateToDetail: (Long) -> Unit,
+    prefillResourceId: String = "",
+    prefillType: String = "",
+    prefillDate: String = "",
+    prefillStartTime: String = "",
+    prefillEndTime: String = ""
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Pre-fill resource from detail navigation
+    LaunchedEffect(prefillResourceId, prefillType) {
+        if (prefillResourceId.isNotBlank() && prefillType.isNotBlank()) {
+            viewModel.prefillResource(prefillResourceId, prefillType)
+        }
+    }
+
+    // Pre-fill time/date from calendar navigation
+    LaunchedEffect(prefillDate, prefillStartTime, prefillEndTime) {
+        if (prefillDate.isNotBlank() || prefillStartTime.isNotBlank() || prefillEndTime.isNotBlank()) {
+            viewModel.prefillFrom(prefillDate, prefillStartTime, prefillEndTime)
+        }
+    }
 
     LaunchedEffect(uiState.createdReservation) {
         uiState.createdReservation?.let {
@@ -84,20 +118,28 @@ fun NewRequestScreen(
     val isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
 
     NewRequestScreenContent(
-        isCompact = isCompact,
-        state = uiState,
-        onNavigateBack = onNavigateBack,
-        onTypeSelected = viewModel::selectResourceType,
-        onSearchQueryChange = viewModel::onSearchQueryChange,
-        onSpaceSelected = viewModel::selectSpace,
-        onEquipmentSelected = viewModel::selectEquipment,
-        onDateChange = viewModel::onDateChange,
-        onStartTimeChange = viewModel::onStartTimeChange,
-        onEndTimeChange = viewModel::onEndTimeChange,
-        onCompanionsChange = viewModel::onCompanionsChange,
-        onPurposeChange = viewModel::onPurposeChange,
-        onSubmit = viewModel::submit,
-        onClearError = viewModel::clearError
+        isCompact             = isCompact,
+        state                 = uiState,
+        onNavigateBack        = onNavigateBack,
+        onTypeSelected        = viewModel::selectResourceType,
+        onSearchQueryChange   = viewModel::onSearchQueryChange,
+        onSearchFocused       = viewModel::onSearchFocused,
+        onSpaceSelected       = viewModel::selectSpace,
+        onEquipmentSelected   = viewModel::selectEquipment,
+        onInputModeChanged    = viewModel::onInputModeChanged,
+        onCalendarModeChanged = viewModel::onCalendarModeChanged,
+        onMonthChanged        = viewModel::onMonthChanged,
+        onWeekChanged         = viewModel::onWeekChanged,
+        onDayTappedInMonthly  = viewModel::onDayTappedInMonthly,
+        onDaySelectedInWeekly = viewModel::onDateChange,
+        onTimeRangeSelected   = { start, end -> viewModel.onTimeRangeSelected(start, end) },
+        onDateChange          = viewModel::onDateChange,
+        onStartTimeChange     = viewModel::onStartTimeChange,
+        onEndTimeChange       = viewModel::onEndTimeChange,
+        onCompanionsChange    = viewModel::onCompanionsChange,
+        onPurposeChange       = viewModel::onPurposeChange,
+        onSubmit              = viewModel::submit,
+        onClearError          = viewModel::clearError
     )
 }
 
@@ -109,8 +151,16 @@ fun NewRequestScreenContent(
     onNavigateBack: () -> Unit = {},
     onTypeSelected: (ResourceType) -> Unit = {},
     onSearchQueryChange: (String) -> Unit = {},
+    onSearchFocused: () -> Unit = {},
     onSpaceSelected: (SpaceDto) -> Unit = {},
     onEquipmentSelected: (EquipmentDto) -> Unit = {},
+    onInputModeChanged: (InputMode) -> Unit = {},
+    onCalendarModeChanged: (CalendarMode) -> Unit = {},
+    onMonthChanged: (YearMonth) -> Unit = {},
+    onWeekChanged: (LocalDate) -> Unit = {},
+    onDayTappedInMonthly: (LocalDate) -> Unit = {},
+    onDaySelectedInWeekly: (LocalDate) -> Unit = {},
+    onTimeRangeSelected: (LocalTime, LocalTime) -> Unit = { _, _ -> },
     onDateChange: (LocalDate) -> Unit = {},
     onStartTimeChange: (LocalTime) -> Unit = {},
     onEndTimeChange: (LocalTime) -> Unit = {},
@@ -129,8 +179,8 @@ fun NewRequestScreenContent(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.primary
+                    containerColor      = MaterialTheme.colorScheme.background,
+                    titleContentColor   = MaterialTheme.colorScheme.primary
                 )
             )
         }
@@ -148,39 +198,55 @@ fun NewRequestScreenContent(
                 if (isCompact) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         NewRequestFormFields(
-                            state = state,
-                            onTypeSelected = onTypeSelected,
-                            onSearchQueryChange = onSearchQueryChange,
-                            onSpaceSelected = onSpaceSelected,
-                            onEquipmentSelected = onEquipmentSelected,
-                            onDateChange = onDateChange,
-                            onStartTimeChange = onStartTimeChange,
-                            onEndTimeChange = onEndTimeChange,
-                            onCompanionsChange = onCompanionsChange,
-                            onPurposeChange = onPurposeChange,
-                            onSubmit = onSubmit
+                            state                 = state,
+                            onTypeSelected        = onTypeSelected,
+                            onSearchQueryChange   = onSearchQueryChange,
+                            onSearchFocused       = onSearchFocused,
+                            onSpaceSelected       = onSpaceSelected,
+                            onEquipmentSelected   = onEquipmentSelected,
+                            onInputModeChanged    = onInputModeChanged,
+                            onCalendarModeChanged = onCalendarModeChanged,
+                            onMonthChanged        = onMonthChanged,
+                            onWeekChanged         = onWeekChanged,
+                            onDayTappedInMonthly  = onDayTappedInMonthly,
+                            onDaySelectedInWeekly = onDaySelectedInWeekly,
+                            onTimeRangeSelected   = onTimeRangeSelected,
+                            onDateChange          = onDateChange,
+                            onStartTimeChange     = onStartTimeChange,
+                            onEndTimeChange       = onEndTimeChange,
+                            onCompanionsChange    = onCompanionsChange,
+                            onPurposeChange       = onPurposeChange,
+                            onSubmit              = onSubmit
                         )
                     }
                 } else {
                     Card(
-                        modifier = Modifier.widthIn(max = 600.dp),
-                        shape = RoundedCornerShape(24.dp),
+                        modifier  = Modifier.widthIn(max = 660.dp),
+                        shape     = RoundedCornerShape(24.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        colors    = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(modifier = Modifier.padding(32.dp)) {
                             NewRequestFormFields(
-                                state = state,
-                                onTypeSelected = onTypeSelected,
-                                onSearchQueryChange = onSearchQueryChange,
-                                onSpaceSelected = onSpaceSelected,
-                                onEquipmentSelected = onEquipmentSelected,
-                                onDateChange = onDateChange,
-                                onStartTimeChange = onStartTimeChange,
-                                onEndTimeChange = onEndTimeChange,
-                                onCompanionsChange = onCompanionsChange,
-                                onPurposeChange = onPurposeChange,
-                                onSubmit = onSubmit
+                                state                 = state,
+                                onTypeSelected        = onTypeSelected,
+                                onSearchQueryChange   = onSearchQueryChange,
+                                onSearchFocused       = onSearchFocused,
+                                onSpaceSelected       = onSpaceSelected,
+                                onEquipmentSelected   = onEquipmentSelected,
+                                onInputModeChanged    = onInputModeChanged,
+                                onCalendarModeChanged = onCalendarModeChanged,
+                                onMonthChanged        = onMonthChanged,
+                                onWeekChanged         = onWeekChanged,
+                                onDayTappedInMonthly  = onDayTappedInMonthly,
+                                onDaySelectedInWeekly = onDaySelectedInWeekly,
+                                onTimeRangeSelected   = onTimeRangeSelected,
+                                onDateChange          = onDateChange,
+                                onStartTimeChange     = onStartTimeChange,
+                                onEndTimeChange       = onEndTimeChange,
+                                onCompanionsChange    = onCompanionsChange,
+                                onPurposeChange       = onPurposeChange,
+                                onSubmit              = onSubmit
                             )
                         }
                     }
@@ -205,13 +271,22 @@ fun NewRequestScreenContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewRequestFormFields(
     state: CreateReservationUiState,
     onTypeSelected: (ResourceType) -> Unit,
     onSearchQueryChange: (String) -> Unit,
+    onSearchFocused: () -> Unit = {},
     onSpaceSelected: (SpaceDto) -> Unit,
     onEquipmentSelected: (EquipmentDto) -> Unit,
+    onInputModeChanged: (InputMode) -> Unit = {},
+    onCalendarModeChanged: (CalendarMode) -> Unit = {},
+    onMonthChanged: (YearMonth) -> Unit = {},
+    onWeekChanged: (LocalDate) -> Unit = {},
+    onDayTappedInMonthly: (LocalDate) -> Unit = {},
+    onDaySelectedInWeekly: (LocalDate) -> Unit = {},
+    onTimeRangeSelected: (LocalTime, LocalTime) -> Unit = { _, _ -> },
     onDateChange: (LocalDate) -> Unit,
     onStartTimeChange: (LocalTime) -> Unit,
     onEndTimeChange: (LocalTime) -> Unit,
@@ -219,12 +294,13 @@ fun NewRequestFormFields(
     onPurposeChange: (String) -> Unit,
     onSubmit: () -> Unit
 ) {
+    // ── Resource type tabs ────────────────────────────────────────────────────
     Text(
-        text = "TIPO DE RECURSO *",
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        text       = "TIPO DE RECURSO *",
+        style      = MaterialTheme.typography.labelSmall,
+        color      = MaterialTheme.colorScheme.onSurfaceVariant,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 8.dp)
+        modifier   = Modifier.padding(bottom = 8.dp)
     )
     ResourceTypeTabs(
         selectedType = state.resourceType,
@@ -233,76 +309,205 @@ fun NewRequestFormFields(
 
     Spacer(modifier = Modifier.height(24.dp))
 
+    // ── Resource search ───────────────────────────────────────────────────────
     ResourceSelectionSection(
-        searchQuery = state.searchQuery,
+        searchQuery        = state.searchQuery,
         onSearchQueryChange = onSearchQueryChange,
-        searchResults = state.searchResults,
-        isSearching = state.isSearching,
-        selectedSpace = state.selectedSpace,
-        selectedEquipment = state.selectedEquipment,
-        onSpaceSelected = onSpaceSelected,
+        onFocusGained      = onSearchFocused,
+        searchResults      = state.searchResults,
+        isSearching        = state.isSearching,
+        selectedSpace      = state.selectedSpace,
+        selectedEquipment  = state.selectedEquipment,
+        onSpaceSelected    = onSpaceSelected,
         onEquipmentSelected = onEquipmentSelected
     )
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    DatePickerField(
-        date = state.date,
-        onDateChange = onDateChange
-    )
+    // ── Date & Time mode toggle (shown once a resource is selected) ───────────
+    val resourceSelected = state.selectedSpace != null || state.selectedEquipment != null
 
-    Spacer(modifier = Modifier.height(24.dp))
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    AnimatedVisibility(
+        visible = resourceSelected,
+        enter   = fadeIn() + expandVertically(),
+        exit    = fadeOut() + shrinkVertically()
     ) {
-        TimePickerField(
-            time = state.startTime,
-            label = "HORARIO *",
-            onTimeChange = onStartTimeChange,
-            modifier = Modifier.weight(1f)
-        )
-        
-        TimePickerField(
-            time = state.endTime,
-            label = "HASTA *",
-            onTimeChange = onEndTimeChange,
-            modifier = Modifier.weight(1f)
-        )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text       = "FECHA Y HORARIO *",
+                style      = MaterialTheme.typography.labelSmall,
+                color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold,
+                modifier   = Modifier.padding(bottom = 8.dp)
+            )
+
+            // Mode segmented button
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                SegmentedButton(
+                    selected = state.inputMode == InputMode.CALENDAR,
+                    onClick  = { onInputModeChanged(InputMode.CALENDAR) },
+                    shape    = SegmentedButtonDefaults.itemShape(0, 2),
+                    icon     = { Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                ) {
+                    Text("Calendario")
+                }
+                SegmentedButton(
+                    selected = state.inputMode == InputMode.PICKERS,
+                    onClick  = { onInputModeChanged(InputMode.PICKERS) },
+                    shape    = SegmentedButtonDefaults.itemShape(1, 2),
+                    icon     = { Icon(Icons.Default.EditCalendar, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                ) {
+                    Text("Manual")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // ── Calendar mode ─────────────────────────────────────────────────
+            AnimatedVisibility(
+                visible = state.inputMode == InputMode.CALENDAR,
+                enter   = fadeIn() + expandVertically(),
+                exit    = fadeOut() + shrinkVertically()
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    AvailabilityCalendarPicker(
+                        calendarMode          = state.calendarMode,
+                        currentMonth          = state.calendarMonth,
+                        weekStart             = state.calendarWeekStart,
+                        availability          = state.availability,
+                        selectedDate          = state.date,
+                        isLoadingCalendar     = state.isLoadingCalendar,
+                        onCalendarModeChanged = onCalendarModeChanged,
+                        onMonthChanged        = onMonthChanged,
+                        onWeekChanged         = onWeekChanged,
+                        onDayTappedInMonthly  = onDayTappedInMonthly,
+                        onDaySelectedInWeekly = onDaySelectedInWeekly,
+                        minDate              = state.earliestSelectableDateTime.toLocalDate(),
+                        availableDates       = state.availableDatesForPicker.takeIf { it.isNotEmpty() }
+                    )
+
+                    // Block selector (shown when a date is picked in weekly view)
+                    AnimatedVisibility(
+                        visible = state.date != null && state.inputMode == InputMode.CALENDAR,
+                        enter   = fadeIn() + expandVertically(),
+                        exit    = fadeOut() + shrinkVertically()
+                    ) {
+                        Column {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            val selectedDayItem = state.availability.find { it.date == state.date }
+                            val isLimitDay = state.date == state.earliestSelectableDateTime.toLocalDate()
+                            TimeRangePicker(
+                                availableBlocks = selectedDayItem?.availableBlocks ?: emptyList(),
+                                occupiedBlocks  = selectedDayItem?.occupiedBlocks  ?: emptyList(),
+                                selectedStart   = state.startTime,
+                                selectedEnd     = state.endTime,
+                                onRangeChanged  = { start, end -> onTimeRangeSelected(start, end) },
+                                minTime         = if (isLimitDay) state.earliestSelectableDateTime.toLocalTime() else null
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ── Picker mode ───────────────────────────────────────────────────
+            AnimatedVisibility(
+                visible = state.inputMode == InputMode.PICKERS,
+                enter   = fadeIn() + expandVertically(),
+                exit    = fadeOut() + shrinkVertically()
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // Lead-time info banner
+                    if (state.bookInAdvanceDuration != null && state.bookInAdvanceDuration.toMinutes() > 0) {
+                        val hours = state.bookInAdvanceDuration.toHours()
+                        val mins  = state.bookInAdvanceDuration.toMinutes() % 60
+                        val label = when {
+                            hours > 0 && mins > 0 -> "${hours}h ${mins}min"
+                            hours > 0              -> "${hours}h"
+                            else                   -> "${mins}min"
+                        }
+                        Text(
+                            text     = "⏱ Este recurso requiere reservarse con al menos $label de anticipación.",
+                            style    = MaterialTheme.typography.bodySmall,
+                            color    = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+
+                    val minDate = state.earliestSelectableDateTime.toLocalDate()
+
+                    DatePickerField(
+                        date           = state.date,
+                        onDateChange   = onDateChange,
+                        minDate        = minDate,
+                        selectableDates = state.availableDatesForPicker
+                            .takeIf { it.isNotEmpty() }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Earliest selectable time: combine past restriction + lead time
+                    val isToday   = state.date == java.time.LocalDate.now()
+                    val minStart  = if (isToday) state.earliestSelectableDateTime.toLocalTime() else null
+
+                    Row(
+                        modifier              = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        TimePickerField(
+                            time          = state.startTime,
+                            label         = "HORA INICIO *",
+                            minTime       = minStart,
+                            allowedRanges = state.allowedTimeRangesForDate,
+                            onTimeChange  = onStartTimeChange,
+                            modifier      = Modifier.weight(1f)
+                        )
+                        TimePickerField(
+                            time          = state.endTime,
+                            label         = "HORA FIN *",
+                            minTime       = state.startTime?.plusMinutes(30),
+                            allowedRanges = state.allowedTimeRangesForDate,
+                            onTimeChange  = onEndTimeChange,
+                            modifier      = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
     }
 
-    Spacer(modifier = Modifier.height(24.dp))
-
+    // ── Companions ────────────────────────────────────────────────────────────
     OutlinedTextField(
-        value = state.companions,
+        value         = state.companions,
         onValueChange = onCompanionsChange,
-        label = { Text("NÚMERO DE ASISTENTES *") },
-        placeholder = { Text("Ej: 15") },
-        leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = "Asistentes") },
+        label         = { Text("NÚMERO DE ASISTENTES *") },
+        placeholder   = { Text("Ej: 15") },
+        leadingIcon   = { Icon(Icons.Outlined.Person, contentDescription = "Asistentes") },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
+        shape         = RoundedCornerShape(12.dp),
+        colors        = OutlinedTextFieldDefaults.colors(
             unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-            focusedBorderColor = MaterialTheme.colorScheme.primary
+            focusedBorderColor   = MaterialTheme.colorScheme.primary
         ),
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true
+        modifier      = Modifier.fillMaxWidth(),
+        singleLine    = true
     )
 
     Spacer(modifier = Modifier.height(24.dp))
 
+    // ── Purpose ───────────────────────────────────────────────────────────────
     OutlinedTextField(
-        value = state.purpose,
+        value         = state.purpose,
         onValueChange = onPurposeChange,
-        label = { Text("PROPÓSITO DE LA RESERVA *") },
-        placeholder = { Text("Describe el propósito...") },
-        shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
+        label         = { Text("PROPÓSITO DE LA RESERVA *") },
+        placeholder   = { Text("Describe el propósito...") },
+        shape         = RoundedCornerShape(12.dp),
+        colors        = OutlinedTextFieldDefaults.colors(
             unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-            focusedBorderColor = MaterialTheme.colorScheme.primary
+            focusedBorderColor   = MaterialTheme.colorScheme.primary
         ),
-        modifier = Modifier
+        modifier      = Modifier
             .fillMaxWidth()
             .height(120.dp),
         maxLines = 4
@@ -310,18 +515,17 @@ fun NewRequestFormFields(
 
     Spacer(modifier = Modifier.height(48.dp))
 
+    // ── Submit ────────────────────────────────────────────────────────────────
     Button(
-        onClick = onSubmit,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        shape = MaterialTheme.shapes.large,
-        enabled = !state.isLoading
+        onClick  = onSubmit,
+        modifier = Modifier.fillMaxWidth().height(56.dp),
+        shape    = MaterialTheme.shapes.large,
+        enabled  = !state.isLoading
     ) {
         if (state.isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.size(24.dp),
-                color = MaterialTheme.colorScheme.onPrimary,
+                color    = MaterialTheme.colorScheme.onPrimary,
                 strokeWidth = 2.dp
             )
         } else {
@@ -330,7 +534,7 @@ fun NewRequestFormFields(
             Text("Enviar Solicitud", fontWeight = FontWeight.SemiBold)
         }
     }
-    
+
     Spacer(modifier = Modifier.height(16.dp))
 }
 
@@ -341,19 +545,18 @@ fun NewRequestScreenPreview() {
         NewRequestScreenContent(
             state = CreateReservationUiState(
                 resourceType = ResourceType.SPACE,
-                searchQuery = "Sala de Juntas A",
+                searchQuery  = "Sala de Juntas A",
                 selectedSpace = SpaceDto(
-                    id = 1L, name = "Sala de Juntas B",
-                    status = ReservableStatus.AVAILABLE,
-                    capacity = 10,
+                    id                   = 1L,
+                    name                 = "Sala de Juntas B",
+                    status               = ReservableStatus.AVAILABLE,
+                    capacity             = 10,
                     availableForStudents = true,
                     bookInAdvanceDuration = 1.hours.toJavaDuration()
                 ),
-                date = LocalDate.of(2026, 3, 27),
-                startTime = LocalTime.of(10, 0),
-                endTime = LocalTime.of(12, 0),
-                companions = "15",
-                purpose = "Reunión de avance"
+                inputMode     = InputMode.CALENDAR,
+                calendarMode  = CalendarMode.MONTHLY,
+                calendarMonth = YearMonth.now()
             )
         )
     }

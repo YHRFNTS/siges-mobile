@@ -1,5 +1,6 @@
 package dev.spiffocode.sigesmobile.data.remote.api
 
+import dev.spiffocode.sigesmobile.data.remote.dto.ApproveReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.CancelReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.CreateReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.DayAvailabilityItem
@@ -21,6 +22,7 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import java.time.LocalDate
 
+@JvmSuppressWildcards
 interface ReservationApiService {
 
     @GET("reservations")
@@ -33,9 +35,9 @@ interface ReservationApiService {
         @Query("date")           date: LocalDate?,
         @Query("dateFrom")       dateFrom: LocalDate?,
         @Query("dateTo")         dateTo: LocalDate?,
-        @Query("status")         status: ReservationStatus?,      // ReservationStatus.name
+        @Query("statuses")         statuses: List<ReservationStatus>?,
         @Query("reservableId")   reservableId: Long?,
-        @Query("type")           type: ReservationType?         // GROUP | SINGLE
+        @Query("type")           type: ReservationType?
     ): Response<PageReservationResponse>
 
     @GET("reservations/{id}")
@@ -50,7 +52,8 @@ interface ReservationApiService {
 
     @PATCH("reservations/{id}/approve")
     suspend fun approveReservation(
-        @Path("id") id: Long
+        @Path("id") id: Long,
+        @Body request: ApproveReservationRequest
     ): Response<ReservationResponse>
 
     @PATCH("reservations/{id}/reject")

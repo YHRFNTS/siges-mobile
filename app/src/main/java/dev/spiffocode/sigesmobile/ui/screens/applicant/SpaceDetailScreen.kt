@@ -57,7 +57,8 @@ fun SpaceDetailScreen(
     spaceId: Long,
     viewModel: SpaceDetailViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
-    onNavigateToReserve: () -> Unit
+    onNavigateToReserve: (spaceId: Long, name: String) -> Unit,
+    onNavigateToCalendar: (spaceId: Long, name: String) -> Unit = { _, _ -> }
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -66,10 +67,11 @@ fun SpaceDetailScreen(
     }
 
     SpaceDetailScreenContent(
-        windowSizeClass = windowSizeClass,
-        state = uiState,
-        onNavigateBack = onNavigateBack,
-        onNavigateToReserve = onNavigateToReserve,
+        windowSizeClass      = windowSizeClass,
+        state                = uiState,
+        onNavigateBack       = onNavigateBack,
+        onNavigateToReserve  = { uiState.space?.let { onNavigateToReserve(it.id, it.name) } },
+        onNavigateToCalendar = { uiState.space?.let { onNavigateToCalendar(it.id, it.name) } },
     )
 }
 
@@ -79,7 +81,8 @@ fun SpaceDetailScreenContent(
     windowSizeClass: WindowSizeClass? = null,
     state: SpaceDetailUiState,
     onNavigateBack: () -> Unit = {},
-    onNavigateToReserve: () -> Unit = {}
+    onNavigateToReserve: () -> Unit = {},
+    onNavigateToCalendar: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -121,7 +124,7 @@ fun SpaceDetailScreenContent(
                             SpaceDetailLeftSection(space)
                         }
                         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                            SpaceDetailRightSection(space, onNavigateToReserve)
+                            SpaceDetailRightSection(space, onNavigateToReserve, onNavigateToCalendar)
                         }
                     }
                 } else {
@@ -133,7 +136,7 @@ fun SpaceDetailScreenContent(
                             .padding(24.dp)
                     ) {
                         SpaceDetailLeftSection(space)
-                        SpaceDetailRightSection(space, onNavigateToReserve)
+                        SpaceDetailRightSection(space, onNavigateToReserve, onNavigateToCalendar)
                     }
                 }
             }
@@ -168,7 +171,11 @@ fun SpaceDetailLeftSection(space: SpaceDto) {
 }
 
 @Composable
-fun SpaceDetailRightSection(space: SpaceDto, onNavigateToReserve: () -> Unit) {
+fun SpaceDetailRightSection(
+    space: SpaceDto,
+    onNavigateToReserve: () -> Unit,
+    onNavigateToCalendar: () -> Unit = {}
+) {
     if (!space.description.isNullOrBlank()) {
         SectionTitle("DESCRIPCIÓN")
         Text(
@@ -191,6 +198,17 @@ fun SpaceDetailRightSection(space: SpaceDto, onNavigateToReserve: () -> Unit) {
     }
 
     Spacer(modifier = Modifier.height(48.dp))
+
+    Button(
+        onClick = onNavigateToCalendar,
+        modifier = Modifier.fillMaxWidth().height(50.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.outlinedButtonColors()
+    ) {
+        Text("Ver Disponibilidad", fontWeight = FontWeight.SemiBold)
+    }
+
+    Spacer(modifier = Modifier.height(12.dp))
 
     Button(
         onClick = onNavigateToReserve,

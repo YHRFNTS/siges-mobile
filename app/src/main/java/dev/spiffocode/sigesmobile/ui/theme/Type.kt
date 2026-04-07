@@ -8,9 +8,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import dev.spiffocode.sigesmobile.R
 
+
 val dmSerifDisplay = FontFamily(
-    Font(R.font.dm_serif_display, FontWeight.Normal
-    )
+    Font(resId = R.font.dm_serif_display, weight = FontWeight.Normal),
+    Font(resId = R.font.dm_serif_display, weight = FontWeight.Bold),
+    Font(resId = R.font.dm_serif_display, weight = FontWeight.ExtraBold)
 )
 
 // Set of Material typography styles to start with

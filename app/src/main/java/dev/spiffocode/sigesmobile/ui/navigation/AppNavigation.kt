@@ -1,5 +1,8 @@
 package dev.spiffocode.sigesmobile.ui.navigation
 
+import android.app.Activity
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -18,8 +21,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -32,10 +39,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import dev.spiffocode.sigesmobile.data.local.SessionManager
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableType
 import dev.spiffocode.sigesmobile.ui.screens.admin.AdminHomeScreen
 import dev.spiffocode.sigesmobile.ui.screens.admin.AdminReservationListScreen
 import dev.spiffocode.sigesmobile.ui.screens.admin.AdminReviewDetailScreen
 import dev.spiffocode.sigesmobile.ui.screens.applicant.ApplicantHomeScreen
+import dev.spiffocode.sigesmobile.ui.screens.applicant.RescheduleScreen
+import dev.spiffocode.sigesmobile.ui.screens.applicant.ReservationDetailScreen
+import dev.spiffocode.sigesmobile.ui.screens.applicant.ResourceCalendarScreen
 import dev.spiffocode.sigesmobile.ui.screens.login.LoginScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ExpiredLinkScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ForgotPasswordScreen
@@ -62,15 +73,22 @@ object Routes {
     fun availability(showBack: Boolean) = "availability?showBackButton=$showBack"
     const val MY_REQUESTS    = "requests?showBackButton={showBackButton}"
     fun myRequests(showBack: Boolean) = "requests?showBackButton=$showBack"
-    const val NEW_REQUEST    = "new_request"
+    const val NEW_REQUEST    = "new_request?reservableId={reservableId}&type={type}&name={name}&date={date}&startTime={startTime}&endTime={endTime}"
+    fun newRequest() = "new_request?reservableId=&type=&name=&date=&startTime=&endTime="
+    fun newRequestPrefilled(
+        reservableId: Long, type: String, name: String, date: String, startTime: String, endTime: String
+    ) = "new_request?reservableId=$reservableId&type=$type&name=${android.net.Uri.encode(name)}&date=$date&startTime=$startTime&endTime=$endTime"
+    const val RESOURCE_CALENDAR = "resource_calendar/{reservableId}/{type}/{name}"
+    fun resourceCalendar(reservableId: Long, type: String, name: String) =
+        "resource_calendar/$reservableId/$type/${android.net.Uri.encode(name)}"
     const val SPACE_DETAIL   = "space_detail/{id}"
     const val EQUIPMENT_DETAIL = "equipment_detail/{id}"
     fun spaceDetail(id: Long) = "space_detail/$id"
     fun equipmentDetail(id: Long) = "equipment_detail/$id"
     const val REQUEST_DETAIL = "request_detail/{reservationId}"
-    const val EDIT_REQUEST   = "edit_request/{reservationId}"
+    const val RESCHEDULE_REQUEST = "reschedule_request/{reservationId}"
     fun requestDetail(id: Long) = "request_detail/$id"
-    fun editRequest(id: Long)   = "edit_request/$id"
+    fun rescheduleRequest(id: Long) = "reschedule_request/$id"
 
     const val ADMIN_HOME           = "admin_home"
     const val ADMIN_ALL_REQUESTS   = "admin_all_requests"
@@ -117,12 +135,40 @@ fun AppNavigation(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+ 
+    // ── Double Back to Exit ──────────────────────────────────────────────────
+    val context = LocalContext.current
+    var lastBackPressTime by remember { mutableStateOf(0L) }
+    
+    val topLevelRoutes = setOf(
+        Routes.HOME, Routes.AVAILABILITY.substringBefore("?"), 
+        Routes.MY_REQUESTS.substringBefore("?"), Routes.PROFILE,
+        Routes.ADMIN_HOME, Routes.ADMIN_ALL_REQUESTS, Routes.LOGIN
+    )
+    val isTopLevel = currentRoute?.substringBefore("?") in topLevelRoutes
+
+    BackHandler(enabled = isTopLevel) {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastBackPressTime < 2000) {
+            (context as? Activity)?.finish()
+        } else {
+            lastBackPressTime = currentTime
+            Toast.makeText(context, "Presiona de nuevo para salir", Toast.LENGTH_SHORT).show()
+        }
+    }
+ 
+    LaunchedEffect(Unit) {
+        if (sessionManager.isLoggedIn && !sessionManager.rememberMe) {
+            sessionManager.clearSession()
+        }
+    }
 
     val isAdmin = sessionManager.role == "ADMIN"
     val showBottomBar = currentRoute != null &&
             noBottomBarPrefixes.none { currentRoute.startsWith(it) }
 
     val startDestination = when {
+        sessionManager.isLoggedIn && !sessionManager.rememberMe -> Routes.LOGIN
         sessionManager.isLoggedIn && isAdmin -> Routes.ADMIN_HOME
         sessionManager.isLoggedIn            -> Routes.HOME
         else                                 -> Routes.LOGIN
@@ -234,9 +280,17 @@ fun AppNavigation(
                     windowSizeClass          = windowSizeClass,
                     viewModel                = hiltViewModel(),
                     onNavigateToAvailability = { navController.navigate(Routes.availability(true)) },
-                    onNavigateToNewRequest   = { navController.navigate(Routes.NEW_REQUEST) },
+                    onNavigateToNewRequest   = { navController.navigate(Routes.newRequest()) },
                     onNavigateToMyRequests   = { navController.navigate(Routes.myRequests(true)) },
-                    onNavigateToDetail       = { id -> navController.navigate(Routes.requestDetail(id)) }
+                    onNavigateToDetail       = { id -> navController.navigate(Routes.requestDetail(id)) },
+                    onNavigateToResourceDetail = {id, type ->
+                        when(type){
+                            ReservableType.SPACE ->
+                                navController.navigate(Routes.spaceDetail(id))
+                            ReservableType.EQUIPMENT ->
+                                navController.navigate(Routes.equipmentDetail(id))
+                        }
+                    }
                 )
             }
 
@@ -265,17 +319,60 @@ fun AppNavigation(
                     showBackButton = showBack,
                     viewModel = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToNewRequest = { navController.navigate(Routes.NEW_REQUEST) },
+                    onNavigateToNewRequest = { navController.navigate(Routes.newRequest()) },
                     onNavigateToDetail = { id -> navController.navigate(Routes.requestDetail(id)) }
                 )
             }
 
-            composable(Routes.NEW_REQUEST) {
+            composable(
+                route     = Routes.NEW_REQUEST,
+                arguments = listOf(
+                    navArgument("reservableId") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("type")         { type = NavType.StringType; defaultValue = "" },
+                    navArgument("name")         { type = NavType.StringType; defaultValue = "" },
+                    navArgument("date")         { type = NavType.StringType; defaultValue = "" },
+                    navArgument("startTime")    { type = NavType.StringType; defaultValue = "" },
+                    navArgument("endTime")      { type = NavType.StringType; defaultValue = "" }
+                )
+            ) { backStack ->
+                val prefillResourceId = backStack.arguments?.getString("reservableId") ?: ""
+                val prefillType       = backStack.arguments?.getString("type")         ?: ""
+                val prefillDate      = backStack.arguments?.getString("date")      ?: ""
+                val prefillStartTime = backStack.arguments?.getString("startTime")  ?: ""
+                val prefillEndTime   = backStack.arguments?.getString("endTime")    ?: ""
                 dev.spiffocode.sigesmobile.ui.screens.applicant.NewRequestScreen(
-                    windowSizeClass = windowSizeClass,
-                    viewModel = hiltViewModel(),
+                    windowSizeClass  = windowSizeClass,
+                    viewModel        = hiltViewModel(),
+                    onNavigateBack   = { navController.popBackStack() },
+                    onNavigateToDetail = { id -> navController.navigate(Routes.requestDetail(id)) },
+                    prefillResourceId = prefillResourceId,
+                    prefillType       = prefillType,
+                    prefillDate      = prefillDate,
+                    prefillStartTime = prefillStartTime,
+                    prefillEndTime   = prefillEndTime
+                )
+            }
+
+            composable(
+                route     = Routes.RESOURCE_CALENDAR,
+                arguments = listOf(
+                    navArgument("reservableId") { type = NavType.LongType },
+                    navArgument("type")         { type = NavType.StringType },
+                    navArgument("name")         { type = NavType.StringType; defaultValue = "" }
+                )
+            ) { backStack ->
+                val reservableId   = backStack.arguments?.getLong("reservableId") ?: return@composable
+                val type           = backStack.arguments?.getString("type") ?: "SPACE"
+                val reservableName = backStack.arguments?.getString("name") ?: ""
+                ResourceCalendarScreen(
+                    reservableId   = reservableId,
+                    type           = type,
+                    reservableName = android.net.Uri.decode(reservableName),
+                    viewModel      = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToDetail = { id -> navController.navigate(Routes.requestDetail(id)) }
+                    onNavigateToNewRequest = { id, date, start, end ->
+                        navController.navigate(Routes.newRequestPrefilled(id, type, android.net.Uri.decode(reservableName), date, start, end))
+                    }
                 )
             }
 
@@ -285,10 +382,11 @@ fun AppNavigation(
             ) { backStack ->
                 val spaceId = backStack.arguments?.getLong("id") ?: return@composable
                 dev.spiffocode.sigesmobile.ui.screens.applicant.SpaceDetailScreen(
-                    windowSizeClass = windowSizeClass,
-                    spaceId = spaceId,
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToReserve = { navController.navigate(Routes.NEW_REQUEST) }
+                    windowSizeClass      = windowSizeClass,
+                    spaceId              = spaceId,
+                    onNavigateBack       = { navController.popBackStack() },
+                    onNavigateToReserve  = { id, name -> navController.navigate(Routes.newRequestPrefilled(id, "SPACE", name, "", "", "")) },
+                    onNavigateToCalendar = { id, name -> navController.navigate(Routes.resourceCalendar(id, "SPACE", name)) }
                 )
             }
 
@@ -296,12 +394,13 @@ fun AppNavigation(
                 route     = Routes.EQUIPMENT_DETAIL,
                 arguments = listOf(navArgument("id") { type = NavType.LongType })
             ) { backStack ->
-                val equipmentId = backStack.arguments?.getLong("id") ?: return@composable
+                val equipmentId   = backStack.arguments?.getLong("id") ?: return@composable
                 dev.spiffocode.sigesmobile.ui.screens.applicant.EquipmentDetailScreen(
-                    windowSizeClass = windowSizeClass,
-                    equipmentId = equipmentId,
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToReserve = { navController.navigate(Routes.NEW_REQUEST) }
+                    windowSizeClass      = windowSizeClass,
+                    equipmentId          = equipmentId,
+                    onNavigateBack       = { navController.popBackStack() },
+                    onNavigateToReserve  = { id, name -> navController.navigate(Routes.newRequestPrefilled(id, "EQUIPMENT", name, "", "", "")) },
+                    onNavigateToCalendar = { id, name -> navController.navigate(Routes.resourceCalendar(id, "EQUIPMENT", name)) }
                 )
             }
 
@@ -310,20 +409,20 @@ fun AppNavigation(
                 arguments = listOf(navArgument("reservationId") { type = NavType.LongType })
             ) { backStack ->
                 val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
-                dev.spiffocode.sigesmobile.ui.screens.applicant.ReservationDetailScreen(
+                ReservationDetailScreen(
                     windowSizeClass = windowSizeClass,
                     reservationId = reservationId,
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToEdit = { id -> navController.navigate(Routes.editRequest(id)) }
+                    onNavigateToEdit = { id -> navController.navigate(Routes.rescheduleRequest(id)) }
                 )
             }
 
             composable(
-                route     = Routes.EDIT_REQUEST,
+                route     = Routes.RESCHEDULE_REQUEST,
                 arguments = listOf(navArgument("reservationId") { type = NavType.LongType })
             ) { backStack ->
                 val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
-                dev.spiffocode.sigesmobile.ui.screens.applicant.EditReservationScreen(
+                RescheduleScreen(
                     windowSizeClass = windowSizeClass,
                     reservationId = reservationId,
                     onNavigateBack = { navController.popBackStack() },

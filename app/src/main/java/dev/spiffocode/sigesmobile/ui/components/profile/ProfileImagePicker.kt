@@ -45,7 +45,7 @@ import java.io.InputStream
 @Composable
 public fun ProfileImagePicker(
     fallbackInitial: Char? = '?',
-    profilePictureUrl: String?,
+    profilePictureUrl: Any?,
     isUploadingPicture: Boolean,
     onUploadPicture: (ByteArray) -> Unit = {}
 ){
@@ -134,7 +134,7 @@ public fun ProfileImagePicker(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            if (!profilePictureUrl.isNullOrBlank()) {
+            if (profilePictureUrl != null) {
                 AsyncImage(
                     model = profilePictureUrl,
                     contentDescription = "Foto de perfil",

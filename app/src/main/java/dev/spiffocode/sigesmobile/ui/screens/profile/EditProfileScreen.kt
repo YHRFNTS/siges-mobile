@@ -109,8 +109,8 @@ fun EditProfileScreenContent(
                 Spacer(modifier = Modifier.height(24.dp))
                 ProfileImagePicker(
                     fallbackInitial = state.firstName.firstOrNull()?.uppercase()?.first(),
-                    profilePictureUrl = state.profilePictureUrl,
-                    isUploadingPicture = state.isUploadingPicture,
+                    profilePictureUrl = state.pendingPictureBytes ?: state.profilePictureUrl,
+                    isUploadingPicture = state.isLoading,
                     onUploadPicture = onUploadProfilePicture
                 )
 

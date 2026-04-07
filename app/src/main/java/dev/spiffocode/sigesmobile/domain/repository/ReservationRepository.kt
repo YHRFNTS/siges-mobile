@@ -2,6 +2,7 @@ package dev.spiffocode.sigesmobile.domain.repository
 
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.data.remote.api.ReservationApiService
+import dev.spiffocode.sigesmobile.data.remote.dto.ApproveReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.CancelReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.CreateReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.DayAvailabilityItem
@@ -34,7 +35,7 @@ class ReservationRepository @Inject constructor(
         date: LocalDate? = null,
         dateFrom: LocalDate? = null,
         dateTo: LocalDate? = null,
-        status: ReservationStatus? = null,
+        statuses: List<ReservationStatus>? = null,
         reservableId: Long? = null,
         type: ReservationType? = null
     ): NetworkResult<PageReservationResponse> = safeApiCall {
@@ -47,7 +48,7 @@ class ReservationRepository @Inject constructor(
             date           = date,
             dateFrom       = dateFrom,
             dateTo         = dateTo,
-            status         = status,
+            statuses       = statuses,
             reservableId   = reservableId,
             type           = type
         )
@@ -62,15 +63,16 @@ class ReservationRepository @Inject constructor(
         startTime: LocalTime,
         endTime: LocalTime,
         type: ReservationType,
-        companions: Int? = null
+        companions: Int? = null,
+        reason: String?
     ): NetworkResult<ReservationResponse> = safeApiCall {
         api.createReservation(
-            CreateReservationRequest(reservableId, date, startTime, endTime, type, companions)
+            CreateReservationRequest(reservableId, date, startTime, endTime, type, companions, reason)
         )
     }
 
-    suspend fun approveReservation(id: Long): NetworkResult<ReservationResponse> =
-        safeApiCall { api.approveReservation(id) }
+    suspend fun approveReservation(id: Long, observation: String?): NetworkResult<ReservationResponse> =
+        safeApiCall { api.approveReservation(id, ApproveReservationRequest(observation)) }
 
     suspend fun rejectReservation(id: Long, reason: String): NetworkResult<ReservationResponse> =
         safeApiCall { api.rejectReservation(id, RejectReservationRequest(reason)) }
