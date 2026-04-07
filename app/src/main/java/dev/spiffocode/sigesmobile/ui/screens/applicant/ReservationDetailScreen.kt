@@ -15,7 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -283,9 +283,13 @@ fun ReservationDetailRightSection(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
-                Icon(Icons.Default.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary)
+                Icon(
+                    imageVector = Icons.Filled.Update,
+                    contentDescription = "Reagendar",
+                    tint = MaterialTheme.colorScheme.primary
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Editar", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Text("Reagendar", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
 
             Button(

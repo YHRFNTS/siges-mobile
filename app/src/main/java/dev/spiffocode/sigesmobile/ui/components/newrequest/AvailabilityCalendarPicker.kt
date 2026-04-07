@@ -75,7 +75,9 @@ fun AvailabilityCalendarPicker(
     onWeekChanged: (LocalDate) -> Unit,
     onDayTappedInMonthly: (LocalDate) -> Unit,
     onDaySelectedInWeekly: (LocalDate) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    minDate: LocalDate = LocalDate.now(),
+    availableDates: Set<LocalDate>? = null
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
 
@@ -107,20 +109,24 @@ fun AvailabilityCalendarPicker(
         } else {
             when (calendarMode) {
                 CalendarMode.MONTHLY -> MonthCalendar(
-                    currentMonth  = currentMonth,
-                    availability  = availability,
-                    selectedDate  = selectedDate,
-                    onMonthPrev   = { onMonthChanged(currentMonth.minusMonths(1)) },
-                    onMonthNext   = { onMonthChanged(currentMonth.plusMonths(1)) },
-                    onDayTapped   = onDayTappedInMonthly
+                    currentMonth    = currentMonth,
+                    availability    = availability,
+                    selectedDate    = selectedDate,
+                    onMonthPrev     = { onMonthChanged(currentMonth.minusMonths(1)) },
+                    onMonthNext     = { onMonthChanged(currentMonth.plusMonths(1)) },
+                    onDayTapped      = onDayTappedInMonthly,
+                    minDate         = minDate,
+                    availableDates  = availableDates
                 )
                 CalendarMode.WEEKLY -> WeekCalendar(
-                    weekStart     = weekStart,
-                    availability  = availability,
-                    selectedDate  = selectedDate,
-                    onWeekPrev    = { onWeekChanged(weekStart.minusWeeks(1)) },
-                    onWeekNext    = { onWeekChanged(weekStart.plusWeeks(1)) },
-                    onDaySelected = onDaySelectedInWeekly
+                    weekStart       = weekStart,
+                    availability    = availability,
+                    selectedDate    = selectedDate,
+                    onWeekPrev      = { onWeekChanged(weekStart.minusWeeks(1)) },
+                    onWeekNext      = { onWeekChanged(weekStart.plusWeeks(1)) },
+                    onDaySelected   = onDaySelectedInWeekly,
+                    minDate         = minDate,
+                    availableDates  = availableDates
                 )
             }
         }
@@ -136,9 +142,10 @@ private fun MonthCalendar(
     selectedDate: LocalDate?,
     onMonthPrev:  () -> Unit,
     onMonthNext:  () -> Unit,
-    onDayTapped:  (LocalDate) -> Unit
+    onDayTapped:  (LocalDate) -> Unit,
+    minDate:      LocalDate,
+    availableDates: Set<LocalDate>?
 ) {
-    val today       = LocalDate.now()
     val firstDay    = currentMonth.atDay(1)
     val daysInMonth = currentMonth.lengthOfMonth()
     // Offset so the first day lands on the right column (Mon=0 … Sun=6)
@@ -201,17 +208,17 @@ private fun MonthCalendar(
                         val dayNum = cellIndex - startOffset + 1
                         cellIndex++
                         if (dayNum in 1..daysInMonth) {
-                            val date     = currentMonth.atDay(dayNum)
-                            val isPast   = date.isBefore(today)
-                            val hasSlots = date in availableSet
+                            val date       = currentMonth.atDay(dayNum)
+                            val isPast     = date.isBefore(minDate)
                             val isSelected = date == selectedDate
+                            val hasSlots   = (availableDates == null || date in availableDates) && availability.any { it.date == date && it.availableBlocks.isNotEmpty() }
 
                             DayCell(
                                 day        = dayNum,
                                 isAvailable = hasSlots && !isPast,
                                 isPast      = isPast,
                                 isSelected  = isSelected,
-                                isToday     = date == today,
+                                isToday     = date == LocalDate.now(),
                                 modifier    = Modifier.weight(1f),
                                 onClick     = if (hasSlots && !isPast) ({ onDayTapped(date) }) else null
                             )
@@ -278,9 +285,10 @@ fun WeekCalendar(
     selectedDate: LocalDate?,
     onWeekPrev: () -> Unit,
     onWeekNext: () -> Unit,
-    onDaySelected: (LocalDate) -> Unit
+    onDaySelected: (LocalDate) -> Unit,
+    minDate: LocalDate,
+    availableDates: Set<LocalDate>?
 ) {
-    val today = LocalDate.now()
     val days  = (0..6).map { weekStart.plusDays(it.toLong()) }
 
     Card(
@@ -319,9 +327,10 @@ fun WeekCalendar(
             ) {
                 days.forEach { date ->
                     val dayItem    = availability.find { it.date == date }
-                    val hasSlots   = (dayItem?.availableBlocks?.isNotEmpty() == true) && !date.isBefore(today)
+                    val isPast     = date.isBefore(minDate)
+                    val hasSlots   = (availableDates == null || date in availableDates) && (dayItem?.availableBlocks?.isNotEmpty() == true) && !isPast
                     val isSelected = date == selectedDate
-                    val isToday    = date == today
+                    val isToday    = date == LocalDate.now()
 
                     WeekDayChip(
                         date       = date,

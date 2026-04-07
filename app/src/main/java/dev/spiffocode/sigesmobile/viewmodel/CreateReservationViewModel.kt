@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.YearMonth
 import javax.inject.Inject
@@ -50,6 +51,16 @@ data class CreateReservationUiState(
     val availability: List<DayAvailabilityItem> = emptyList(),
     val isLoadingCalendar: Boolean = false,
     val selectedBlock: TimeBlockItem? = null,
+
+    // ── Date/time selection restrictions ─────────────────────────────────────
+    /** Lead-time from the selected resource (null = no restriction). */
+    val bookInAdvanceDuration: java.time.Duration? = null,
+    /** Earliest date+time the user may book (now + leadTime). Recomputed whenever the resource changes. */
+    val earliestSelectableDateTime: LocalDateTime = LocalDateTime.now(),
+    /** Dates that have at least one available block — used to restrict the manual date picker. */
+    val availableDatesForPicker: Set<LocalDate> = emptySet(),
+    /** Available time ranges for the currently selected date — used to restrict manual time pickers. */
+    val allowedTimeRangesForDate: List<Pair<LocalTime, LocalTime>> = emptyList(),
 
     // Group info & purpose
     val companions: String = "",
@@ -106,15 +117,35 @@ class CreateReservationViewModel @Inject constructor(
     }
 
     fun selectSpace(space: SpaceDto) {
+        val leadTime = space.bookInAdvanceDuration
         _uiState.update {
-            it.copy(selectedSpace = space, searchResults = emptyList(), searchQuery = space.name)
+            it.copy(
+                selectedSpace          = space,
+                searchResults          = emptyList(),
+                searchQuery            = space.name,
+                bookInAdvanceDuration  = leadTime,
+                earliestSelectableDateTime = computeEarliest(leadTime),
+                date                   = null,
+                startTime              = null,
+                endTime                = null
+            )
         }
         loadAvailability(space.id)
     }
 
     fun selectEquipment(equipment: EquipmentDto) {
+        val leadTime = equipment.spaceAttached?.bookInAdvanceDuration
         _uiState.update {
-            it.copy(selectedEquipment = equipment, searchResults = emptyList(), searchQuery = equipment.name)
+            it.copy(
+                selectedEquipment      = equipment,
+                searchResults          = emptyList(),
+                searchQuery            = equipment.name,
+                bookInAdvanceDuration  = leadTime,
+                earliestSelectableDateTime = computeEarliest(leadTime),
+                date                   = null,
+                startTime              = null,
+                endTime                = null
+            )
         }
         loadAvailability(equipment.id)
     }
@@ -169,7 +200,22 @@ class CreateReservationViewModel @Inject constructor(
 
     // ── Manual pickers ────────────────────────────────────────────────────────
 
-    fun onDateChange(value: LocalDate)      = _uiState.update { it.copy(date = value, error = null, selectedBlock = null) }
+    fun onDateChange(value: LocalDate) {
+        _uiState.update { state ->
+            val dayItem = state.availability.find { it.date == value }
+            val ranges  = dayItem?.availableBlocks
+                ?.map { it.start to it.end }
+                ?: emptyList()
+            state.copy(
+                date                    = value,
+                startTime               = null,
+                endTime                 = null,
+                selectedBlock           = null,
+                allowedTimeRangesForDate = ranges,
+                error                   = null
+            )
+        }
+    }
     fun onStartTimeChange(value: LocalTime) = _uiState.update { it.copy(startTime = value, error = null, selectedBlock = null) }
     fun onEndTimeChange(value: LocalTime)   = _uiState.update { it.copy(endTime = value, error = null, selectedBlock = null) }
     fun onCompanionsChange(value: String)   = _uiState.update { it.copy(companions = value, error = null) }
@@ -259,10 +305,26 @@ class CreateReservationViewModel @Inject constructor(
             _uiState.update { it.copy(isLoadingCalendar = true) }
             when (val result = reservationRepository.getCalendar(reservableId, from, to)) {
                 is NetworkResult.Success -> _uiState.update {
-                    // Merge with existing availability, replacing any date range we just fetched
                     val merged = (it.availability.filterNot { d -> d.date >= from && d.date <= to } + result.data)
                         .sortedBy { d -> d.date }
-                    it.copy(isLoadingCalendar = false, availability = merged)
+                    val earliestDate = it.earliestSelectableDateTime.toLocalDate()
+                    val earliestTime = it.earliestSelectableDateTime.toLocalTime()
+                    val availDates = merged
+                        .filter { d ->
+                            if (d.date.isBefore(earliestDate)) false
+                            else if (d.date == earliestDate) {
+                                d.availableBlocks.any { b -> b.end.isAfter(earliestTime) }
+                            } else {
+                                d.availableBlocks.isNotEmpty()
+                            }
+                        }
+                        .map { d -> d.date }
+                        .toSet()
+                    it.copy(
+                        availability          = merged,
+                        availableDatesForPicker = availDates,
+                        isLoadingCalendar     = false
+                    )
                 }
                 is NetworkResult.Error -> _uiState.update {
                     it.copy(isLoadingCalendar = false)
@@ -272,7 +334,7 @@ class CreateReservationViewModel @Inject constructor(
         }
     }
 
-    private fun searchResources(query: String) {
+    fun searchResources(query: String) {
         val type = _uiState.value.resourceType
         viewModelScope.launch {
             _uiState.update { it.copy(isSearching = true) }
@@ -315,4 +377,10 @@ class CreateReservationViewModel @Inject constructor(
 
     fun clearError() = _uiState.update { it.copy(error = null) }
     fun resetForm()  = _uiState.update { CreateReservationUiState() }
+
+    /** Returns `now + leadTime` (or `now` if no lead time). */
+    fun computeEarliest(leadTime: java.time.Duration?): LocalDateTime =
+        LocalDateTime.now().let { now ->
+            if (leadTime != null) now.plus(leadTime) else now
+        }
 }

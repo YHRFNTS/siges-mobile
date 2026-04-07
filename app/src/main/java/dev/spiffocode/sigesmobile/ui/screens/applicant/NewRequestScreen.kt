@@ -86,7 +86,6 @@ fun NewRequestScreen(
     viewModel: CreateReservationViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
-    // Optional prefill args from ResourceCalendarScreen
     prefillDate: String = "",
     prefillStartTime: String = "",
     prefillEndTime: String = ""
@@ -373,7 +372,9 @@ fun NewRequestFormFields(
                         onMonthChanged        = onMonthChanged,
                         onWeekChanged         = onWeekChanged,
                         onDayTappedInMonthly  = onDayTappedInMonthly,
-                        onDaySelectedInWeekly = onDaySelectedInWeekly
+                        onDaySelectedInWeekly = onDaySelectedInWeekly,
+                        minDate              = state.earliestSelectableDateTime.toLocalDate(),
+                        availableDates       = state.availableDatesForPicker.takeIf { it.isNotEmpty() }
                     )
 
                     // Block selector (shown when a date is picked in weekly view)
@@ -385,12 +386,14 @@ fun NewRequestFormFields(
                         Column {
                             Spacer(modifier = Modifier.height(16.dp))
                             val selectedDayItem = state.availability.find { it.date == state.date }
+                            val isLimitDay = state.date == state.earliestSelectableDateTime.toLocalDate()
                             TimeRangePicker(
                                 availableBlocks = selectedDayItem?.availableBlocks ?: emptyList(),
                                 occupiedBlocks  = selectedDayItem?.occupiedBlocks  ?: emptyList(),
                                 selectedStart   = state.startTime,
                                 selectedEnd     = state.endTime,
-                                onRangeChanged  = { start, end -> onTimeRangeSelected(start, end) }
+                                onRangeChanged  = { start, end -> onTimeRangeSelected(start, end) },
+                                minTime         = if (isLimitDay) state.earliestSelectableDateTime.toLocalTime() else null
                             )
                         }
                     }
@@ -404,28 +407,58 @@ fun NewRequestFormFields(
                 exit    = fadeOut() + shrinkVertically()
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
+                    // Lead-time info banner
+                    if (state.bookInAdvanceDuration != null && state.bookInAdvanceDuration.toMinutes() > 0) {
+                        val hours = state.bookInAdvanceDuration.toHours()
+                        val mins  = state.bookInAdvanceDuration.toMinutes() % 60
+                        val label = when {
+                            hours > 0 && mins > 0 -> "${hours}h ${mins}min"
+                            hours > 0              -> "${hours}h"
+                            else                   -> "${mins}min"
+                        }
+                        Text(
+                            text     = "⏱ Este recurso requiere reservarse con al menos $label de anticipación.",
+                            style    = MaterialTheme.typography.bodySmall,
+                            color    = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+
+                    val minDate = state.earliestSelectableDateTime.toLocalDate()
+
                     DatePickerField(
-                        date       = state.date,
-                        onDateChange = onDateChange
+                        date           = state.date,
+                        onDateChange   = onDateChange,
+                        minDate        = minDate,
+                        selectableDates = state.availableDatesForPicker
+                            .takeIf { it.isNotEmpty() }
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    // Earliest selectable time: combine past restriction + lead time
+                    val isToday   = state.date == java.time.LocalDate.now()
+                    val minStart  = if (isToday) state.earliestSelectableDateTime.toLocalTime() else null
 
                     Row(
                         modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         TimePickerField(
-                            time        = state.startTime,
-                            label       = "HORA INICIO *",
-                            onTimeChange = onStartTimeChange,
-                            modifier    = Modifier.weight(1f)
+                            time          = state.startTime,
+                            label         = "HORA INICIO *",
+                            minTime       = minStart,
+                            allowedRanges = state.allowedTimeRangesForDate,
+                            onTimeChange  = onStartTimeChange,
+                            modifier      = Modifier.weight(1f)
                         )
                         TimePickerField(
-                            time        = state.endTime,
-                            label       = "HORA FIN *",
-                            onTimeChange = onEndTimeChange,
-                            modifier    = Modifier.weight(1f)
+                            time          = state.endTime,
+                            label         = "HORA FIN *",
+                            minTime       = state.startTime?.plusMinutes(30),
+                            allowedRanges = state.allowedTimeRangesForDate,
+                            onTimeChange  = onEndTimeChange,
+                            modifier      = Modifier.weight(1f)
                         )
                     }
                 }

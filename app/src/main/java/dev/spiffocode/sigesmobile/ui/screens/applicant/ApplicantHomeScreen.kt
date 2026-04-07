@@ -43,6 +43,7 @@ import dev.spiffocode.sigesmobile.viewmodel.AvailableResourceUIItem
 import dev.spiffocode.sigesmobile.viewmodel.HomeViewModel
 import dev.spiffocode.sigesmobile.viewmodel.NotificationsViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ReservationUIItem
+import dev.spiffocode.sigesmobile.viewmodel.ResourceType
 import kotlinx.datetime.LocalDateTime
 import java.util.Collections.emptyList
 
@@ -54,7 +55,8 @@ fun ApplicantHomeScreen(
     onNavigateToAvailability: () -> Unit = {},
     onNavigateToNewRequest: () -> Unit = {},
     onNavigateToMyRequests: () -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {}
+    onNavigateToDetail: (Long) -> Unit = {},
+    onNavigateToResourceDetail: (Long, ReservableType) -> Unit = {_, _ -> }
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -85,7 +87,8 @@ fun ApplicantHomeScreen(
         onNavigateToAvailability = onNavigateToAvailability,
         onNavigateToNewRequest = onNavigateToNewRequest,
         onNavigateToMyRequests = onNavigateToMyRequests,
-        onNavigateToDetail = onNavigateToDetail
+        onNavigateToDetail = onNavigateToDetail,
+        onNavigateToResourceDetail = onNavigateToResourceDetail
     )
 
 }
@@ -108,7 +111,8 @@ fun ApplicantHomeScreen(
     onNavigateToAvailability: () -> Unit = {},
     onNavigateToNewRequest: () -> Unit = {},
     onNavigateToMyRequests: () -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {}
+    onNavigateToDetail: (Long) -> Unit = {},
+    onNavigateToResourceDetail: (Long, ReservableType) -> Unit = {_, _ -> }
 ) {
     val scrollState = rememberScrollState()
 
@@ -213,7 +217,7 @@ fun ApplicantHomeScreen(
                         status = resource.status,
                         resourceType = resource.reservableType,
                         resourceCategory = resource.category,
-                        onClick = { onNavigateToDetail(resource.id) }
+                        onClick = { onNavigateToResourceDetail(resource.id, resource.reservableType) }
                     )
                 }
             }

@@ -32,10 +32,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import dev.spiffocode.sigesmobile.data.local.SessionManager
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableType
 import dev.spiffocode.sigesmobile.ui.screens.admin.AdminHomeScreen
 import dev.spiffocode.sigesmobile.ui.screens.admin.AdminReservationListScreen
 import dev.spiffocode.sigesmobile.ui.screens.admin.AdminReviewDetailScreen
 import dev.spiffocode.sigesmobile.ui.screens.applicant.ApplicantHomeScreen
+import dev.spiffocode.sigesmobile.ui.screens.applicant.RescheduleScreen
+import dev.spiffocode.sigesmobile.ui.screens.applicant.ReservationDetailScreen
+import dev.spiffocode.sigesmobile.ui.screens.applicant.ResourceCalendarScreen
 import dev.spiffocode.sigesmobile.ui.screens.login.LoginScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ExpiredLinkScreen
 import dev.spiffocode.sigesmobile.ui.screens.passwordRecovery.ForgotPasswordScreen
@@ -45,7 +49,6 @@ import dev.spiffocode.sigesmobile.ui.screens.profile.ChangePasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.EditProfileScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.NotificationPrefsScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.ProfileScreen
-import dev.spiffocode.sigesmobile.ui.screens.applicant.ResourceCalendarScreen
 import dev.spiffocode.sigesmobile.viewmodel.ResetPasswordError
 import dev.spiffocode.sigesmobile.viewmodel.ResetPasswordViewModel
 
@@ -76,9 +79,9 @@ object Routes {
     fun spaceDetail(id: Long) = "space_detail/$id"
     fun equipmentDetail(id: Long) = "equipment_detail/$id"
     const val REQUEST_DETAIL = "request_detail/{reservationId}"
-    const val EDIT_REQUEST   = "edit_request/{reservationId}"
+    const val RESCHEDULE_REQUEST = "reschedule_request/{reservationId}"
     fun requestDetail(id: Long) = "request_detail/$id"
-    fun editRequest(id: Long)   = "edit_request/$id"
+    fun rescheduleRequest(id: Long) = "reschedule_request/$id"
 
     const val ADMIN_HOME           = "admin_home"
     const val ADMIN_ALL_REQUESTS   = "admin_all_requests"
@@ -244,7 +247,15 @@ fun AppNavigation(
                     onNavigateToAvailability = { navController.navigate(Routes.availability(true)) },
                     onNavigateToNewRequest   = { navController.navigate(Routes.newRequest()) },
                     onNavigateToMyRequests   = { navController.navigate(Routes.myRequests(true)) },
-                    onNavigateToDetail       = { id -> navController.navigate(Routes.requestDetail(id)) }
+                    onNavigateToDetail       = { id -> navController.navigate(Routes.requestDetail(id)) },
+                    onNavigateToResourceDetail = {id, type ->
+                        when(type){
+                            ReservableType.SPACE ->
+                                navController.navigate(Routes.spaceDetail(id))
+                            ReservableType.EQUIPMENT ->
+                                navController.navigate(Routes.equipmentDetail(id))
+                        }
+                    }
                 )
             }
 
@@ -357,20 +368,20 @@ fun AppNavigation(
                 arguments = listOf(navArgument("reservationId") { type = NavType.LongType })
             ) { backStack ->
                 val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
-                dev.spiffocode.sigesmobile.ui.screens.applicant.ReservationDetailScreen(
+                ReservationDetailScreen(
                     windowSizeClass = windowSizeClass,
                     reservationId = reservationId,
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToEdit = { id -> navController.navigate(Routes.editRequest(id)) }
+                    onNavigateToEdit = { id -> navController.navigate(Routes.rescheduleRequest(id)) }
                 )
             }
 
             composable(
-                route     = Routes.EDIT_REQUEST,
+                route     = Routes.RESCHEDULE_REQUEST,
                 arguments = listOf(navArgument("reservationId") { type = NavType.LongType })
             ) { backStack ->
                 val reservationId = backStack.arguments?.getLong("reservationId") ?: return@composable
-                dev.spiffocode.sigesmobile.ui.screens.applicant.EditReservationScreen(
+                RescheduleScreen(
                     windowSizeClass = windowSizeClass,
                     reservationId = reservationId,
                     onNavigateBack = { navController.popBackStack() },

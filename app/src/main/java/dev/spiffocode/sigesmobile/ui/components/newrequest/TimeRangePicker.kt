@@ -71,7 +71,8 @@ fun TimeRangePicker(
     selectedEnd:     LocalTime?,
     onRangeChanged:  (start: LocalTime, end: LocalTime) -> Unit,
     modifier:        Modifier = Modifier,
-    stepMinutes:     Int = 30
+    stepMinutes:     Int = 30,
+    minTime:         LocalTime? = null
 ) {
     if (availableBlocks.isEmpty()) {
         Text(
@@ -94,8 +95,25 @@ fun TimeRangePicker(
         .coerceAtLeast(stepMinutes * 4)
 
     // ── Merged free intervals ─────────────────────────────────────────────────
-    val mergedFree: List<Pair<LocalTime, LocalTime>> = remember(availableBlocks) {
-        mergeIntervals(availableBlocks.map { it.start to it.end })
+    val mergedFree: List<Pair<LocalTime, LocalTime>> = remember(availableBlocks, minTime) {
+        val clipped = if (minTime == null) availableBlocks else {
+            availableBlocks.mapNotNull { blk ->
+                if (blk.end.isBefore(minTime) || blk.end == minTime) null
+                else if (blk.start.isBefore(minTime)) TimeBlockItem(minTime, blk.end)
+                else blk
+            }
+        }
+        mergeIntervals(clipped.map { it.start to it.end })
+    }
+
+    if (mergedFree.isEmpty()) {
+        Text(
+            "Sin franjas permitidas con el tiempo de anticipación requerido.",
+            style    = MaterialTheme.typography.bodySmall,
+            color    = MaterialTheme.colorScheme.error,
+            modifier = modifier.padding(vertical = 8.dp)
+        )
+        return
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -110,7 +128,8 @@ fun TimeRangePicker(
 
     fun isValid(sF: Float, eF: Float): Boolean {
         val s = sF.toSnapped(); val e = eF.toSnapped()
-        return e.isAfter(s) && mergedFree.any { it.containsRange(s, e) }
+        val respectsMin = minTime == null || !s.isBefore(minTime)
+        return e.isAfter(s) && respectsMin && mergedFree.any { it.containsRange(s, e) }
     }
 
     // ── Initial state ─────────────────────────────────────────────────────────
@@ -171,32 +190,77 @@ fun TimeRangePicker(
         RangeSlider(
             value         = startF..endF,
             onValueChange = { r ->
-                val ns = r.start; val ne = r.endInclusive
-                if (isValid(ns, ne)) {
-                    startF = ns; endF = ne
-                    onRangeChanged(ns.toSnapped(), ne.toSnapped())
+                val nsF = r.start; val neF = r.endInclusive
+                val ns  = nsF.toSnapped(); val ne = neF.toSnapped()
+                val durMinsRequested = ChronoUnit.MINUTES.between(ns, ne).toInt()
+                val startMoved = abs(nsF - startF) > abs(neF - endF)
+
+                // 1. Current interval where the "static" thumb is
+                val currentStaticInterval = if (startMoved) {
+                    mergedFree.find { !endF.toSnapped().isBefore(it.first) && !endF.toSnapped().isAfter(it.second) }
                 } else {
-                    // Determine which thumb moved and clamp it
-                    val startMoved = abs(ns - startF) > abs(ne - endF)
+                    mergedFree.find { !startF.toSnapped().isBefore(it.first) && !startF.toSnapped().isAfter(it.second) }
+                }
+
+                // 2. Interval where the "moving" thumb wants to go
+                val targetInterval = if (startMoved) {
+                    mergedFree.find { !ns.isBefore(it.first) && !ns.isAfter(it.second) }
+                } else {
+                    mergedFree.find { !ne.isBefore(it.first) && !ne.isAfter(it.second) }
+                }
+
+                var finalStartF = startF
+                var finalEndF   = endF
+
+                if (targetInterval != null) {
+                    // Moving thumb is in a valid slot
                     if (startMoved) {
-                        val endInterval = mergedFree.find { !endF.toSnapped().isBefore(it.first) && !endF.toSnapped().isAfter(it.second) }
-                        if (endInterval != null) {
-                            val clamped = ((maxOf(ns, endInterval.first.toF()) / stepMinutes).roundToInt() * stepMinutes).toFloat()
-                            if (isValid(clamped, endF)) {
-                                startF = clamped
-                                onRangeChanged(clamped.toSnapped(), endF.toSnapped())
-                            }
+                        finalStartF = nsF.coerceIn(targetInterval.first.toF(), targetInterval.second.toF() - stepMinutes)
+                        // If moving to a DIFFERENT interval, or pushing past end, snap the other thumb
+                        if (currentStaticInterval != targetInterval || ne.isBefore(finalStartF.toSnapped().plusMinutes(stepMinutes.toLong()))) {
+                            finalEndF = (finalStartF.toSnapped().plusMinutes(maxOf(stepMinutes, durMins).toLong()))
+                                .coerceIn(targetInterval.first.plusMinutes(stepMinutes.toLong()), targetInterval.second).toF()
+                        } else {
+                            finalEndF = endF
                         }
                     } else {
-                        val startInterval = mergedFree.find { !startF.toSnapped().isBefore(it.first) && !startF.toSnapped().isAfter(it.second) }
-                        if (startInterval != null) {
-                            val clamped = ((minOf(ne, startInterval.second.toF()) / stepMinutes).roundToInt() * stepMinutes).toFloat()
-                            if (isValid(startF, clamped)) {
-                                endF = clamped
-                                onRangeChanged(startF.toSnapped(), clamped.toSnapped())
-                            }
+                        finalEndF = neF.coerceIn(targetInterval.first.toF() + stepMinutes, targetInterval.second.toF())
+                        // If moving to a DIFFERENT interval, or pulling past start, snap the other thumb
+                        if (currentStaticInterval != targetInterval || ns.isAfter(finalEndF.toSnapped().minusMinutes(stepMinutes.toLong()))) {
+                            finalStartF = (finalEndF.toSnapped().minusMinutes(maxOf(stepMinutes, durMins).toLong()))
+                                .coerceIn(targetInterval.first, targetInterval.second.minusMinutes(stepMinutes.toLong())).toF()
+                        } else {
+                            finalStartF = startF
                         }
                     }
+                } else {
+                    // Moving thumb in occupied territory: clamp to the boundary of the static interval
+                    if (startMoved) {
+                        currentStaticInterval?.let {
+                            finalStartF = if (ns.isBefore(it.first)) it.first.toF() else it.second.toF() - stepMinutes
+                        }
+                    } else {
+                        currentStaticInterval?.let {
+                            finalEndF = if (ne.isAfter(it.second)) it.second.toF() else it.first.toF() + stepMinutes
+                        }
+                    }
+                }
+
+                // Honor minTime (past or lead time)
+                minTime?.let { mt ->
+                    val mtF = mt.toF()
+                    if (finalStartF < mtF) {
+                        finalStartF = mtF
+                        if (finalEndF <= finalStartF) {
+                            finalEndF = (finalStartF.toSnapped().plusMinutes(stepMinutes.toLong())).toF()
+                        }
+                    }
+                }
+
+                if (isValid(finalStartF, finalEndF)) {
+                    startF = finalStartF
+                    endF   = finalEndF
+                    onRangeChanged(finalStartF.toSnapped(), finalEndF.toSnapped())
                 }
             },
             valueRange = 0f..totalMins.toFloat(),
@@ -211,7 +275,8 @@ fun TimeRangePicker(
                     colorAvail      = colorAvail,
                     colorOccupy     = colorOccupy,
                     colorGray       = colorGray,
-                    colorSel        = colorSel
+                    colorSel        = colorSel,
+                    minTime         = minTime
                 )
             }
         )
@@ -235,7 +300,8 @@ private fun AvailabilityTrack(
     colorAvail:      Color,
     colorOccupy:     Color,
     colorGray:       Color,
-    colorSel:        Color
+    colorSel:        Color,
+    minTime:         LocalTime? = null
 ) {
     fun LocalTime.frac(): Float =
         ChronoUnit.MINUTES.between(dayStart, this).toFloat() / totalMins
@@ -271,6 +337,17 @@ private fun AvailabilityTrack(
                         topLeft = Offset(blk.start.frac() * w, 0f),
                         size    = Size((blk.end.frac() - blk.start.frac()) * w, h)
                     )
+                }
+
+                // Restricted area (past or lead time): gray overlay
+                minTime?.let { mt ->
+                    if (mt.isAfter(dayStart)) {
+                        drawRect(
+                            color   = colorGray.copy(alpha = 0.6f),
+                            topLeft = Offset(0f, 0f),
+                            size    = Size(mt.frac() * w, h)
+                        )
+                    }
                 }
 
                 // Selected range: primary
