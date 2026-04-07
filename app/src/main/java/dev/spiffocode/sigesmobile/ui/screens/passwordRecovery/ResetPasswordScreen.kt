@@ -123,7 +123,9 @@ fun MobileResetPasswordLayout(
                 toggleNewPasswordVisibility = toggleNewPasswordVisibility,
                 toggleConfirmPasswordVisibility = toggleConfirmPasswordVisibility,
                 resetPassword = resetPassword,
-                errorMessage = state.errorMessage
+                errorMessage = state.errorMessage,
+                isNewPasswordError = state.isNewPasswordError,
+                isConfirmPasswordError = state.isConfirmPasswordError
             )
         }
     }
@@ -184,7 +186,9 @@ fun ExpandedResetPasswordLayout(
                         toggleNewPasswordVisibility = toggleNewPasswordVisibility,
                         toggleConfirmPasswordVisibility = toggleConfirmPasswordVisibility,
                         resetPassword = resetPassword,
-                        errorMessage = state.errorMessage
+                        errorMessage = state.errorMessage,
+                        isNewPasswordError = state.isNewPasswordError,
+                        isConfirmPasswordError = state.isConfirmPasswordError
                     )
                 }
             }

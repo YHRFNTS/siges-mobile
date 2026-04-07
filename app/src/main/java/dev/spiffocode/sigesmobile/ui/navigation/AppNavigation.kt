@@ -160,6 +160,26 @@ fun AppNavigation(
     }
  
     val mainViewModel: MainViewModel = hiltViewModel()
+    val accessToken by sessionManager.accessTokenFlow.collectAsState(initial = sessionManager.accessToken)
+
+    val guestRoutes = setOf(
+        Routes.LOGIN,
+        Routes.FORGOT_PASSWORD,
+        Routes.EXPIRED_LINK,
+        Routes.USED_LINK,
+        "reset_password"
+    )
+
+    LaunchedEffect(accessToken) {
+        if (accessToken == null) {
+            val isGuestRoute = currentRoute != null && guestRoutes.any { currentRoute.startsWith(it) }
+            if (!isGuestRoute && currentRoute != null) {
+                navController.navigate(Routes.LOGIN) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (sessionManager.isLoggedIn && !sessionManager.rememberMe) {

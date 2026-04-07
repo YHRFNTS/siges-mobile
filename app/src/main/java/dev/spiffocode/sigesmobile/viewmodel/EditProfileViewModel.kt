@@ -33,7 +33,10 @@ data class EditProfileUiState(
     val isUploadingPicture: Boolean = false,
     val profilePictureUrl: Any? = null,
     val pendingPictureBytes: ByteArray? = null,
-    val error: String? = null
+    val error: String? = null,
+    val isFirstNameError: Boolean = false,
+    val isLastNameError: Boolean = false,
+    val isPhoneNumberError: Boolean = false
 )
 
 @HiltViewModel
@@ -65,20 +68,20 @@ class EditProfileViewModel @Inject constructor(
         userId = session.id?.toLong() ?: -1
     }
 
-    fun onFirstNameChange(value: String)    = _uiState.update { it.copy(firstName = value, error = null) }
-    fun onLastNameChange(value: String)     = _uiState.update { it.copy(lastName = value, error = null) }
-    fun onPhoneNumberChange(value: String)  = _uiState.update { it.copy(phoneNumber = value, error = null) }
+    fun onFirstNameChange(value: String)    = _uiState.update { it.copy(firstName = value, error = null, isFirstNameError = false) }
+    fun onLastNameChange(value: String)     = _uiState.update { it.copy(lastName = value, error = null, isLastNameError = false) }
+    fun onPhoneNumberChange(value: String)  = _uiState.update { it.copy(phoneNumber = value, error = null, isPhoneNumberError = false) }
     fun onBirthDateChange(value: LocalDate)    = _uiState.update { it.copy(birthDate = value, error = null) }
 
     fun saveChanges() {
         val state = _uiState.value
         when {
             state.firstName.isBlank() ->
-                _uiState.update { it.copy(error = "El nombre no puede estar vacío.") }
+                _uiState.update { it.copy(error = "El nombre no puede estar vacío.", isFirstNameError = true) }
             state.lastName.isBlank() ->
-                _uiState.update { it.copy(error = "El apellido no puede estar vacío.") }
+                _uiState.update { it.copy(error = "El apellido no puede estar vacío.", isLastNameError = true) }
             state.phoneNumber.isBlank() ->
-                _uiState.update { it.copy(error = "El teléfono no puede estar vacío.") }
+                _uiState.update { it.copy(error = "El teléfono no puede estar vacío.", isPhoneNumberError = true) }
             else -> viewModelScope.launch {
                 _uiState.update { it.copy(isLoading = true, error = null) }
                 val state = _uiState.value

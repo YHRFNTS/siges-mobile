@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.spiffocode.sigesmobile.ui.components.PasswordTextField
 import dev.spiffocode.sigesmobile.ui.components.PrimaryButton
+import dev.spiffocode.sigesmobile.ui.components.SigesErrorBanner
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 
 
@@ -48,7 +49,9 @@ fun ResetPasswordForm(
     toggleConfirmPasswordVisibility: () -> Unit = {},
     errorMessage: String?,
     resetPassword: () -> Unit = {},
-    isLoading: Boolean
+    isLoading: Boolean,
+    isNewPasswordError: Boolean = false,
+    isConfirmPasswordError: Boolean = false
 
 ){
     Box(
@@ -133,7 +136,8 @@ fun ResetPasswordForm(
                 placeholder = "Mínimo 8 caracteres",
                 leadingIcon = Icons.Default.Lock,
                 isVisible = isNewPasswordVisible,
-                onVisibilityToggle = toggleNewPasswordVisibility
+                onVisibilityToggle = toggleNewPasswordVisibility,
+                isError = isNewPasswordError
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -150,16 +154,13 @@ fun ResetPasswordForm(
                 placeholder = "Repite tu nueva contraseña",
                 leadingIcon = Icons.Default.Lock,
                 isVisible = isConfirmPasswordVisible,
-                onVisibilityToggle = toggleConfirmPasswordVisibility
+                onVisibilityToggle = toggleConfirmPasswordVisibility,
+                isError = isConfirmPasswordError
             )
 
             errorMessage?.let {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+                Spacer(modifier = Modifier.height(16.dp))
+                SigesErrorBanner(errorMessage = it)
             }
 
             Spacer(modifier = Modifier.height(32.dp))

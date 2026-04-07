@@ -23,7 +23,9 @@ data class LoginUiState(
     val rememberMe: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val retryAfterSeconds: Int? = null
+    val retryAfterSeconds: Int? = null,
+    val isIdentifierError: Boolean = false,
+    val isPasswordError: Boolean = false
 )
 
 @HiltViewModel
@@ -44,8 +46,8 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    fun onIdentifierChange(value: String) = _uiState.update { it.copy(identifier = value, errorMessage = null) }
-    fun onPasswordChange(value: String)   = _uiState.update { it.copy(password = value, errorMessage = null) }
+    fun onIdentifierChange(value: String) = _uiState.update { it.copy(identifier = value, errorMessage = null, isIdentifierError = false) }
+    fun onPasswordChange(value: String)   = _uiState.update { it.copy(password = value, errorMessage = null, isPasswordError = false) }
     fun togglePasswordVisibility()        = _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
     fun toggleRememberMe(checked: Boolean)= _uiState.update { it.copy(rememberMe = checked) }
 
@@ -55,11 +57,17 @@ class LoginViewModel @Inject constructor(
 
     fun login() {
         val state = _uiState.value
-        if (state.identifier.isBlank()) { _uiState.update { it.copy(errorMessage = "Ingresa tu usuario o correo.") }; return }
-        if (state.password.isBlank())   { _uiState.update { it.copy(errorMessage = "Ingresa tu contraseña.") }; return }
+        if (state.identifier.isBlank()) { 
+            _uiState.update { it.copy(errorMessage = "Ingresa tu usuario o correo.", isIdentifierError = true) }
+            return 
+        }
+        if (state.password.isBlank())   { 
+            _uiState.update { it.copy(errorMessage = "Ingresa tu contraseña.", isPasswordError = true) }
+            return 
+        }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, isIdentifierError = false, isPasswordError = false) }
             when (val result = authRepository.login(state.identifier.trim(), state.password, state.rememberMe)) {
                 is NetworkResult.Success -> {
                     _uiState.update { it.copy(isLoading = false) };
@@ -80,7 +88,9 @@ class LoginViewModel @Inject constructor(
                                 -1   -> "Sin conexión. Verifica tu internet."
                                 else -> "Error inesperado."
                             },
-                            retryAfterSeconds = if (result.code == 429) 30 else null
+                            retryAfterSeconds = if (result.code == 429) 30 else null,
+                            isIdentifierError = result.code == 401,
+                            isPasswordError = result.code == 401
                         )
                     }
                     _uiEvent.send(UiEvent.LoginError);

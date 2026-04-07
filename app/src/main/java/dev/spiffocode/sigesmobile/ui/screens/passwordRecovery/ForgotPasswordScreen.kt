@@ -41,6 +41,7 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.ui.components.PrimaryButton
 import dev.spiffocode.sigesmobile.ui.components.PrimaryTextField
+import dev.spiffocode.sigesmobile.ui.components.SigesErrorBanner
 import dev.spiffocode.sigesmobile.ui.components.login.LoginHeader
 import dev.spiffocode.sigesmobile.ui.theme.SigesTheme
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
@@ -175,16 +176,13 @@ fun MobileForgotPasswordLayout(
                     value = state.email,
                     onValueChange = onEmailChange,
                     placeholder = "usuario@utez.edu.mx",
-                    leadingIcon = Icons.Default.Email
+                    leadingIcon = Icons.Default.Email,
+                    isError = state.isEmailError
                 )
 
                 state.errorMessage?.let {
-                    Text(
-                        text = it,
-                        color = MaterialTheme.colorScheme.error,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    SigesErrorBanner(errorMessage = it)
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -327,16 +325,13 @@ fun ExpandedForgotPasswordLayout(
                         value = state.email,
                         onValueChange = onEmailChange,
                         placeholder = "usuario@utez.edu.mx",
-                        leadingIcon = Icons.Default.Email
+                        leadingIcon = Icons.Default.Email,
+                        isError = state.isEmailError
                     )
 
                     state.errorMessage?.let {
-                        Text(
-                            text = it,
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        SigesErrorBanner(errorMessage = it)
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))

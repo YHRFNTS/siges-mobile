@@ -27,13 +27,15 @@ fun PrimaryTextField(
     placeholder: String,
     leadingIcon: ImageVector,
     keyboardType: KeyboardType = KeyboardType.Email,
-    imeAction: ImeAction = ImeAction.Next
+    imeAction: ImeAction = ImeAction.Next,
+    isError: Boolean = false
 ) {
 
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth().widthIn(max = 300.dp),
+        isError = isError,
         placeholder = { Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         leadingIcon = { Icon(leadingIcon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),

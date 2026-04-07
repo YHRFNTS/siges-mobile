@@ -17,7 +17,8 @@ data class ForgotPasswordUiState(
     val email: String = "",
     val isLoading: Boolean = false,
     val isSent: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val isEmailError: Boolean = false
 )
 
 @HiltViewModel
@@ -28,12 +29,12 @@ class ForgotPasswordViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ForgotPasswordUiState())
     val uiState: StateFlow<ForgotPasswordUiState> = _uiState.asStateFlow()
 
-    fun onEmailChange(value: String) = _uiState.update { it.copy(email = value, errorMessage = null) }
+    fun onEmailChange(value: String) = _uiState.update { it.copy(email = value, errorMessage = null, isEmailError = false) }
 
     fun sendRecoveryEmail() {
         val email = _uiState.value.email.trim()
-        if (email.isBlank()) { _uiState.update { it.copy(errorMessage = "Ingresa un correo.") }; return }
-        if (!email.endsWith("@utez.edu.mx")) { _uiState.update { it.copy(errorMessage = "Usa tu correo institucional (@utez.edu.mx).") }; return }
+        if (email.isBlank()) { _uiState.update { it.copy(errorMessage = "Ingresa un correo.", isEmailError = true) }; return }
+        if (!email.endsWith("@utez.edu.mx")) { _uiState.update { it.copy(errorMessage = "Usa tu correo institucional (@utez.edu.mx).", isEmailError = true) }; return }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }

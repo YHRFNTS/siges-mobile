@@ -43,6 +43,7 @@ fun SigesNumberSpinner(
     placeholder: String = "Selecciona...",
     leadingIcon: ImageVector? = Icons.Outlined.Person,
     enabled: Boolean = true,
+    isError: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -56,6 +57,7 @@ fun SigesNumberSpinner(
             value         = if (value.isEmpty()) "" else value,
             onValueChange = {},
             readOnly      = true,
+            isError       = isError,
             label         = { Text(label) },
             placeholder   = { Text(placeholder) },
             leadingIcon   = leadingIcon?.let { { Icon(it, contentDescription = null) } },
@@ -66,7 +68,9 @@ fun SigesNumberSpinner(
                 disabledBorderColor  = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
                 disabledTextColor    = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
                 disabledLabelColor   = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                errorBorderColor     = MaterialTheme.colorScheme.error,
+                errorLabelColor      = MaterialTheme.colorScheme.error
             ),
             shape         = RoundedCornerShape(12.dp),
             modifier      = Modifier.menuAnchor().fillMaxWidth(),

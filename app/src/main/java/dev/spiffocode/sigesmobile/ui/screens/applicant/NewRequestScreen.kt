@@ -308,7 +308,6 @@ fun NewRequestFormFields(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    // ── Date & Time mode toggle (shown once a resource is selected) ───────────
     val resourceSelected = state.selectedSpace != null || state.selectedEquipment != null
 
     AnimatedVisibility(
@@ -462,7 +461,6 @@ fun NewRequestFormFields(
     }
 
     val maxCap = state.maxCapacity ?: 0
-
     SigesNumberSpinner(
         value         = if (resourceSelected) state.companions else "",
         onValueChange = onCompanionsChange,
@@ -470,6 +468,7 @@ fun NewRequestFormFields(
         label         = if (resourceSelected) "NÚMERO DE ASISTENTES (Máx. $maxCap) *" else "NÚMERO DE ASISTENTES *",
         placeholder   = if (resourceSelected) "Selecciona la cantidad..." else "Selecciona un recurso primero",
         enabled       = resourceSelected && maxCap > 0,
+        isError       = state.isCompanionsError,
         modifier      = Modifier.fillMaxWidth()
     )
 
@@ -482,9 +481,12 @@ fun NewRequestFormFields(
         label         = { Text("PROPÓSITO DE LA RESERVA *") },
         placeholder   = { Text("Describe el propósito...") },
         shape         = RoundedCornerShape(12.dp),
+        isError       = state.isPurposeError,
         colors        = OutlinedTextFieldDefaults.colors(
             unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-            focusedBorderColor   = MaterialTheme.colorScheme.primary
+            focusedBorderColor   = MaterialTheme.colorScheme.primary,
+            errorBorderColor     = MaterialTheme.colorScheme.error,
+            errorLabelColor      = MaterialTheme.colorScheme.error
         ),
         modifier      = Modifier
             .fillMaxWidth()

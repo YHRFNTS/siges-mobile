@@ -10,12 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -39,14 +36,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.spiffocode.sigesmobile.ui.theme.Plum
+import dev.spiffocode.sigesmobile.ui.components.PasswordTextField
+import dev.spiffocode.sigesmobile.ui.components.SigesErrorBanner
 import dev.spiffocode.sigesmobile.viewmodel.ChangePasswordViewModel
 
 @Composable
@@ -64,6 +59,9 @@ fun ChangePasswordScreen(
         isLoading = state.isLoading,
         error = state.error,
         successMessage = state.successMessage,
+        isCurrentPasswordError = state.isCurrentPasswordError,
+        isNewPasswordError = state.isNewPasswordError,
+        isConfirmPasswordError = state.isConfirmPasswordError,
         onCurrentPasswordChange = viewModel::updateCurrentPassword,
         onNewPasswordChange = viewModel::updateNewPassword,
         onConfirmPasswordChange = viewModel::updateConfirmPassword,
@@ -83,6 +81,9 @@ fun ChangePasswordScreenContent(
     isLoading: Boolean,
     error: String? = null,
     successMessage: String? = null,
+    isCurrentPasswordError: Boolean = false,
+    isNewPasswordError: Boolean = false,
+    isConfirmPasswordError: Boolean = false,
     onCurrentPasswordChange: (String) -> Unit = {},
     onNewPasswordChange: (String) -> Unit = {},
     onConfirmPasswordChange: (String) -> Unit = {},
@@ -91,6 +92,7 @@ fun ChangePasswordScreenContent(
     onNavigateBack: () -> Unit = {}
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
     var currentPasswordVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(successMessage, error) {
@@ -165,25 +167,13 @@ fun ChangePasswordScreenContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
                 )
-                OutlinedTextField(
+                PasswordTextField(
                     value = currentPassword,
                     onValueChange = onCurrentPasswordChange,
-                    placeholder = { Text("Ingresa tu contraseña actual", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    visualTransformation = if (currentPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { currentPasswordVisible = !currentPasswordVisible }) {
-                            Icon(
-                                imageVector = if (currentPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                contentDescription = if (currentPasswordVisible) "Ocultar contraseña" else "Mostrar contraseña",
-                                modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f)
-                            )
-                        }
-                    }
+                    placeholder = "Ingresa tu contraseña actual",
+                    isVisible = currentPasswordVisible,
+                    onVisibilityToggle = { currentPasswordVisible = !currentPasswordVisible },
+                    isError = isCurrentPasswordError
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -194,25 +184,13 @@ fun ChangePasswordScreenContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
                 )
-                OutlinedTextField(
+                PasswordTextField(
                     value = newPassword,
                     onValueChange = onNewPasswordChange,
-                    placeholder = { Text("Ingresa tu nueva contraseña", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(
-                                imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
-                                modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f)
-                            )
-                        }
-                    }
+                    placeholder = "Ingresa tu nueva contraseña",
+                    isVisible = passwordVisible,
+                    onVisibilityToggle = { passwordVisible = !passwordVisible },
+                    isError = isNewPasswordError
                 )
                 Text(
                     text = "Mínimo 8 caracteres",
@@ -229,25 +207,13 @@ fun ChangePasswordScreenContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
                 )
-                OutlinedTextField(
+                PasswordTextField(
                     value = confirmPassword,
                     onValueChange = onConfirmPasswordChange,
-                    placeholder = { Text("Confirma tu nueva contraseña", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(
-                                imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
-                                modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f)
-                            )
-                        }
-                    }
+                    placeholder = "Confirma tu nueva contraseña",
+                    isVisible = confirmPasswordVisible,
+                    onVisibilityToggle = { confirmPasswordVisible = !confirmPasswordVisible },
+                    isError = isConfirmPasswordError
                 )
 
                 Spacer(modifier = Modifier.height(48.dp))
@@ -258,7 +224,7 @@ fun ChangePasswordScreenContent(
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = MaterialTheme.shapes.large,
-                    colors = ButtonDefaults.buttonColors(containerColor = Plum),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     enabled = !isLoading
                 ) {
                     if (isLoading) {
@@ -271,12 +237,8 @@ fun ChangePasswordScreenContent(
 
             // Notifications
             if (error != null) {
-                Snackbar(
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                ) {
-                    Text(error)
+                Box(modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)) {
+                    SigesErrorBanner(errorMessage = error)
                 }
             }
             if (successMessage != null) {

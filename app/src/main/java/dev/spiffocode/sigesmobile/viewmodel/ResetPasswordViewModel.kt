@@ -23,7 +23,9 @@ data class ResetPasswordUiState(
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
     val errorMessage: String? = null,
-    val tokenError: ResetPasswordError? = null
+    val tokenError: ResetPasswordError? = null,
+    val isNewPasswordError: Boolean = false,
+    val isConfirmPasswordError: Boolean = false
 )
 
 @HiltViewModel
@@ -34,8 +36,8 @@ class ResetPasswordViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ResetPasswordUiState())
     val uiState: StateFlow<ResetPasswordUiState> = _uiState.asStateFlow()
 
-    fun onNewPasswordChange(value: String)     = _uiState.update { it.copy(newPassword = value, errorMessage = null) }
-    fun onConfirmPasswordChange(value: String) = _uiState.update { it.copy(confirmPassword = value, errorMessage = null) }
+    fun onNewPasswordChange(value: String)     = _uiState.update { it.copy(newPassword = value, errorMessage = null, isNewPasswordError = false) }
+    fun onConfirmPasswordChange(value: String) = _uiState.update { it.copy(confirmPassword = value, errorMessage = null, isConfirmPasswordError = false) }
     fun toggleNewPasswordVisibility()          = _uiState.update { it.copy(isNewPasswordVisible = !it.isNewPasswordVisible) }
     fun toggleConfirmPasswordVisibility()      = _uiState.update { it.copy(isConfirmPasswordVisible = !it.isConfirmPasswordVisible) }
 
@@ -43,9 +45,9 @@ class ResetPasswordViewModel @Inject constructor(
         val state = _uiState.value
         val passwordRegex = Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9]).{8,}$")
         when {
-            state.newPassword.length < 8       -> _uiState.update { it.copy(errorMessage = "Mínimo 8 caracteres.") }
-            !passwordRegex.matches(state.newPassword) -> _uiState.update { it.copy(errorMessage = "Debe incluir mayúscula, minúscula, número y carácter especial.") }
-            state.newPassword != state.confirmPassword -> _uiState.update { it.copy(errorMessage = "Las contraseñas no coinciden.") }
+            state.newPassword.length < 8       -> _uiState.update { it.copy(errorMessage = "Mínimo 8 caracteres.", isNewPasswordError = true) }
+            !passwordRegex.matches(state.newPassword) -> _uiState.update { it.copy(errorMessage = "Debe incluir mayúscula, minúscula, número y carácter especial.", isNewPasswordError = true) }
+            state.newPassword != state.confirmPassword -> _uiState.update { it.copy(errorMessage = "Las contraseñas no coinciden.", isConfirmPasswordError = true, isNewPasswordError = true) }
             else -> viewModelScope.launch {
                 _uiState.update { it.copy(isLoading = true, errorMessage = null, tokenError = null) }
                 when (val result = repository.resetPassword(token, state.newPassword)) {

@@ -45,7 +45,9 @@ public fun LoginForm(
     onLogin: () -> Unit,
     isLoading: Boolean,
     modifier: Modifier = Modifier,
-    onNavigateToForgotPassword: () -> Unit
+    onNavigateToForgotPassword: () -> Unit,
+    isIdentifierError: Boolean = false,
+    isPasswordError: Boolean = false
 ) {
 
     Column(modifier = modifier
@@ -64,7 +66,8 @@ public fun LoginForm(
             value         = identifier,
             onValueChange = onIdentifierChange,
             placeholder   = "Correo / Matrícula / Número de empleado",
-            leadingIcon   = Icons.Default.Email
+            leadingIcon   = Icons.Default.Email,
+            isError       = isIdentifierError
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -77,7 +80,8 @@ public fun LoginForm(
             placeholder        = "••••••••",
             leadingIcon        = Icons.Default.Lock,
             isVisible          = isPasswordVisible,
-            onVisibilityToggle = togglePasswordVisibility
+            onVisibilityToggle = togglePasswordVisibility,
+            isError            = isPasswordError
         )
 
         SigesErrorBanner(errorMessage = errorMessage)
@@ -142,8 +146,9 @@ public fun LoginForm(
         onLogin                    = viewModel::login,
         isLoading                  = state.isLoading,
         modifier                   = modifier,
-        onNavigateToForgotPassword = onNavigateToForgotPassword
-
+        onNavigateToForgotPassword = onNavigateToForgotPassword,
+        isIdentifierError          = state.isIdentifierError,
+        isPasswordError            = state.isPasswordError
     )
 }
 

@@ -30,7 +30,8 @@ fun PasswordTextField(
     placeholder: String = "*********",
     leadingIcon: ImageVector = Icons.Default.Lock,
     isVisible: Boolean,
-    onVisibilityToggle: () -> Unit = {}
+    onVisibilityToggle: () -> Unit = {},
+    isError: Boolean = false
 ) {
     val plum = Color(0xFF6B5B95)
     val borderGray = Color(0xFFE5E7EB)
@@ -41,6 +42,7 @@ fun PasswordTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth(),
+        isError = isError,
         placeholder = { Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         leadingIcon = { Icon(leadingIcon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
         trailingIcon = {

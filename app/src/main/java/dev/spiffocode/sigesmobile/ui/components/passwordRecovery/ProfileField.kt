@@ -20,7 +20,8 @@ public fun ProfileField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit = {},
-    readOnly: Boolean = false
+    readOnly: Boolean = false,
+    isError: Boolean = false
 ) {
     Column(modifier = Modifier
         .widthIn(max = 480.dp)
@@ -41,12 +42,15 @@ public fun ProfileField(
             shape = MaterialTheme.shapes.small,
             readOnly = readOnly,
             enabled = !readOnly,
+            isError = isError,
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = MaterialTheme.colorScheme.onSurface,
                 disabledBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                disabledTextColor = MaterialTheme.colorScheme.onSurface
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                errorBorderColor = MaterialTheme.colorScheme.error,
+                errorLabelColor = MaterialTheme.colorScheme.error
             )
         )
     }

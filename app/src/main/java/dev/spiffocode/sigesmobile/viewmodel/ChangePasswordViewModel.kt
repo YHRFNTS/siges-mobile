@@ -20,7 +20,10 @@ data class ChangePasswordUiState(
     val confirmPassword: String = "",
     val isLoading: Boolean = false,
     val error: String? = null,
-    val successMessage: String? = null
+    val successMessage: String? = null,
+    val isCurrentPasswordError: Boolean = false,
+    val isNewPasswordError: Boolean = false,
+    val isConfirmPasswordError: Boolean = false
 )
 
 @HiltViewModel
@@ -33,31 +36,36 @@ class ChangePasswordViewModel @Inject constructor(
     val uiState: StateFlow<ChangePasswordUiState> = _uiState.asStateFlow()
 
     fun updateCurrentPassword(password: String) {
-        _uiState.update { it.copy(currentPassword = password, error = null, successMessage = null) }
+        _uiState.update { it.copy(currentPassword = password, error = null, successMessage = null, isCurrentPasswordError = false) }
     }
 
     fun updateNewPassword(password: String) {
-        _uiState.update { it.copy(newPassword = password, error = null, successMessage = null) }
+        _uiState.update { it.copy(newPassword = password, error = null, successMessage = null, isNewPasswordError = false) }
     }
 
     fun updateConfirmPassword(password: String) {
-        _uiState.update { it.copy(confirmPassword = password, error = null, successMessage = null) }
+        _uiState.update { it.copy(confirmPassword = password, error = null, successMessage = null, isConfirmPasswordError = false) }
     }
 
     fun submit() {
         val state = _uiState.value
         if (state.currentPassword.isBlank() || state.newPassword.isBlank() || state.confirmPassword.isBlank()) {
-            _uiState.update { it.copy(error = "Todos los campos obligatorios deben estar llenos.") }
+            _uiState.update { it.copy(
+                error = "Todos los campos obligatorios deben estar llenos.",
+                isCurrentPasswordError = it.currentPassword.isBlank(),
+                isNewPasswordError = it.newPassword.isBlank(),
+                isConfirmPasswordError = it.confirmPassword.isBlank()
+            ) }
             return
         }
 
         if (state.newPassword != state.confirmPassword) {
-            _uiState.update { it.copy(error = "Las contraseñas no coinciden.") }
+            _uiState.update { it.copy(error = "Las contraseñas no coinciden.", isConfirmPasswordError = true, isNewPasswordError = true) }
             return
         }
 
         if (state.newPassword.length < 8) {
-            _uiState.update { it.copy(error = "La nueva contraseña debe tener al menos 8 caracteres.") }
+            _uiState.update { it.copy(error = "La nueva contraseña debe tener al menos 8 caracteres.", isNewPasswordError = true) }
             return
         }
 

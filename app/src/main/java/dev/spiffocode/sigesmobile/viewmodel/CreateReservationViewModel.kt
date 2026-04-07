@@ -70,7 +70,9 @@ data class CreateReservationUiState(
     val isLoading: Boolean = false,
     val createdReservation: ReservationResponse? = null,
     val error: String? = null,
-    val maxCapacity: Int? = null
+    val maxCapacity: Int? = null,
+    val isCompanionsError: Boolean = false,
+    val isPurposeError: Boolean = false
 )
 
 @HiltViewModel
@@ -221,8 +223,8 @@ class CreateReservationViewModel @Inject constructor(
     }
     fun onStartTimeChange(value: LocalTime) = _uiState.update { it.copy(startTime = value, error = null, selectedBlock = null) }
     fun onEndTimeChange(value: LocalTime)   = _uiState.update { it.copy(endTime = value, error = null, selectedBlock = null) }
-    fun onCompanionsChange(value: String)   = _uiState.update { it.copy(companions = value, error = null) }
-    fun onPurposeChange(value: String)      = _uiState.update { it.copy(purpose = value, error = null) }
+    fun onCompanionsChange(value: String)   = _uiState.update { it.copy(companions = value, error = null, isCompanionsError = false) }
+    fun onPurposeChange(value: String)      = _uiState.update { it.copy(purpose = value, error = null, isPurposeError = false) }
 
     // ── Submission ────────────────────────────────────────────────────────────
 
@@ -247,16 +249,16 @@ class CreateReservationViewModel @Inject constructor(
                 _uiState.update { it.copy(error = "La fecha no puede ser en el pasado.") }
 
             state.companions.isBlank() ->
-                _uiState.update { it.copy(error = "Ingresa el número de asistentes.") }
+                _uiState.update { it.copy(error = "Ingresa el número de asistentes.", isCompanionsError = true) }
 
             state.purpose.isBlank() ->
-                _uiState.update { it.copy(error = "Describe el propósito de la reserva.") }
+                _uiState.update { it.copy(error = "Describe el propósito de la reserva.", isPurposeError = true) }
 
             state.maxCapacity != null && (state.companions.toIntOrNull() ?: 0) > state.maxCapacity ->
-                _uiState.update { it.copy(error = "El número de asistentes excede la capacidad máxima (${state.maxCapacity}) del recurso seleccionado.") }
+                _uiState.update { it.copy(error = "El número de asistentes excede la capacidad máxima (${state.maxCapacity}) del recurso seleccionado.", isCompanionsError = true) }
 
             else -> viewModelScope.launch {
-                _uiState.update { it.copy(isLoading = true, error = null) }
+                _uiState.update { it.copy(isLoading = true, error = null, isCompanionsError = false, isPurposeError = false) }
 
                 val companions = state.companions.trim().toIntOrNull() ?: 1
                 val type = if (companions > 1) ReservationType.GROUP else ReservationType.SINGLE

@@ -13,7 +13,6 @@ import dev.spiffocode.sigesmobile.data.remote.AuthInterceptor
 import dev.spiffocode.sigesmobile.data.remote.DurationTypeAdapter
 import dev.spiffocode.sigesmobile.data.remote.LocalDateTypeAdapter
 import dev.spiffocode.sigesmobile.data.remote.LocalTimeTypeAdapter
-import dev.spiffocode.sigesmobile.data.remote.TokenAuthenticator
 import dev.spiffocode.sigesmobile.data.remote.api.AuthApiService
 import dev.spiffocode.sigesmobile.data.remote.api.BuildingApiService
 import dev.spiffocode.sigesmobile.data.remote.api.EquipmentApiService
@@ -52,11 +51,9 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
-        tokenAuthenticator: TokenAuthenticator,
         loggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
-        .authenticator(tokenAuthenticator)
         .addInterceptor(loggingInterceptor)
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
