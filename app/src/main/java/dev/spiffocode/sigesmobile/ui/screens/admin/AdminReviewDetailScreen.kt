@@ -55,9 +55,11 @@ import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationType
 import dev.spiffocode.sigesmobile.data.remote.dto.UserRole
 import dev.spiffocode.sigesmobile.ui.components.detail.InfoRow
+import dev.spiffocode.sigesmobile.ui.components.detail.ObservationBox
 import dev.spiffocode.sigesmobile.ui.components.detail.SectionTitle
 import dev.spiffocode.sigesmobile.ui.components.detail.StatusHeaderCard
 import dev.spiffocode.sigesmobile.ui.components.reservation.ObservationChat
+import dev.spiffocode.sigesmobile.ui.helpers.toHumanString
 import dev.spiffocode.sigesmobile.ui.helpers.toText
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.AdminReviewUiState
@@ -67,6 +69,7 @@ import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.datetime.toKotlinLocalDateTime
 
 @Composable
 fun AdminReviewDetailScreen(
@@ -91,6 +94,7 @@ fun AdminReviewDetailScreen(
         onOpenReject    = viewModel::showRejectDialog,
         onCloseReject   = viewModel::hideRejectDialog,
         onReject        = { viewModel.reject(reservationId) },
+        onCancel        = { viewModel.cancel(reservationId, it) },
         onAddNote       = { note -> viewModel.addNote(reservationId, note) },
         onEditNote      = { noteId, comment -> viewModel.editNote(reservationId, noteId, comment) },
         onRefresh       = { viewModel.loadReservation(reservationId) },
@@ -110,6 +114,7 @@ fun AdminReviewDetailScreenContent(
     onOpenReject: () -> Unit = {},
     onCloseReject: () -> Unit = {},
     onReject: () -> Unit = {},
+    onCancel: (String) -> Unit = {},
     onAddNote: (String) -> Unit = {},
     onEditNote: (Long, String) -> Unit = { _, _ -> },
     onRefresh: () -> Unit = {},
@@ -187,6 +192,7 @@ fun AdminReviewDetailScreenContent(
                                         onObservationChange = onObservationChange,
                                         onApprove = onApprove,
                                         onOpenReject = onOpenReject,
+                                        onCancel = onCancel,
                                         onAddNote = onAddNote,
                                         onEditNote = onEditNote
                                     )
@@ -208,6 +214,7 @@ fun AdminReviewDetailScreenContent(
                                     onObservationChange = onObservationChange,
                                     onApprove = onApprove,
                                     onOpenReject = onOpenReject,
+                                    onCancel = onCancel,
                                     onAddNote = onAddNote,
                                     onEditNote = onEditNote
                                 )
@@ -217,11 +224,16 @@ fun AdminReviewDetailScreenContent(
                 }
 
                 if (state.showRejectDialog) {
+                    val isPending = state.reservation?.status == ReservationStatus.PENDING
                     RejectReasonDialog(
+                        title = if (isPending) "Motivo de rechazo" else "Motivo de cancelación",
+                        description = if (isPending) 
+                            "Por favor, explica por qué no se puede aceptar esta reservación. El solicitante verá este motivo." 
+                            else "Explica por qué se cancela esta reservación previamente aceptada.",
                         reason = state.rejectReason,
                         onReasonChange = onRejectReasonChange,
                         onDismiss = onCloseReject,
-                        onConfirm = onReject,
+                        onConfirm = { if (isPending) onReject() else onCancel(state.rejectReason) },
                         isLoading = state.isLoading
                     )
                 }
@@ -291,6 +303,7 @@ fun AdminReviewRightSection(
     onObservationChange: (String) -> Unit,
     onApprove: () -> Unit,
     onOpenReject: () -> Unit,
+    onCancel: (String) -> Unit,
     onAddNote: (String) -> Unit,
     onEditNote: (Long, String) -> Unit
 ) {
@@ -312,6 +325,26 @@ fun AdminReviewRightSection(
         onEditNote = onEditNote,
         modifier = Modifier.padding(bottom = 16.dp)
     )
+
+    if (!res.rejectionReason.isNullOrBlank()) {
+        SectionTitle("Motivo de Rechazo")
+        val dateText = res.rejectedAt?.toKotlinLocalDateTime()?.toHumanString() ?: ""
+        ObservationBox(
+            observation = res.rejectionReason,
+            authorAndDate = "Administración ${if (dateText.isNotEmpty()) "- $dateText" else ""}",
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+    }
+
+    if (!res.approvalReason.isNullOrBlank()) {
+        SectionTitle("Observaciones de Aprobación")
+        val dateText = res.approvedAt?.toKotlinLocalDateTime()?.toHumanString() ?: ""
+        ObservationBox(
+            observation = res.approvalReason,
+            authorAndDate = "Administración ${if (dateText.isNotEmpty()) "- $dateText" else ""}",
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+    }
 
     if (res.status == ReservationStatus.PENDING) {
         SectionTitle("OBSERVACIONES (OPCIONAL)")
@@ -380,6 +413,33 @@ fun AdminReviewRightSection(
                 )
             }
         }
+    } else if (res.status == ReservationStatus.APPROVED || res.status == ReservationStatus.IN_PROGRESS) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = onOpenReject, // Re-use the dialog trigger
+                enabled = !state.isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Icon(Icons.Default.Close, contentDescription = "Cancelar")
+                Text(
+                    text = "  Cancelar Reserva",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Text(
+                text = "Esta acción cancelará la reservación activa.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
+            )
+        }
     }
 
     Spacer(modifier = Modifier.height(24.dp))
@@ -387,6 +447,8 @@ fun AdminReviewRightSection(
 
 @Composable
 fun RejectReasonDialog(
+    title: String,
+    description: String,
     reason: String,
     onReasonChange: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -397,7 +459,7 @@ fun RejectReasonDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
         title = {
             Text(
-                text = "Motivo de rechazo",
+                text = title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -405,7 +467,7 @@ fun RejectReasonDialog(
         text = {
             Column {
                 Text(
-                    text = "Por favor, explica por qué no se puede aceptar esta reservación. El solicitante verá este motivo.",
+                    text = description,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 16.dp)

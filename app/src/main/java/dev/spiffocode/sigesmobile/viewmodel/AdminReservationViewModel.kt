@@ -136,6 +136,32 @@ class AdminReviewViewModel @Inject constructor(
         }
     }
 
+    fun cancel(id: Long, reason: String) {
+        if (reason.isBlank()) {
+            _uiState.update { it.copy(error = "El motivo de cancelación es obligatorio") }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null, showRejectDialog = false) }
+            when (val result = repository.cancelReservation(id, reason)) {
+                is NetworkResult.Success -> _uiState.update {
+                    it.copy(isLoading = false, reservation = result.data, actionSuccess = "Solicitud cancelada")
+                }
+                is NetworkResult.Error -> _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = when (result.code) {
+                            409  -> "La solicitud ya no está en el estado requerido."
+                            403  -> "No tienes permiso para realizar esta acción."
+                            else -> result.message
+                        }
+                    )
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
     fun clearMessages() = _uiState.update { it.copy(error = null, actionSuccess = null) }
 }
 

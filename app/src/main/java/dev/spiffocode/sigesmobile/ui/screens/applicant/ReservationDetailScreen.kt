@@ -269,20 +269,20 @@ fun ReservationDetailRightSection(
 
     if (!res.rejectionReason.isNullOrBlank()) {
         SectionTitle("Motivo de Rechazo")
+        val dateText = res.rejectedAt?.toKotlinLocalDateTime()?.toHumanString() ?: ""
         ObservationBox(
             observation = res.rejectionReason,
-            authorAndDate = "Administración - - ${
-                res.rejectedAt?.toKotlinLocalDateTime()?.toHumanString()
-            }",
+            authorAndDate = "Administración ${if (dateText.isNotEmpty()) "- $dateText" else ""}",
             modifier = Modifier.padding(bottom = 16.dp)
         )
     }
 
     if (!res.approvalReason.isNullOrBlank()) {
         SectionTitle("Observaciones de Aprobación")
+        val dateText = res.approvedAt?.toKotlinLocalDateTime()?.toHumanString() ?: ""
         ObservationBox(
             observation = res.approvalReason,
-            authorAndDate = "Administración - ${res.approvedAt?.toKotlinLocalDateTime()?.toHumanString()}",
+            authorAndDate = "Administración ${if (dateText.isNotEmpty()) "- $dateText" else ""}",
             modifier = Modifier.padding(bottom = 16.dp)
         )
     }
@@ -297,7 +297,9 @@ fun ReservationDetailRightSection(
 
     Spacer(modifier = Modifier.height(48.dp))
 
-    if (res.status == ReservationStatus.PENDING) {
+    if (res.status == ReservationStatus.PENDING || 
+        res.status == ReservationStatus.APPROVED || 
+        res.status == ReservationStatus.IN_PROGRESS) {
         var showCancelDialog by remember { mutableStateOf(false) }
         
         Row(
