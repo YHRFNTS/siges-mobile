@@ -53,8 +53,8 @@ fun EquipmentDetailScreen(
     equipmentId: Long,
     viewModel: EquipmentDetailViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
-    onNavigateToReserve: () -> Unit,
-    onNavigateToCalendar: () -> Unit = {}
+    onNavigateToReserve: (id: Long, name: String) -> Unit,
+    onNavigateToCalendar: (id: Long, name: String) -> Unit = { _, _ -> }
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -66,8 +66,8 @@ fun EquipmentDetailScreen(
         windowSizeClass      = windowSizeClass,
         state                = uiState,
         onNavigateBack       = onNavigateBack,
-        onNavigateToReserve  = onNavigateToReserve,
-        onNavigateToCalendar = onNavigateToCalendar,
+        onNavigateToReserve  = { uiState.equipment?.let { onNavigateToReserve(it.id, it.name) } },
+        onNavigateToCalendar = { uiState.equipment?.let { onNavigateToCalendar(it.id, it.name) } },
     )
 }
 

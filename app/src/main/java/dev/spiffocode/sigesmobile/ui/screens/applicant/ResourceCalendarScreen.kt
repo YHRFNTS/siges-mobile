@@ -68,6 +68,7 @@ private val timeFormatterRc = DateTimeFormatter.ofPattern("HH:mm")
 @Composable
 fun ResourceCalendarScreen(
     reservableId: Long,
+    type: String,
     reservableName: String,
     viewModel: ResourceCalendarViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
@@ -76,7 +77,7 @@ fun ResourceCalendarScreen(
     val state by viewModel.uiState.collectAsState()
 
     LaunchedEffect(reservableId) {
-        viewModel.init(reservableId, reservableName)
+        viewModel.init(reservableId, type, reservableName)
     }
 
     Scaffold(

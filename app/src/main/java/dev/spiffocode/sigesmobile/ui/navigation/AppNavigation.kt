@@ -66,14 +66,14 @@ object Routes {
     fun availability(showBack: Boolean) = "availability?showBackButton=$showBack"
     const val MY_REQUESTS    = "requests?showBackButton={showBackButton}"
     fun myRequests(showBack: Boolean) = "requests?showBackButton=$showBack"
-    const val NEW_REQUEST    = "new_request?reservableId={reservableId}&name={name}&date={date}&startTime={startTime}&endTime={endTime}"
-    fun newRequest() = "new_request?reservableId=&name=&date=&startTime=&endTime="
+    const val NEW_REQUEST    = "new_request?reservableId={reservableId}&type={type}&name={name}&date={date}&startTime={startTime}&endTime={endTime}"
+    fun newRequest() = "new_request?reservableId=&type=&name=&date=&startTime=&endTime="
     fun newRequestPrefilled(
-        reservableId: Long, name: String, date: String, startTime: String, endTime: String
-    ) = "new_request?reservableId=$reservableId&name=${android.net.Uri.encode(name)}&date=$date&startTime=$startTime&endTime=$endTime"
-    const val RESOURCE_CALENDAR = "resource_calendar/{reservableId}/{name}"
-    fun resourceCalendar(reservableId: Long, name: String) =
-        "resource_calendar/$reservableId/${android.net.Uri.encode(name)}"
+        reservableId: Long, type: String, name: String, date: String, startTime: String, endTime: String
+    ) = "new_request?reservableId=$reservableId&type=$type&name=${android.net.Uri.encode(name)}&date=$date&startTime=$startTime&endTime=$endTime"
+    const val RESOURCE_CALENDAR = "resource_calendar/{reservableId}/{type}/{name}"
+    fun resourceCalendar(reservableId: Long, type: String, name: String) =
+        "resource_calendar/$reservableId/$type/${android.net.Uri.encode(name)}"
     const val SPACE_DETAIL   = "space_detail/{id}"
     const val EQUIPMENT_DETAIL = "equipment_detail/{id}"
     fun spaceDetail(id: Long) = "space_detail/$id"
@@ -293,12 +293,15 @@ fun AppNavigation(
                 route     = Routes.NEW_REQUEST,
                 arguments = listOf(
                     navArgument("reservableId") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("type")         { type = NavType.StringType; defaultValue = "" },
                     navArgument("name")         { type = NavType.StringType; defaultValue = "" },
                     navArgument("date")         { type = NavType.StringType; defaultValue = "" },
                     navArgument("startTime")    { type = NavType.StringType; defaultValue = "" },
                     navArgument("endTime")      { type = NavType.StringType; defaultValue = "" }
                 )
             ) { backStack ->
+                val prefillResourceId = backStack.arguments?.getString("reservableId") ?: ""
+                val prefillType       = backStack.arguments?.getString("type")         ?: ""
                 val prefillDate      = backStack.arguments?.getString("date")      ?: ""
                 val prefillStartTime = backStack.arguments?.getString("startTime")  ?: ""
                 val prefillEndTime   = backStack.arguments?.getString("endTime")    ?: ""
@@ -307,6 +310,8 @@ fun AppNavigation(
                     viewModel        = hiltViewModel(),
                     onNavigateBack   = { navController.popBackStack() },
                     onNavigateToDetail = { id -> navController.navigate(Routes.requestDetail(id)) },
+                    prefillResourceId = prefillResourceId,
+                    prefillType       = prefillType,
                     prefillDate      = prefillDate,
                     prefillStartTime = prefillStartTime,
                     prefillEndTime   = prefillEndTime
@@ -317,18 +322,21 @@ fun AppNavigation(
                 route     = Routes.RESOURCE_CALENDAR,
                 arguments = listOf(
                     navArgument("reservableId") { type = NavType.LongType },
+                    navArgument("type")         { type = NavType.StringType },
                     navArgument("name")         { type = NavType.StringType; defaultValue = "" }
                 )
             ) { backStack ->
                 val reservableId   = backStack.arguments?.getLong("reservableId") ?: return@composable
+                val type           = backStack.arguments?.getString("type") ?: "SPACE"
                 val reservableName = backStack.arguments?.getString("name") ?: ""
                 ResourceCalendarScreen(
                     reservableId   = reservableId,
+                    type           = type,
                     reservableName = android.net.Uri.decode(reservableName),
                     viewModel      = hiltViewModel(),
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToNewRequest = { id, date, start, end ->
-                        navController.navigate(Routes.newRequestPrefilled(id, android.net.Uri.decode(reservableName), date, start, end))
+                        navController.navigate(Routes.newRequestPrefilled(id, type, android.net.Uri.decode(reservableName), date, start, end))
                     }
                 )
             }
@@ -338,13 +346,12 @@ fun AppNavigation(
                 arguments = listOf(navArgument("id") { type = NavType.LongType })
             ) { backStack ->
                 val spaceId = backStack.arguments?.getLong("id") ?: return@composable
-                val spaceName = backStack.arguments?.getString("name") ?: ""
                 dev.spiffocode.sigesmobile.ui.screens.applicant.SpaceDetailScreen(
                     windowSizeClass      = windowSizeClass,
                     spaceId              = spaceId,
                     onNavigateBack       = { navController.popBackStack() },
-                    onNavigateToReserve  = { navController.navigate(Routes.newRequest()) },
-                    onNavigateToCalendar = { navController.navigate(Routes.resourceCalendar(spaceId, spaceName)) }
+                    onNavigateToReserve  = { id, name -> navController.navigate(Routes.newRequestPrefilled(id, "SPACE", name, "", "", "")) },
+                    onNavigateToCalendar = { id, name -> navController.navigate(Routes.resourceCalendar(id, "SPACE", name)) }
                 )
             }
 
@@ -353,13 +360,12 @@ fun AppNavigation(
                 arguments = listOf(navArgument("id") { type = NavType.LongType })
             ) { backStack ->
                 val equipmentId   = backStack.arguments?.getLong("id") ?: return@composable
-                val equipmentName = backStack.arguments?.getString("name") ?: ""
                 dev.spiffocode.sigesmobile.ui.screens.applicant.EquipmentDetailScreen(
                     windowSizeClass      = windowSizeClass,
                     equipmentId          = equipmentId,
                     onNavigateBack       = { navController.popBackStack() },
-                    onNavigateToReserve  = { navController.navigate(Routes.newRequest()) },
-                    onNavigateToCalendar = { navController.navigate(Routes.resourceCalendar(equipmentId, equipmentName)) }
+                    onNavigateToReserve  = { id, name -> navController.navigate(Routes.newRequestPrefilled(id, "EQUIPMENT", name, "", "", "")) },
+                    onNavigateToCalendar = { id, name -> navController.navigate(Routes.resourceCalendar(id, "EQUIPMENT", name)) }
                 )
             }
 

@@ -356,19 +356,52 @@ class CreateReservationViewModel @Inject constructor(
         }
     }
 
-    fun prefillFrom(dateStr: String, startTimeStr: String, endTimeStr: String) {
-        runCatching {
-            val date  = LocalDate.parse(dateStr)
-            val start = LocalTime.parse(startTimeStr)
-            val end   = LocalTime.parse(endTimeStr)
-            _uiState.update {
-                it.copy(
-                    inputMode = InputMode.PICKERS,
-                    date      = date,
-                    startTime = start,
-                    endTime   = end
-                )
+    fun prefillResource(idStr: String, typeStr: String) {
+        val id = idStr.toLongOrNull() ?: return
+        val type = when (typeStr.uppercase()) {
+            "SPACE" -> ResourceType.SPACE
+            "EQUIPMENT" -> ResourceType.EQUIPMENT
+            else -> return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            val result = when (type) {
+                ResourceType.SPACE     -> spaceRepository.getSpace(id)
+                ResourceType.EQUIPMENT -> equipmentRepository.getEquipment(id)
             }
+
+            when (result) {
+                is NetworkResult.Success -> {
+                    val data = result.data
+                    if (data is SpaceDto) {
+                        selectSpace(data)
+                    } else if (data is EquipmentDto) {
+                        selectEquipment(data)
+                    }
+                    _uiState.update { it.copy(isLoading = false) }
+                }
+                is NetworkResult.Error -> {
+                    _uiState.update { it.copy(isLoading = false, error = "No se pudo cargar el recurso: ${result.message}") }
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun prefillFrom(dateStr: String, startTimeStr: String, endTimeStr: String) {
+        val date  = runCatching { LocalDate.parse(dateStr) }.getOrNull()
+        val start = runCatching { LocalTime.parse(startTimeStr) }.getOrNull()
+        val end   = runCatching { LocalTime.parse(endTimeStr) }.getOrNull()
+
+        _uiState.update { state ->
+            state.copy(
+                date      = date  ?: state.date,
+                startTime = start ?: state.startTime,
+                endTime   = end   ?: state.endTime,
+                // Switch to pickers if we have a full date/time pre-selection (e.g. from calendar)
+                inputMode = if (date != null && start != null && end != null) InputMode.PICKERS else state.inputMode
+            )
         }
     }
 

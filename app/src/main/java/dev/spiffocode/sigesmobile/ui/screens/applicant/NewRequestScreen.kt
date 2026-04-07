@@ -86,15 +86,24 @@ fun NewRequestScreen(
     viewModel: CreateReservationViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
+    prefillResourceId: String = "",
+    prefillType: String = "",
     prefillDate: String = "",
     prefillStartTime: String = "",
     prefillEndTime: String = ""
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Pre-fill from calendar navigation
+    // Pre-fill resource from detail navigation
+    LaunchedEffect(prefillResourceId, prefillType) {
+        if (prefillResourceId.isNotBlank() && prefillType.isNotBlank()) {
+            viewModel.prefillResource(prefillResourceId, prefillType)
+        }
+    }
+
+    // Pre-fill time/date from calendar navigation
     LaunchedEffect(prefillDate, prefillStartTime, prefillEndTime) {
-        if (prefillDate.isNotBlank() && prefillStartTime.isNotBlank() && prefillEndTime.isNotBlank()) {
+        if (prefillDate.isNotBlank() || prefillStartTime.isNotBlank() || prefillEndTime.isNotBlank()) {
             viewModel.prefillFrom(prefillDate, prefillStartTime, prefillEndTime)
         }
     }

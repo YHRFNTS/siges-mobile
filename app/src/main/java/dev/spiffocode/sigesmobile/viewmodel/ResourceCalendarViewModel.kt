@@ -17,6 +17,7 @@ import javax.inject.Inject
 
 data class ResourceCalendarUiState(
     val reservableId: Long? = null,
+    val type: String = "SPACE",
     val reservableName: String = "",
     val weekStart: LocalDate = LocalDate.now().with(DayOfWeek.MONDAY),
     val availability: List<DayAvailabilityItem> = emptyList(),
@@ -32,11 +33,12 @@ class ResourceCalendarViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ResourceCalendarUiState())
     val uiState: StateFlow<ResourceCalendarUiState> = _uiState.asStateFlow()
 
-    fun init(reservableId: Long, reservableName: String) {
+    fun init(reservableId: Long, type: String, reservableName: String) {
         val today = LocalDate.now()
         _uiState.update {
             it.copy(
                 reservableId   = reservableId,
+                type           = type,
                 reservableName = reservableName,
                 weekStart      = today.with(DayOfWeek.MONDAY)
             )
