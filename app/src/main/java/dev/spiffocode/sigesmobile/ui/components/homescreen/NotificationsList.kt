@@ -96,7 +96,7 @@ fun NotificationsList(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No tienes notificaciones pendientes",
+                    text = "No tienes notificaciones no leídas",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
