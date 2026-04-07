@@ -131,8 +131,10 @@ class SessionManager @Inject constructor(
     suspend fun clearSession() {
         context.dataStore.edit { prefs ->
             val remember = prefs[Keys.REMEMBER_ME] ?: false
+            val fcmToken = prefs[Keys.FCM_TOKEN] ?: ""
             prefs.clear()
             prefs[Keys.REMEMBER_ME] = remember
+            prefs[Keys.FCM_TOKEN] = fcmToken
         }
     }
 }

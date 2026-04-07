@@ -1,5 +1,6 @@
 package dev.spiffocode.sigesmobile.domain.repository
 
+import android.util.Log
 import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.data.remote.api.AuthApiService
@@ -64,6 +65,8 @@ class AuthRepository @Inject constructor(
         val accessToken  = session.accessToken  ?: return NetworkResult.Error(401, "No hay sesión activa")
         val refreshToken = session.refreshToken ?: return NetworkResult.Error(401, "No hay sesión activa")
         val fcmToken     = session.fcmToken
+        Log.d("Logout", "FCM Token: $fcmToken")
+
 
         fcmToken?.let { token ->
              safeApiCall { userApi.unregisterPushToken(token) }
