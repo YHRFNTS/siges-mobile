@@ -15,14 +15,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationMetadata
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationReadStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationType
 import dev.spiffocode.sigesmobile.ui.helpers.toHumanString
-import dev.spiffocode.sigesmobile.ui.navigation.Routes
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import kotlinx.datetime.toKotlinLocalDateTime
 import java.time.LocalDateTime
@@ -31,8 +28,7 @@ import java.time.LocalDateTime
 @Composable
 fun NotificationItem(
     notification: NotificationResponse,
-    onClick: () -> Unit = {},
-    navController: NavController = rememberNavController()
+    onClick: () -> Unit = {}
 ) {
     DropdownMenuItem(
         text = {
@@ -58,26 +54,7 @@ fun NotificationItem(
                 )
             }
         },
-        onClick = {
-            onClick()
-
-            when (notification.type) {
-                NotificationType.RESERVATION_RESCHEDULE,
-                NotificationType.COMMENT_ON_RESERVATION,
-                NotificationType.RESERVATION_REMINDER,
-                NotificationType.RESERVATION_CREATED,
-                NotificationType.RESERVATION_APPROVED,
-                NotificationType.RESERVATION_REJECTED,
-                NotificationType.RESERVATION_CANCELLED -> notification.reservation?.id?.let {
-                    navController.navigate(
-                        Routes.requestDetail(it)
-                    )
-                }
-
-                NotificationType.PASSWORD_CHANGED,
-                NotificationType.LOGIN_NEW_DEVICE -> navController.navigate(Routes.PROFILE)
-            }
-        }
+        onClick = onClick
     )
 }
 

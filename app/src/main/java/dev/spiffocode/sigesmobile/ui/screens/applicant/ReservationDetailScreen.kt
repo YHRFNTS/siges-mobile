@@ -33,6 +33,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -58,6 +59,7 @@ import dev.spiffocode.sigesmobile.ui.helpers.toHumanString
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.ReservationDetailUiState
 import dev.spiffocode.sigesmobile.viewmodel.ReservationDetailViewModel
+import dev.spiffocode.sigesmobile.ui.components.reservation.ObservationChat
 import kotlinx.datetime.toKotlinLocalDateTime
 import java.time.LocalDate
 import java.time.LocalTime
@@ -84,6 +86,9 @@ fun ReservationDetailScreen(
         onNavigateBack = onNavigateBack,
         onNavigateToEdit = { onNavigateToEdit(reservationId) },
         onCancelReservation = { reason -> viewModel.cancel(reservationId, reason) },
+        onRefresh = { viewModel.loadReservation(reservationId) },
+        onAddNote = { note -> viewModel.addNoteWithText(reservationId, note) },
+        onEditNote = { noteId, comment -> viewModel.editNote(reservationId, noteId, comment) },
         onClearMessages = viewModel::clearMessages
     )
 }
@@ -96,6 +101,9 @@ fun ReservationDetailScreenContent(
     onNavigateBack: () -> Unit = {},
     onNavigateToEdit: () -> Unit = {},
     onCancelReservation: (String) -> Unit = {},
+    onRefresh: () -> Unit = {},
+    onAddNote: (String) -> Unit = {},
+    onEditNote: (Long, String) -> Unit = { _, _ -> },
     onClearMessages: () -> Unit = {}
 ) {
     Scaffold(
@@ -114,63 +122,85 @@ fun ReservationDetailScreenContent(
             )
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            val scrollState = rememberScrollState()
+        PullToRefreshBox(
+            isRefreshing = state.isLoading,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxSize().padding(paddingValues)
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                val scrollState = rememberScrollState()
 
-            if (state.isLoading && state.reservation == null) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (state.error != null && state.reservation == null) {
-                Text(
-                    text = state.error,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center).padding(24.dp)
-                )
-            } else if (state.reservation != null) {
-                val res = state.reservation
-                val isExpanded = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Expanded
+                if (state.isLoading && state.reservation == null) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                } else if (state.error != null && state.reservation == null) {
+                    Text(
+                        text = state.error,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center).padding(24.dp)
+                    )
+                } else if (state.reservation != null) {
+                    val res = state.reservation
+                    val isExpanded =
+                        windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Expanded
 
-                if (isExpanded) {
-                    Row(
-                        modifier = Modifier.fillMaxSize().padding(24.dp),
-                        horizontalArrangement = Arrangement.spacedBy(24.dp)
-                    ) {
-                        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                            ReservationDetailLeftSection(res)
+                    if (isExpanded) {
+                        Row(
+                            modifier = Modifier.fillMaxSize().padding(24.dp),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
+                            ) {
+                                ReservationDetailLeftSection(res)
+                            }
+                            Column(
+                                modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
+                            ) {
+                                ReservationDetailRightSection(
+                                    res = res,
+                                    currentUserId = state.currentUserId,
+                                    onNavigateToEdit = onNavigateToEdit,
+                                    onCancelReservation = onCancelReservation,
+                                    onAddNote = onAddNote,
+                                    onEditNote = onEditNote
+                                )
+                            }
                         }
-                        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                    } else {
+                        val scrollState = rememberScrollState()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(scrollState)
+                                .padding(24.dp)
+                        ) {
+                            ReservationDetailLeftSection(res)
                             ReservationDetailRightSection(
                                 res = res,
+                                currentUserId = state.currentUserId,
                                 onNavigateToEdit = onNavigateToEdit,
-                                onCancelReservation = onCancelReservation
+                                onCancelReservation = onCancelReservation,
+                                onAddNote = onAddNote,
+                                onEditNote = onEditNote
                             )
                         }
                     }
-                } else {
-                    val scrollState = rememberScrollState()
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(scrollState)
-                            .padding(24.dp)
-                    ) {
-                        ReservationDetailLeftSection(res)
-                        ReservationDetailRightSection(
-                            res = res,
-                            onNavigateToEdit = onNavigateToEdit,
-                            onCancelReservation = onCancelReservation
-                        )
-                    }
                 }
-            }
 
-            if (state.error != null || state.actionSuccess != null) {
-                Snackbar(
-                    modifier = Modifier.padding(16.dp).align(Alignment.BottomCenter),
-                    action = {
-                        TextButton(onClick = onClearMessages) { Text("OK", color = MaterialTheme.colorScheme.inversePrimary) }
+                if (state.error != null || state.actionSuccess != null) {
+                    Snackbar(
+                        modifier = Modifier.padding(16.dp).align(Alignment.BottomCenter),
+                        action = {
+                            TextButton(onClick = onClearMessages) {
+                                Text(
+                                    "OK",
+                                    color = MaterialTheme.colorScheme.inversePrimary
+                                )
+                            }
+                        }
+                    ) {
+                        Text(state.actionSuccess ?: state.error ?: "")
                     }
-                ) {
-                    Text(state.actionSuccess ?: state.error ?: "")
                 }
             }
         }
@@ -220,8 +250,11 @@ fun ReservationDetailLeftSection(res: dev.spiffocode.sigesmobile.data.remote.dto
 @Composable
 fun ReservationDetailRightSection(
     res: dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse,
+    currentUserId: Long?,
     onNavigateToEdit: () -> Unit,
-    onCancelReservation: (String) -> Unit
+    onCancelReservation: (String) -> Unit,
+    onAddNote: (String) -> Unit,
+    onEditNote: (Long, String) -> Unit
 ) {
     // ── Request Reason ──────────────────────────────────
     if (!res.requestReason.isNullOrBlank()) {
@@ -254,19 +287,13 @@ fun ReservationDetailRightSection(
         )
     }
 
-    val otherNotes = res.notes ?: emptyList()
-    if (otherNotes.isNotEmpty()) {
-        SectionTitle("NOTAS ADICIONALES")
-        otherNotes.forEach { note ->
-            ObservationBox(
-                observation = note.comment,
-                authorAndDate = "${note.createdBy?.firstName} ${note.createdBy?.lastName} - - ${
-                    note.createdAt?.toKotlinLocalDateTime()?.toHumanString()
-                }",
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-    }
+    ObservationChat(
+        notes = res.notes ?: emptyList(),
+        currentUserId = currentUserId,
+        onAddNote = onAddNote,
+        onEditNote = onEditNote,
+        modifier = Modifier.padding(bottom = 16.dp)
+    )
 
     Spacer(modifier = Modifier.height(48.dp))
 
@@ -307,9 +334,9 @@ fun ReservationDetailRightSection(
             AlertDialog(
                 onDismissRequest = { showCancelDialog = false },
                 confirmButton = {
-                    TextButton(onClick = { 
+                    TextButton(onClick = {
                         onCancelReservation(cancelReason)
-                        showCancelDialog = false 
+                        showCancelDialog = false
                     }) {
                         Text("Confirmar Cancelación", color = MaterialTheme.colorScheme.error)
                     }

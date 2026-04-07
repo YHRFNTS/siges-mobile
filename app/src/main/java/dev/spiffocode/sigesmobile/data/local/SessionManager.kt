@@ -35,6 +35,7 @@ class SessionManager @Inject constructor(
         val BIRTH_DATE          = stringPreferencesKey("birth_date")
         val ID                  = stringPreferencesKey("user_id")
         val REMEMBER_ME         = booleanPreferencesKey("remember_me")
+        val FCM_TOKEN           = stringPreferencesKey("fcm_token")
     }
 
     val accessTokenFlow: Flow<String?>  = context.dataStore.data.map { it[Keys.ACCESS_TOKEN] }
@@ -54,6 +55,7 @@ class SessionManager @Inject constructor(
     val birthDate: String?          get() = runBlocking { context.dataStore.data.map { it[Keys.BIRTH_DATE] }.first() }
     val id: String?                 get() = runBlocking { context.dataStore.data.map { it[Keys.ID] }.first() }
     val rememberMe: Boolean         get() = runBlocking { context.dataStore.data.map { it[Keys.REMEMBER_ME] ?: false }.first() }
+    val fcmToken: String?           get() = runBlocking { context.dataStore.data.map { it[Keys.FCM_TOKEN] }.first() }
 
 
 
@@ -104,6 +106,10 @@ class SessionManager @Inject constructor(
 
     suspend fun updateProfilePictureUrl(url: String) {
         context.dataStore.edit { it[Keys.PROFILE_PICTURE_URL] = url }
+    }
+
+    suspend fun saveFcmToken(token: String) {
+        context.dataStore.edit { it[Keys.FCM_TOKEN] = token }
     }
  
     suspend fun updateUserInfo(

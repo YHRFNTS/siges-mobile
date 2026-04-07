@@ -33,6 +33,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -54,10 +55,9 @@ import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationType
 import dev.spiffocode.sigesmobile.data.remote.dto.UserRole
 import dev.spiffocode.sigesmobile.ui.components.detail.InfoRow
-import dev.spiffocode.sigesmobile.ui.components.detail.ObservationBox
 import dev.spiffocode.sigesmobile.ui.components.detail.SectionTitle
 import dev.spiffocode.sigesmobile.ui.components.detail.StatusHeaderCard
-import dev.spiffocode.sigesmobile.ui.helpers.toHumanString
+import dev.spiffocode.sigesmobile.ui.components.reservation.ObservationChat
 import dev.spiffocode.sigesmobile.ui.helpers.toText
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.AdminReviewUiState
@@ -65,7 +65,6 @@ import dev.spiffocode.sigesmobile.viewmodel.AdminReviewViewModel
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalTime
-import kotlinx.datetime.toKotlinLocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -92,6 +91,9 @@ fun AdminReviewDetailScreen(
         onOpenReject    = viewModel::showRejectDialog,
         onCloseReject   = viewModel::hideRejectDialog,
         onReject        = { viewModel.reject(reservationId) },
+        onAddNote       = { note -> viewModel.addNote(reservationId, note) },
+        onEditNote      = { noteId, comment -> viewModel.editNote(reservationId, noteId, comment) },
+        onRefresh       = { viewModel.loadReservation(reservationId) },
         onClearMessages = viewModel::clearMessages
     )
 }
@@ -108,6 +110,9 @@ fun AdminReviewDetailScreenContent(
     onOpenReject: () -> Unit = {},
     onCloseReject: () -> Unit = {},
     onReject: () -> Unit = {},
+    onAddNote: (String) -> Unit = {},
+    onEditNote: (Long, String) -> Unit = { _, _ -> },
+    onRefresh: () -> Unit = {},
     onClearMessages: () -> Unit = {}
 ) {
     Scaffold(
@@ -131,86 +136,95 @@ fun AdminReviewDetailScreenContent(
             )
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+        PullToRefreshBox(
+            isRefreshing = state.isLoading,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
-            when {
-                state.isLoading && state.reservation == null -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                state.error != null && state.reservation == null -> {
-                    Text(
-                        text = state.error,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(24.dp)
-                    )
-                }
-                state.reservation != null -> {
-                    val res = state.reservation
-                    val isExpanded = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
-                    
-                    if (isExpanded) {
-                        Row(
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    state.isLoading && state.reservation == null -> {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
+
+                    state.error != null && state.reservation == null -> {
+                        Text(
+                            text = state.error,
+                            color = MaterialTheme.colorScheme.error,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .padding(24.dp),
-                            horizontalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
+                                .align(Alignment.Center)
+                                .padding(24.dp)
+                        )
+                    }
+
+                    state.reservation != null -> {
+                        val res = state.reservation
+                        val isExpanded =
+                            windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
+
+                        if (isExpanded) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp),
+                                horizontalArrangement = Arrangement.spacedBy(24.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    AdminReviewLeftSection(res)
+                                }
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    AdminReviewRightSection(
+                                        res = res,
+                                        state = state,
+                                        onObservationChange = onObservationChange,
+                                        onApprove = onApprove,
+                                        onOpenReject = onOpenReject,
+                                        onAddNote = onAddNote,
+                                        onEditNote = onEditNote
+                                    )
+                                }
+                            }
+                        } else {
+                            val scrollState = rememberScrollState()
+
                             Column(
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .verticalScroll(rememberScrollState())
+                                    .fillMaxSize()
+                                    .verticalScroll(scrollState)
+                                    .padding(24.dp)
                             ) {
                                 AdminReviewLeftSection(res)
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .verticalScroll(rememberScrollState())
-                            ) {
                                 AdminReviewRightSection(
                                     res = res,
                                     state = state,
                                     onObservationChange = onObservationChange,
                                     onApprove = onApprove,
-                                    onOpenReject = onOpenReject
+                                    onOpenReject = onOpenReject,
+                                    onAddNote = onAddNote,
+                                    onEditNote = onEditNote
                                 )
                             }
                         }
-                    } else {
-                        val scrollState = rememberScrollState()
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(scrollState)
-                                .padding(24.dp)
-                        ) {
-                            AdminReviewLeftSection(res)
-                            AdminReviewRightSection(
-                                res = res,
-                                state = state,
-                                onObservationChange = onObservationChange,
-                                onApprove = onApprove,
-                                onOpenReject = onOpenReject
-                            )
-                        }
                     }
                 }
-            }
 
-            if (state.showRejectDialog) {
-                RejectReasonDialog(
-                    reason = state.rejectReason,
-                    onReasonChange = onRejectReasonChange,
-                    onDismiss = onCloseReject,
-                    onConfirm = onReject,
-                    isLoading = state.isLoading
-                )
+                if (state.showRejectDialog) {
+                    RejectReasonDialog(
+                        reason = state.rejectReason,
+                        onReasonChange = onRejectReasonChange,
+                        onDismiss = onCloseReject,
+                        onConfirm = onReject,
+                        isLoading = state.isLoading
+                    )
+                }
             }
         }
     }
@@ -276,34 +290,28 @@ fun AdminReviewRightSection(
     state: AdminReviewUiState,
     onObservationChange: (String) -> Unit,
     onApprove: () -> Unit,
-    onOpenReject: () -> Unit
+    onOpenReject: () -> Unit,
+    onAddNote: (String) -> Unit,
+    onEditNote: (Long, String) -> Unit
 ) {
-    // ── Purpose note ──────────────────────────────────────
-    val firstNote = res.notes?.firstOrNull()
-    if (firstNote != null) {
+    // ── Purpose ──────────────────────────────────────
+    if (!res.requestReason.isNullOrBlank()) {
         SectionTitle("PROPÓSITO")
         Text(
-            text     = firstNote.comment,
+            text     = res.requestReason,
             style    = MaterialTheme.typography.bodyMedium,
             color    = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(bottom = 16.dp)
         )
     }
 
-    val adminNotes = res.notes?.drop(1) ?: emptyList()
-    if (adminNotes.isNotEmpty() && res.status != ReservationStatus.PENDING) {
-        SectionTitle("OBSERVACIONES")
-        adminNotes.forEach { note ->
-            val author = note.createdBy?.let {
-                "${it.firstName} ${it.lastName}"
-            } ?: "Admin"
-            ObservationBox(
-                observation  = note.comment,
-                authorAndDate = "$author - ${note.createdAt?.toKotlinLocalDateTime()?.toHumanString()}",
-                modifier     = Modifier.padding(bottom = 8.dp)
-            )
-        }
-    }
+    ObservationChat(
+        notes = res.notes ?: emptyList(),
+        currentUserId = state.currentUserId,
+        onAddNote = onAddNote,
+        onEditNote = onEditNote,
+        modifier = Modifier.padding(bottom = 16.dp)
+    )
 
     if (res.status == ReservationStatus.PENDING) {
         SectionTitle("OBSERVACIONES (OPCIONAL)")

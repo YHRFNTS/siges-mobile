@@ -23,6 +23,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -71,6 +72,7 @@ fun AdminReservationListScreen(
         onSetDateRange = viewModel::setDateRange,
         onSetSort = viewModel::setSort,
         onLoadPage = viewModel::loadPage,
+        onRefresh = viewModel::refresh,
         onNavigateToDetail = onNavigateToDetail,
     )
 }
@@ -85,6 +87,7 @@ fun AdminReservationListScreen(
     onSetDateRange: (java.time.LocalDate?, java.time.LocalDate?) -> Unit = { _, _ -> },
     onSetSort: (String, String) -> Unit = { _, _ -> },
     onLoadPage: (Int) -> Unit = {},
+    onRefresh: () -> Unit = {},
     onNavigateToDetail: (Long) -> Unit = {}
 ) {
     var showFromDatePicker by remember { mutableStateOf(false) }
@@ -160,11 +163,16 @@ fun AdminReservationListScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = state.isLoading,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
             // ── Tabs ─────────────────────────────────────────────────────────
             val selectedTabIndex = when (state.selectedTab) {
                 AdminReservationTab.ALL      -> 0
@@ -344,9 +352,9 @@ fun AdminReservationListScreen(
                         spacing = Arrangement.spacedBy(4.dp)
                     ) { reservation ->
                         val reservableTypeDisplay = when (reservation.reservable?.reservableType) {
-                            ReservableType.SPACE     -> "Espacio"
+                            ReservableType.SPACE -> "Espacio"
                             ReservableType.EQUIPMENT -> "Equipo"
-                            null                     -> "--"
+                            null -> "--"
                         }
 
                         val durationMins = java.time.Duration.between(
@@ -363,7 +371,7 @@ fun AdminReservationListScreen(
                         val petitionerRole = petitioner?.role?.toText()
 
                         RequestCard(
-                            title       = reservation.reservable?.name ?: "Recurso no especificado",
+                            title = reservation.reservable?.name ?: "Recurso no especificado",
                             startDateTime = reservation.date.atTime(reservation.startTime).let {
                                 kotlinx.datetime.LocalDateTime(
                                     it.year, it.monthValue, it.dayOfMonth, it.hour, it.minute
@@ -374,19 +382,20 @@ fun AdminReservationListScreen(
                                     it.year, it.monthValue, it.dayOfMonth, it.hour, it.minute
                                 )
                             },
-                            status        = reservation.status,
-                            meta1         = reservableTypeDisplay,
-                            meta2         = durationDisplay,
+                            status = reservation.status,
+                            meta1 = reservableTypeDisplay,
+                            meta2 = durationDisplay,
                             requesterName = petitionerName,
                             requesterRole = petitionerRole,
-                            createdAt     = reservation.createdAt?.let {
+                            createdAt = reservation.createdAt?.let {
                                 kotlinx.datetime.LocalDateTime(
                                     it.year, it.monthValue, it.dayOfMonth, it.hour, it.minute
                                 )
                             },
-                            onClick       = { onNavigateToDetail(reservation.id) },
+                            onClick = { onNavigateToDetail(reservation.id) },
                         )
                         Spacer(modifier = Modifier.height(12.dp))
+                    }
                     }
                 }
             }

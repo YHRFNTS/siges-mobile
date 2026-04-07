@@ -33,6 +33,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -98,6 +99,7 @@ fun MyReservationsScreen(
         filterByReservable = viewModel::filterByReservable,
         onSetDateRange = viewModel::setDateRange,
         onSetSort = viewModel::setSort,
+        onRefresh = viewModel::refresh,
         loadPage = viewModel::loadPage,
         showBackButton = showBackButton,
         onNavigateBack = onNavigateBack,
@@ -123,6 +125,7 @@ fun MyReservationsScreen(
     filterByReservable: (ReservableDto?) -> Unit = {},
     onSetDateRange: (java.time.LocalDate?, java.time.LocalDate?) -> Unit = { _, _ -> },
     onSetSort: (String, String) -> Unit = { _, _ -> },
+    onRefresh: () -> Unit = {},
     loadPage: (Int) -> Unit = {},
     showBackButton: Boolean = false,
     onNavigateBack: () -> Unit = {},
@@ -194,11 +197,16 @@ fun MyReservationsScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = isLoading,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
             // App Bar
             TopAppBar(
                 title = {
@@ -416,7 +424,8 @@ fun MyReservationsScreen(
                         }
 
                         // Calculate duration heuristically based on start and end times assuming same day
-                        val durationMins = Duration.between(reservation.startTime, reservation.endTime).toMinutes()
+                        val durationMins =
+                            Duration.between(reservation.startTime, reservation.endTime).toMinutes()
                         val durationDisplay = if (durationMins >= 60) {
                             val hours = durationMins / 60
                             val remainder = durationMins % 60
@@ -428,22 +437,43 @@ fun MyReservationsScreen(
                         RequestCard(
                             title = reservation.reservable?.name ?: "Recurso no especificado",
                             startDateTime = reservation.date.atTime(reservation.startTime).let {
-                                LocalDateTime(it.year, it.monthValue, it.dayOfMonth, it.hour, it.minute)
+                                LocalDateTime(
+                                    it.year,
+                                    it.monthValue,
+                                    it.dayOfMonth,
+                                    it.hour,
+                                    it.minute
+                                )
                             },
                             endDateTime = reservation.date.atTime(reservation.endTime).let {
-                                LocalDateTime(it.year, it.monthValue, it.dayOfMonth, it.hour, it.minute)
+                                LocalDateTime(
+                                    it.year,
+                                    it.monthValue,
+                                    it.dayOfMonth,
+                                    it.hour,
+                                    it.minute
+                                )
                             },
                             status = reservation.status,
                             meta1 = reservableTypeDisplay,
                             meta2 = durationDisplay,
                             createdAt = reservation.createdAt?.let {
-                                LocalDateTime(it.year, it.monthValue, it.dayOfMonth, it.hour, it.minute)
+                                LocalDateTime(
+                                    it.year,
+                                    it.monthValue,
+                                    it.dayOfMonth,
+                                    it.hour,
+                                    it.minute
+                                )
                             },
                             onClick = { onNavigateToDetail(reservation.id) }
                         )
                         Spacer(modifier = Modifier.height(12.dp))
+
+
                     }
                 )
+            }
             }
         }
     }

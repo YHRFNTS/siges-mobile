@@ -21,6 +21,7 @@ import javax.inject.Inject
 data class AdminReviewUiState(
     val isLoading: Boolean = false,
     val reservation: ReservationResponse? = null,
+    val currentUserId: Long? = null,
     val observation: String = "",
     val rejectReason: String = "",
     val showRejectDialog: Boolean = false,
@@ -30,7 +31,8 @@ data class AdminReviewUiState(
 
 @HiltViewModel
 class AdminReviewViewModel @Inject constructor(
-    private val repository: ReservationRepository
+    private val repository: ReservationRepository,
+    private val sessionManager: dev.spiffocode.sigesmobile.data.local.SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdminReviewUiState())
@@ -38,7 +40,8 @@ class AdminReviewViewModel @Inject constructor(
 
     fun loadReservation(id: Long) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            val currentId = sessionManager.id?.toLongOrNull()
+            _uiState.update { it.copy(isLoading = true, error = null, currentUserId = currentId) }
             when (val result = repository.getReservation(id)) {
                 is NetworkResult.Success -> _uiState.update {
                     it.copy(isLoading = false, reservation = result.data)
@@ -87,6 +90,43 @@ class AdminReviewViewModel @Inject constructor(
             when (val result = repository.rejectReservation(id, reason)) {
                 is NetworkResult.Success -> _uiState.update {
                     it.copy(isLoading = false, reservation = result.data, actionSuccess = "Solicitud denegada")
+                }
+                is NetworkResult.Error -> _uiState.update {
+                    it.copy(isLoading = false, error = result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun addNote(id: Long, comment: String) {
+        if (comment.isBlank()) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            when (val result = repository.addNote(id, comment)) {
+                is NetworkResult.Success -> _uiState.update {
+                    it.copy(
+                        isLoading     = false,
+                        reservation   = result.data,
+                        actionSuccess = "Observación agregada"
+                    )
+                }
+                is NetworkResult.Error -> _uiState.update {
+                    it.copy(isLoading = false, error = result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun editNote(reservationId: Long, noteId: Long, comment: String) {
+        if (comment.isBlank()) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            when (val result = repository.editNote(reservationId, noteId, comment)) {
+                is NetworkResult.Success -> {
+                    loadReservation(reservationId)
+                    _uiState.update { it.copy(actionSuccess = "Observación editada") }
                 }
                 is NetworkResult.Error -> _uiState.update {
                     it.copy(isLoading = false, error = result.message)

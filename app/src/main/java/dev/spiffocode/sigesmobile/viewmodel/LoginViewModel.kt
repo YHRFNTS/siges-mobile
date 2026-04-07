@@ -5,6 +5,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.domain.repository.AuthRepository
+import dev.spiffocode.sigesmobile.domain.repository.UserRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +29,7 @@ data class LoginUiState(
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val userRepository: UserRepository,
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
@@ -61,6 +63,10 @@ class LoginViewModel @Inject constructor(
             when (val result = authRepository.login(state.identifier.trim(), state.password, state.rememberMe)) {
                 is NetworkResult.Success -> {
                     _uiState.update { it.copy(isLoading = false) };
+                    // Register FCM token if available
+                    sessionManager.fcmToken?.let { token ->
+                        userRepository.registerPushToken(token)
+                    }
                     _uiEvent.send(UiEvent.LoginSuccess);
                 }
                 is NetworkResult.Error   -> {

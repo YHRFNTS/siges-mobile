@@ -45,6 +45,8 @@ fun NotificationsList(
     onMarkAllRead: () -> Unit = {},
     onExpandedChange: (Boolean) -> Unit = {},
     onNotificationClick: (NotificationResponse) -> Unit = {},
+    onNavigateToDetail: (Long) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onLoadMoreItems: () -> Unit = {}
 ) {
     val itemHeight = 64.dp
@@ -52,8 +54,12 @@ fun NotificationsList(
     val loaderHeight = if (hasNextPage) 44.dp else 0.dp
 
     val calculatedHeight = remember(notifications.size, hasNextPage) {
-        val listHeight = itemHeight * notifications.size.coerceAtMost(5) + loaderHeight
-        (headerHeight + listHeight).coerceAtMost(maxHeight)
+        if (notifications.isEmpty()) {
+            140.dp // High enough for the message and padding
+        } else {
+            val listHeight = itemHeight * notifications.size.coerceAtMost(5) + loaderHeight
+            (headerHeight + listHeight).coerceAtMost(maxHeight)
+        }
     }
 
     DropdownMenu(
@@ -92,7 +98,7 @@ fun NotificationsList(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No tienes notificaciones pendientes",
+                    text = "No tienes notificaciones no leídas",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -107,7 +113,32 @@ fun NotificationsList(
                 loadMoreItems = onLoadMoreItems,
                 hasNextPage = hasNextPage
             ) { notif ->
-                NotificationItem(notif, onClick = { onNotificationClick(notif) })
+                NotificationItem(
+                    notification = notif,
+                    onClick = {
+                        onNotificationClick(notif)
+                        onExpandedChange(false)
+                        
+                        when (notif.type) {
+                            NotificationType.LOGIN_NEW_DEVICE,
+                            NotificationType.PASSWORD_CHANGED -> {
+                                onNavigateToProfile()
+                            }
+                            else -> {
+                                // Try to find reservation ID in multiple places
+                                val resId = notif.reservation?.id ?: notif.metadata?.reservationId
+                                
+                                if (resId != null && resId != 0L) {
+                                    onNavigateToDetail(resId)
+                                } else {
+                                    // If no ID found, we just stay on the current screen (Home)
+                                    // This matches the user's description of being "redirected to home"
+                                    // because the menu closes and they are still where they were.
+                                }
+                            }
+                        }
+                    }
+                )
                 HorizontalDivider()
             }
         }

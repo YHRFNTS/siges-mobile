@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -43,7 +44,6 @@ import dev.spiffocode.sigesmobile.viewmodel.AvailableResourceUIItem
 import dev.spiffocode.sigesmobile.viewmodel.HomeViewModel
 import dev.spiffocode.sigesmobile.viewmodel.NotificationsViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ReservationUIItem
-import dev.spiffocode.sigesmobile.viewmodel.ResourceType
 import kotlinx.datetime.LocalDateTime
 import java.util.Collections.emptyList
 
@@ -55,7 +55,8 @@ fun ApplicantHomeScreen(
     onNavigateToAvailability: () -> Unit = {},
     onNavigateToNewRequest: () -> Unit = {},
     onNavigateToMyRequests: () -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {},
+    onNavigateToReservationDetail: (Long) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onNavigateToResourceDetail: (Long, ReservableType) -> Unit = {_, _ -> }
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -84,16 +85,19 @@ fun ApplicantHomeScreen(
         onClickNotification = notificationsViewModel::onClick,
         markAllNotificationsAsRead = notificationsViewModel::markAllRead,
         onLoadMoreNotifications = notificationsViewModel::loadNextPage,
+        onRefresh = viewModel::loadHome,
         onNavigateToAvailability = onNavigateToAvailability,
         onNavigateToNewRequest = onNavigateToNewRequest,
         onNavigateToMyRequests = onNavigateToMyRequests,
-        onNavigateToDetail = onNavigateToDetail,
+        onNavigateToReservationDetail = onNavigateToReservationDetail,
+        onNavigateToProfile = onNavigateToProfile,
         onNavigateToResourceDetail = onNavigateToResourceDetail
     )
 
 }
 
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun ApplicantHomeScreen(
     columns: Int = 1,
@@ -108,33 +112,36 @@ fun ApplicantHomeScreen(
     onClickNotification: (NotificationResponse) -> Unit = {},
     markAllNotificationsAsRead: () -> Unit = {},
     onLoadMoreNotifications: () -> Unit = {},
+    onRefresh: () -> Unit = {},
     onNavigateToAvailability: () -> Unit = {},
     onNavigateToNewRequest: () -> Unit = {},
     onNavigateToMyRequests: () -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {},
+    onNavigateToReservationDetail: (Long) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onNavigateToResourceDetail: (Long, ReservableType) -> Unit = {_, _ -> }
 ) {
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(scrollState)
+    PullToRefreshBox(
+        isRefreshing = isLoading,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize()
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(scrollState)
+        ) {
         HomeHeader(
             userName         = userName,
             userRole         = userRole,
             notifications    = notifications,
             notificationsHasNextPage = hasNextNotificationPage,
-            onNotificationClick = { notification ->
-                onClickNotification(notification)
-                val resId = notification.reservation?.id ?: notification.metadata?.reservationId
-                if (resId != null) {
-                    onNavigateToDetail(resId)
-                }
-            },
+            onNotificationClick = { onClickNotification(it) },
             onMarkAllNotificationsRead = markAllNotificationsAsRead,
+            onNavigateToDetail = onNavigateToReservationDetail,
+            onNavigateToProfile = onNavigateToProfile,
             onLoadMoreNotifications = onLoadMoreNotifications
         )
 
@@ -152,25 +159,33 @@ fun ApplicantHomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             SectionHeader(
-                title         = "Mis Solicitudes",
-                actionText    = "Ver todas",
+                title = "Mis Solicitudes",
+                actionText = "Ver todas",
                 onActionClick = onNavigateToMyRequests
             )
 
             when {
                 isLoading -> {
-                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
+
                 myRecentReservations.isEmpty() -> {
                     Text(
-                        text     = "No tienes solicitudes recientes.",
-                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = "No tienes solicitudes recientes.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                     )
                 }
+
                 else -> {
                     ResponsiveGrid(
                         items = myRecentReservations,
@@ -178,13 +193,13 @@ fun ApplicantHomeScreen(
                         modifier = Modifier.padding(horizontal = 20.dp)
                     ) { reservation ->
                         RequestCard(
-                            title       = reservation.title,
+                            title = reservation.title,
                             startDateTime = reservation.dateStart,
                             endDateTime = reservation.dateEnd,
-                            status      = reservation.status,
-                            meta1       = reservation.meta1,
-                            meta2       = reservation.meta2,
-                            onClick     = { onNavigateToDetail(reservation.id) }
+                            status = reservation.status,
+                            meta1 = reservation.meta1,
+                            meta2 = reservation.meta2,
+                            onClick = { onNavigateToReservationDetail(reservation.id) }
                         )
                     }
                 }
@@ -193,15 +208,15 @@ fun ApplicantHomeScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             SectionHeader(
-                title         = "Disponible Ahora",
-                actionText    = "Ver todo",
+                title = "Disponible Ahora",
+                actionText = "Ver todo",
                 onActionClick = onNavigateToAvailability
             )
 
             if (availableSpaces.isEmpty() && !isLoading) {
                 Text(
-                    text     = "No hay recursos disponibles en este momento.",
-                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = "No hay recursos disponibles en este momento.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
@@ -212,26 +227,32 @@ fun ApplicantHomeScreen(
                     modifier = Modifier.padding(horizontal = 20.dp)
                 ) { resource ->
                     AvailableItemCard(
-                        title  = resource.title,
-                        meta   = resource.meta,
+                        title = resource.title,
+                        meta = resource.meta,
                         status = resource.status,
                         resourceType = resource.reservableType,
                         resourceCategory = resource.category,
-                        onClick = { onNavigateToResourceDetail(resource.id, resource.reservableType) }
+                        onClick = {
+                            onNavigateToResourceDetail(
+                                resource.id,
+                                resource.reservableType
+                            )
+                        }
                     )
                 }
             }
 
             error?.let { error ->
                 Text(
-                    text     = error,
-                    color    = MaterialTheme.colorScheme.error,
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+        }
         }
     }
 }

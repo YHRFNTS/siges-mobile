@@ -36,6 +36,8 @@ fun NotificationsButton(
     hasNextPage: Boolean,
     onNotificationClick: (NotificationResponse) -> Unit = {},
     onMarkAllRead: () -> Unit = {},
+    onNavigateToDetail: (Long) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onLoadMoreItems: () -> Unit = {},
     shape: CornerBasedShape = MaterialTheme.shapes.medium,
     padding: Dp = 20.dp,
@@ -87,6 +89,9 @@ fun NotificationsButton(
             onMarkAllRead = onMarkAllRead,
             notifications = notifications,
             expanded = expanded,
+            onExpandedChange = { expanded = it },
+            onNavigateToDetail = onNavigateToDetail,
+            onNavigateToProfile = onNavigateToProfile,
             hasNextPage = hasNextPage,
             onLoadMoreItems = onLoadMoreItems
         )

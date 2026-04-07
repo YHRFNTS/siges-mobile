@@ -7,6 +7,7 @@ import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationResponse
 import dev.spiffocode.sigesmobile.domain.repository.NotificationRepository
 import jakarta.inject.Inject
+import dev.spiffocode.sigesmobile.data.remote.dto.NotificationReadStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,7 +32,7 @@ class NotificationsViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             try {
                 val notifications = notificationsRepository
-                    .listNotifications(page = 0, size = 20)
+                    .listNotifications(page = 0, size = 20, status = NotificationReadStatus.UNREAD)
 
                 if(notifications is NetworkResult.Success){
                     _uiState.update {
@@ -71,7 +72,7 @@ class NotificationsViewModel @Inject constructor(
             val nextPage = current.currentPage + 1
             try {
                 val notifications = notificationsRepository
-                    .listNotifications(page = nextPage, size = 20)
+                    .listNotifications(page = nextPage, size = 20, status = NotificationReadStatus.UNREAD)
 
                 if(notifications is NetworkResult.Success){
                     _uiState.update {
