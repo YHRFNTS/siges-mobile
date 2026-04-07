@@ -25,6 +25,10 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -53,9 +57,6 @@ import dev.spiffocode.sigesmobile.viewmodel.MyReservationsViewModel
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalTime
-
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -294,6 +295,61 @@ fun MyReservationsScreen(
     }
 }
 
-// Previews removed to avoid WindowSizeClass mock errors
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+@Preview
+fun MyReservationsScreenPreviewEmpty(){
+    SigesmobileTheme {
+        MyReservationsScreen(
+            windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass,
+            isLoading = false,
+            reservations = emptyList(),
+            selectedTab = MyReservationsTab.ALL,
+            selectedReservableId = null,
+            totalPages = 1,
+            currentPage = 0,
+            error = null
+        )
+    }
+}
 
-// removed
+
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+@Preview
+fun MyReservationsScreenPreviewWithItems(){
+    SigesmobileTheme {
+        MyReservationsScreen(
+            windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass,
+            isLoading = false,
+            reservations = listOf(
+                ReservationResponse(
+                    id = 1,
+                    reservable = ReservableDto(
+                        id = 1,
+                        name = "Aula 1",
+                        reservableType = ReservableType.SPACE,
+                        availableForStudents = true,
+                        status = ReservableStatus.AVAILABLE,
+                        capacity = 10,
+                        spaceType = SpaceTypeDto(
+                            id = 1,
+                            name = "Aulas"
+                        )
+                    ),
+                    date = LocalDate(2026,1,28).toJavaLocalDate(),
+                    startTime = kotlinx.datetime.LocalTime(10,0).toJavaLocalTime(),
+                    endTime = kotlinx.datetime.LocalTime(12,0).toJavaLocalTime(),
+                    status = ReservationStatus.PENDING,
+                    type = ReservationType.GROUP,
+                    companions = 7
+                )
+            ),
+            selectedTab = MyReservationsTab.ALL,
+            selectedReservableId = null,
+            totalPages = 1,
+            currentPage = 0,
+            error = null
+        )
+    }
+}

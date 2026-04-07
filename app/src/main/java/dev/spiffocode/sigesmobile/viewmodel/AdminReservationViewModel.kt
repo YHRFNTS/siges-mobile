@@ -2,11 +2,11 @@ package dev.spiffocode.sigesmobile.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.domain.repository.ReservationRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +20,8 @@ data class AdminReviewUiState(
     val isLoading: Boolean = false,
     val reservation: ReservationResponse? = null,
     val observation: String = "",
+    val rejectReason: String = "",
+    val showRejectDialog: Boolean = false,
     val error: String? = null,
     val actionSuccess: String? = null
 )
@@ -48,16 +50,18 @@ class AdminReviewViewModel @Inject constructor(
     }
 
     fun setObservation(text: String) = _uiState.update { it.copy(observation = text) }
+    fun onRejectReasonChange(text: String) = _uiState.update { it.copy(rejectReason = text) }
+
+    fun showRejectDialog() = _uiState.update { it.copy(showRejectDialog = true, rejectReason = "") }
+    fun hideRejectDialog() = _uiState.update { it.copy(showRejectDialog = false) }
 
     fun approve(id: Long) {
         val observation = _uiState.value.observation.trim()
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            // Optionally publish observation note before approving
-            if (observation.isNotEmpty()) {
-                repository.addNote(id, observation)
-            }
-            when (val result = repository.approveReservation(id)) {
+            
+            // Pass observation directly to approveReservation as approveReason
+            when (val result = repository.approveReservation(id, observation.ifEmpty { null })) {
                 is NetworkResult.Success -> _uiState.update {
                     it.copy(isLoading = false, reservation = result.data, actionSuccess = "Solicitud aprobada")
                 }
@@ -70,10 +74,15 @@ class AdminReviewViewModel @Inject constructor(
     }
 
     fun reject(id: Long) {
-        val observation = _uiState.value.observation.trim()
+        val reason = _uiState.value.rejectReason.trim()
+        if (reason.isEmpty()) {
+            _uiState.update { it.copy(error = "El motivo de rechazo es obligatorio") }
+            return
+        }
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            when (val result = repository.rejectReservation(id, observation)) {
+            _uiState.update { it.copy(isLoading = true, error = null, showRejectDialog = false) }
+            when (val result = repository.rejectReservation(id, reason)) {
                 is NetworkResult.Success -> _uiState.update {
                     it.copy(isLoading = false, reservation = result.data, actionSuccess = "Solicitud denegada")
                 }
@@ -129,10 +138,10 @@ class AdminReservationListViewModel @Inject constructor(
 
     private fun load() {
         val state = _uiState.value
-        val status: ReservationStatus? = when (state.selectedTab) {
+        val statuses: List<ReservationStatus>? = when (state.selectedTab) {
             AdminReservationTab.ALL      -> null
-            AdminReservationTab.PENDING  -> ReservationStatus.PENDING
-            AdminReservationTab.RESOLVED -> null
+            AdminReservationTab.PENDING  -> listOf(ReservationStatus.PENDING)
+            AdminReservationTab.RESOLVED -> listOf(ReservationStatus.CANCELLED, ReservationStatus.APPROVED, ReservationStatus.REJECTED)
         }
 
         viewModelScope.launch {
@@ -141,7 +150,7 @@ class AdminReservationListViewModel @Inject constructor(
                 page         = state.currentPage,
                 size         = 20,
                 sort         = "date,desc",
-                status       = status,
+                statuses       = statuses,
                 reservableId = state.selectedReservableId
             )) {
                 is NetworkResult.Success -> {

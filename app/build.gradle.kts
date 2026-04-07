@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.hilt.android)
     implementation(libs.kotlinx.datetime)
+    implementation(libs.androidx.compose.material3.adaptive)
     ksp(libs.hilt.android.compiler)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)

@@ -14,8 +14,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -26,11 +27,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -53,15 +57,15 @@ import dev.spiffocode.sigesmobile.ui.components.detail.InfoRow
 import dev.spiffocode.sigesmobile.ui.components.detail.ObservationBox
 import dev.spiffocode.sigesmobile.ui.components.detail.SectionTitle
 import dev.spiffocode.sigesmobile.ui.components.detail.StatusHeaderCard
+import dev.spiffocode.sigesmobile.ui.helpers.toHumanString
 import dev.spiffocode.sigesmobile.ui.helpers.toText
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.AdminReviewUiState
 import dev.spiffocode.sigesmobile.viewmodel.AdminReviewViewModel
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalTime
+import kotlinx.datetime.toKotlinLocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -83,7 +87,10 @@ fun AdminReviewDetailScreen(
         state           = state,
         onNavigateBack  = onNavigateBack,
         onObservationChange = viewModel::setObservation,
+        onRejectReasonChange = viewModel::onRejectReasonChange,
         onApprove       = { viewModel.approve(reservationId) },
+        onOpenReject    = viewModel::showRejectDialog,
+        onCloseReject   = viewModel::hideRejectDialog,
         onReject        = { viewModel.reject(reservationId) },
         onClearMessages = viewModel::clearMessages
     )
@@ -96,7 +103,10 @@ fun AdminReviewDetailScreenContent(
     state: AdminReviewUiState,
     onNavigateBack: () -> Unit = {},
     onObservationChange: (String) -> Unit = {},
+    onRejectReasonChange: (String) -> Unit = {},
     onApprove: () -> Unit = {},
+    onOpenReject: () -> Unit = {},
+    onCloseReject: () -> Unit = {},
     onReject: () -> Unit = {},
     onClearMessages: () -> Unit = {}
 ) {
@@ -167,7 +177,7 @@ fun AdminReviewDetailScreenContent(
                                     state = state,
                                     onObservationChange = onObservationChange,
                                     onApprove = onApprove,
-                                    onReject = onReject
+                                    onOpenReject = onOpenReject
                                 )
                             }
                         }
@@ -186,27 +196,21 @@ fun AdminReviewDetailScreenContent(
                                 state = state,
                                 onObservationChange = onObservationChange,
                                 onApprove = onApprove,
-                                onReject = onReject
+                                onOpenReject = onOpenReject
                             )
                         }
                     }
                 }
             }
 
-            // ── Snackbar ──────────────────────────────────────────────────────
-            if (state.error != null || state.actionSuccess != null) {
-                Snackbar(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .align(Alignment.BottomCenter),
-                    action = {
-                        TextButton(onClick = onClearMessages) {
-                            Text("OK", color = MaterialTheme.colorScheme.inversePrimary)
-                        }
-                    }
-                ) {
-                    Text(state.actionSuccess ?: state.error ?: "")
-                }
+            if (state.showRejectDialog) {
+                RejectReasonDialog(
+                    reason = state.rejectReason,
+                    onReasonChange = onRejectReasonChange,
+                    onDismiss = onCloseReject,
+                    onConfirm = onReject,
+                    isLoading = state.isLoading
+                )
             }
         }
     }
@@ -214,7 +218,6 @@ fun AdminReviewDetailScreenContent(
 
 @Composable
 fun AdminReviewLeftSection(res: ReservationResponse) {
-    // ── Header card ───────────────────────────────────────
     StatusHeaderCard(
         status   = res.status,
         title    = res.reservable?.name ?: "Recurso desconocido",
@@ -222,7 +225,6 @@ fun AdminReviewLeftSection(res: ReservationResponse) {
         modifier = Modifier.padding(bottom = 24.dp)
     )
 
-    // ── Petitioner section ────────────────────────────────
     val petitioner = res.petitioner
     if (petitioner != null) {
         SectionTitle("SOLICITANTE")
@@ -240,7 +242,6 @@ fun AdminReviewLeftSection(res: ReservationResponse) {
         Spacer(modifier = Modifier.height(8.dp))
     }
 
-    // ── Reservation info ─────────────────────────────────
     SectionTitle("INFORMACIÓN DE LA SOLICITUD")
 
     val resourceTypeLabel = when (res.reservable?.reservableType) {
@@ -275,7 +276,7 @@ fun AdminReviewRightSection(
     state: AdminReviewUiState,
     onObservationChange: (String) -> Unit,
     onApprove: () -> Unit,
-    onReject: () -> Unit
+    onOpenReject: () -> Unit
 ) {
     // ── Purpose note ──────────────────────────────────────
     val firstNote = res.notes?.firstOrNull()
@@ -289,7 +290,6 @@ fun AdminReviewRightSection(
         )
     }
 
-    // ── Previous admin notes (resolved) ───────────────────
     val adminNotes = res.notes?.drop(1) ?: emptyList()
     if (adminNotes.isNotEmpty() && res.status != ReservationStatus.PENDING) {
         SectionTitle("OBSERVACIONES")
@@ -299,13 +299,12 @@ fun AdminReviewRightSection(
             } ?: "Admin"
             ObservationBox(
                 observation  = note.comment,
-                authorAndDate = author,
+                authorAndDate = "$author - ${note.createdAt?.toKotlinLocalDateTime()?.toHumanString()}",
                 modifier     = Modifier.padding(bottom = 8.dp)
             )
         }
     }
 
-    // ── Observation field (always shown for Admin) ─────────
     if (res.status == ReservationStatus.PENDING) {
         SectionTitle("OBSERVACIONES (OPCIONAL)")
         OutlinedTextField(
@@ -335,7 +334,7 @@ fun AdminReviewRightSection(
         ) {
             // Deny
             Button(
-                onClick  = onReject,
+                onClick  = onOpenReject,
                 enabled  = !state.isLoading,
                 modifier = Modifier
                     .weight(1f)
@@ -378,8 +377,148 @@ fun AdminReviewRightSection(
     Spacer(modifier = Modifier.height(24.dp))
 }
 
+@Composable
+fun RejectReasonDialog(
+    reason: String,
+    onReasonChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    isLoading: Boolean
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = {
+            Text(
+                text = "Motivo de rechazo",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = "Por favor, explica por qué no se puede aceptar esta reservación. El solicitante verá este motivo.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = onReasonChange,
+                    placeholder = { Text("Ej. El espacio estará en mantenimiento...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = reason.trim().isNotBlank() && !isLoading,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.padding(end = 8.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+                Text("Confirmar rechazo")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
+                Text("Cancelar")
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(24.dp)
+    )
+}
+
 // ───────────────────────────── Previews ──────────────────────────────────────
 
-// Removed previews that depended on hardcoded SizeClass for simplicity, but we can just pass a dummy windowSizeClass later
+@OptIn( ExperimentalMaterial3AdaptiveApi::class)
+@Preview(showBackground = true, name = "Pending — with petitioner")
+@Composable
+fun AdminReviewDetailPendingPreview() {
+    SigesmobileTheme {
+        AdminReviewDetailScreenContent(
+            windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass,
+            state = AdminReviewUiState(
+                reservation = ReservationResponse(
+                    id   = 1,
+                    status = ReservationStatus.PENDING,
+                    date = LocalDate(2026, 1, 28).toJavaLocalDate(),
+                    startTime = kotlinx.datetime.LocalTime(10, 0).toJavaLocalTime(),
+                    endTime   = kotlinx.datetime.LocalTime(12, 0).toJavaLocalTime(),
+                    type = ReservationType.GROUP,
+                    companions = 15,
+                    reservable = ReservableDto(
+                        id = 1,
+                        name = "Sala de Juntas A",
+                        reservableType = ReservableType.SPACE,
+                        status = ReservableStatus.AVAILABLE,
+                        availableForStudents = true
+                    ),
+                    notes = listOf(
+                        NoteItem(
+                            id = 1,
+                            comment = "Reunión de coordinación del equipo de investigación para revisar avances del proyecto trimestral.",
+                            createdAt = null,
+                            updatedAt = null,
+                            createdBy = null
+                        )
+                    )
+                )
+            )
+        )
+    }
+}
 
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Preview(showBackground = true, name = "Approved — no action buttons")
+@Composable
+fun AdminReviewDetailApprovedPreview() {
+    SigesmobileTheme {
+        AdminReviewDetailScreenContent(
+            windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass,
+            state = AdminReviewUiState(
+                reservation = ReservationResponse(
+                    id   = 2,
+                    status = ReservationStatus.APPROVED,
+                    date = LocalDate(2026, 1, 28).toJavaLocalDate(),
+                    startTime = kotlinx.datetime.LocalTime(10, 0).toJavaLocalTime(),
+                    endTime   = kotlinx.datetime.LocalTime(12, 0).toJavaLocalTime(),
+                    type = ReservationType.SINGLE,
+                    approvedAt = java.time.LocalDateTime.now().minusDays(1),
+                    approvalReason = "Cirren las puertas al irse",
+                    createdAt = java.time.LocalDateTime.now().minusDays(2),
+                    requestReason = "Reunión de seguimiento del proyecto de desarrollo de software para el semestre actual",
+                    reservable = ReservableDto(
+                        id = 1,
+                        name = "Sala de Juntas A",
+                        reservableType = ReservableType.SPACE,
+                        status = ReservableStatus.AVAILABLE,
+                        availableForStudents = true
+                    ),
+                    notes = listOf(
+                        NoteItem(1, "Reunión interna de revisión.", null, null, null),
+                        NoteItem(2, "Sala lista, traiga adaptador HDMI.", null, null, null)
+                    )
+                )
+            )
+        )
+    }
+}
 

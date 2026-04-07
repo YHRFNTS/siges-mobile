@@ -1,7 +1,6 @@
 package dev.spiffocode.sigesmobile.ui.screens.applicant
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +15,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,6 +36,7 @@ import dev.spiffocode.sigesmobile.ui.components.homescreen.AvailableItemCard
 import dev.spiffocode.sigesmobile.ui.components.homescreen.HomeHeader
 import dev.spiffocode.sigesmobile.ui.components.homescreen.QuickActionsGrid
 import dev.spiffocode.sigesmobile.ui.components.homescreen.RequestCard
+import dev.spiffocode.sigesmobile.ui.components.homescreen.ResponsiveGrid
 import dev.spiffocode.sigesmobile.ui.components.homescreen.SectionHeader
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.AvailableResourceUIItem
@@ -43,10 +45,6 @@ import dev.spiffocode.sigesmobile.viewmodel.NotificationsViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ReservationUIItem
 import kotlinx.datetime.LocalDateTime
 import java.util.Collections.emptyList
-
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import dev.spiffocode.sigesmobile.ui.components.homescreen.ResponsiveGrid
 
 @Composable
 fun ApplicantHomeScreen(
@@ -214,7 +212,8 @@ fun ApplicantHomeScreen(
                         meta   = resource.meta,
                         status = resource.status,
                         resourceType = resource.reservableType,
-                        resourceCategory = resource.category
+                        resourceCategory = resource.category,
+                        onClick = { onNavigateToDetail(resource.id) }
                     )
                 }
             }
@@ -291,6 +290,7 @@ fun ApplicantHomeScreenWithSpaces() {
             isLoading = false,
             availableSpaces = listOf(
                 AvailableResourceUIItem(
+                    id = 1,
                     title = "Lab de cómputo 1",
                     meta = "Capacidad: 30 personas",
                     status = ReservableStatus.AVAILABLE,

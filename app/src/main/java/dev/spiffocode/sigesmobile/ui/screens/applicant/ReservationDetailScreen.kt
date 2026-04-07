@@ -31,6 +31,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -43,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableType
@@ -51,8 +54,13 @@ import dev.spiffocode.sigesmobile.ui.components.detail.InfoRow
 import dev.spiffocode.sigesmobile.ui.components.detail.ObservationBox
 import dev.spiffocode.sigesmobile.ui.components.detail.SectionTitle
 import dev.spiffocode.sigesmobile.ui.components.detail.StatusHeaderCard
+import dev.spiffocode.sigesmobile.ui.helpers.toHumanString
+import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.ReservationDetailUiState
 import dev.spiffocode.sigesmobile.viewmodel.ReservationDetailViewModel
+import kotlinx.datetime.toKotlinLocalDateTime
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -215,24 +223,46 @@ fun ReservationDetailRightSection(
     onNavigateToEdit: () -> Unit,
     onCancelReservation: (String) -> Unit
 ) {
-    val firstNote = res.notes?.firstOrNull()
-    if (firstNote != null) {
-        SectionTitle("PROPÓSITO")
+    // ── Request Reason ──────────────────────────────────
+    if (!res.requestReason.isNullOrBlank()) {
+        SectionTitle("Propósito")
         Text(
-            text = firstNote.comment,
+            text = res.requestReason,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(bottom = 16.dp)
         )
     }
 
-    val adminNotes = res.notes?.drop(1) ?: emptyList()
-    if (adminNotes.isNotEmpty()) {
-        SectionTitle("OBSERVACIONES")
-        adminNotes.forEach { note ->
+    if (!res.rejectionReason.isNullOrBlank()) {
+        SectionTitle("Motivo de Rechazo")
+        ObservationBox(
+            observation = res.rejectionReason,
+            authorAndDate = "Administración - - ${
+                res.rejectedAt?.toKotlinLocalDateTime()?.toHumanString()
+            }",
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+    }
+
+    if (!res.approvalReason.isNullOrBlank()) {
+        SectionTitle("Observaciones de Aprobación")
+        ObservationBox(
+            observation = res.approvalReason,
+            authorAndDate = "Administración - ${res.approvedAt?.toKotlinLocalDateTime()?.toHumanString()}",
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+    }
+
+    val otherNotes = res.notes ?: emptyList()
+    if (otherNotes.isNotEmpty()) {
+        SectionTitle("NOTAS ADICIONALES")
+        otherNotes.forEach { note ->
             ObservationBox(
                 observation = note.comment,
-                authorAndDate = "Admin",
+                authorAndDate = "${note.createdBy?.firstName} ${note.createdBy?.lastName} - - ${
+                    note.createdAt?.toKotlinLocalDateTime()?.toHumanString()
+                }",
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
@@ -298,6 +328,43 @@ fun ReservationDetailRightSection(
                 }
             )
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Preview(showBackground = true)
+@Composable
+fun ReservationDetailScreenPreview() {
+    SigesmobileTheme {
+        ReservationDetailScreenContent(
+            windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass,
+            state = ReservationDetailUiState(
+                reservation = dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse(
+                    id = 1,
+                    status = ReservationStatus.APPROVED,
+                    date = LocalDate.of(2026, 1, 28),
+                    startTime = LocalTime.of(10, 0),
+                    endTime = LocalTime.of(12, 0),
+                    type = dev.spiffocode.sigesmobile.data.remote.dto.ReservationType.GROUP,
+                    companions = 15,
+                    reservable = dev.spiffocode.sigesmobile.data.remote.dto.ReservableDto(
+                        id = 1, name = "Sala de Juntas A", reservableType = ReservableType.SPACE, status = dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus.AVAILABLE, availableForStudents = true
+                    ),
+                    approvedAt = java.time.LocalDateTime.now().minusDays(1),
+                    approvalReason = "Cirren las puertas al irse",
+                    createdAt = java.time.LocalDateTime.now().minusDays(2),
+                    requestReason = "Reunión de seguimiento del proyecto de desarrollo de software para el semestre actual",
+                    notes = listOf(
+                        dev.spiffocode.sigesmobile.data.remote.dto.NoteItem(
+                            id = 1, comment = "Reunión de seguimiento del proyecto de desarrollo de software para el semestre actual.", createdAt = null, updatedAt = null, createdBy = null
+                        ),
+                        dev.spiffocode.sigesmobile.data.remote.dto.NoteItem(
+                            id = 2, comment = "La pantalla interactiva de la sala estará disponible durante su reserva.", createdAt = null, updatedAt = null, createdBy = null
+                        )
+                    )
+                )
+            )
+        )
     }
 }
 

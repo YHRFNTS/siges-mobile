@@ -54,10 +54,10 @@ class MyReservationsViewModel @Inject constructor(
 
     private fun load() {
         val state = _uiState.value
-        val status = when (state.selectedTab) {
+        val statuses: List<ReservationStatus>? = when (state.selectedTab) {
             MyReservationsTab.ALL      -> null
-            MyReservationsTab.PENDING  -> ReservationStatus.PENDING
-            MyReservationsTab.APPROVED -> ReservationStatus.APPROVED
+            MyReservationsTab.PENDING  -> listOf(ReservationStatus.PENDING)
+            MyReservationsTab.APPROVED -> listOf(ReservationStatus.APPROVED)
         }
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
@@ -65,7 +65,7 @@ class MyReservationsViewModel @Inject constructor(
                 page         = state.currentPage,
                 size         = 20,
                 sort         = "date,desc",
-                status       = status,
+                statuses       = statuses,
                 reservableId = state.selectedReservableId
             )) {
                 is NetworkResult.Success -> _uiState.update {

@@ -53,7 +53,8 @@ fun EquipmentDetailScreen(
     equipmentId: Long,
     viewModel: EquipmentDetailViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
-    onNavigateToReserve: () -> Unit
+    onNavigateToReserve: () -> Unit,
+    onNavigateToCalendar: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -62,10 +63,11 @@ fun EquipmentDetailScreen(
     }
 
     EquipmentDetailScreenContent(
-        windowSizeClass = windowSizeClass,
-        state = uiState,
-        onNavigateBack = onNavigateBack,
-        onNavigateToReserve = onNavigateToReserve,
+        windowSizeClass      = windowSizeClass,
+        state                = uiState,
+        onNavigateBack       = onNavigateBack,
+        onNavigateToReserve  = onNavigateToReserve,
+        onNavigateToCalendar = onNavigateToCalendar,
     )
 }
 
@@ -75,7 +77,8 @@ fun EquipmentDetailScreenContent(
     windowSizeClass: WindowSizeClass? = null,
     state: EquipmentDetailUiState,
     onNavigateBack: () -> Unit = {},
-    onNavigateToReserve: () -> Unit = {}
+    onNavigateToReserve: () -> Unit = {},
+    onNavigateToCalendar: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -117,7 +120,7 @@ fun EquipmentDetailScreenContent(
                             EquipmentDetailLeftSection(equipment)
                         }
                         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                            EquipmentDetailRightSection(equipment, onNavigateToReserve)
+                            EquipmentDetailRightSection(equipment, onNavigateToReserve, onNavigateToCalendar)
                         }
                     }
                 } else {
@@ -129,7 +132,7 @@ fun EquipmentDetailScreenContent(
                             .padding(24.dp)
                     ) {
                         EquipmentDetailLeftSection(equipment)
-                        EquipmentDetailRightSection(equipment, onNavigateToReserve)
+                        EquipmentDetailRightSection(equipment, onNavigateToReserve, onNavigateToCalendar)
                     }
                 }
             }
@@ -173,7 +176,11 @@ fun EquipmentDetailLeftSection(equipment: EquipmentDto) {
 }
 
 @Composable
-fun EquipmentDetailRightSection(equipment: EquipmentDto, onNavigateToReserve: () -> Unit) {
+fun EquipmentDetailRightSection(
+    equipment: EquipmentDto,
+    onNavigateToReserve: () -> Unit,
+    onNavigateToCalendar: () -> Unit = {}
+) {
     if (!equipment.description.isNullOrBlank()) {
         SectionTitle("DESCRIPCIÓN")
         Text(
@@ -185,6 +192,17 @@ fun EquipmentDetailRightSection(equipment: EquipmentDto, onNavigateToReserve: ()
     }
 
     Spacer(modifier = Modifier.height(48.dp))
+
+    Button(
+        onClick = onNavigateToCalendar,
+        modifier = Modifier.fillMaxWidth().height(50.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.outlinedButtonColors()
+    ) {
+        Text("Ver Disponibilidad", fontWeight = FontWeight.SemiBold)
+    }
+
+    Spacer(modifier = Modifier.height(12.dp))
 
     Button(
         onClick = onNavigateToReserve,

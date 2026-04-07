@@ -16,7 +16,8 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -29,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableDto
@@ -243,26 +243,26 @@ fun AdminReservationListScreen(
 
 // ───────────────────────────── Previews ──────────────────────────────────────
 
-@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Preview(showBackground = true)
 @Composable
 fun AdminReservationListScreenEmptyPreview() {
     SigesmobileTheme {
         AdminReservationListScreen(
             state = AdminReservationListUiState(isLoading = false),
-            windowSizeClass = WindowSizeClass.calculateFromSize(size = DpSize(400.dp, 900.dp))
+            windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass,
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Preview(showBackground = true, name = "With reservations")
 @Composable
 fun AdminReservationListScreenPreview() {
     SigesmobileTheme {
         AdminReservationListScreen(
 
-            windowSizeClass = WindowSizeClass.calculateFromSize(size = DpSize(400.dp, 900.dp)),
+            windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass,
             state = AdminReservationListUiState(
                 isLoading = false,
                 reservations = listOf(
