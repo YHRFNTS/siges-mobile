@@ -31,7 +31,8 @@ data class EditProfileUiState(
     val registrationNumber: String? = null,
     val isSaved: Boolean = false,
     val isUploadingPicture: Boolean = false,
-    val profilePictureUrl: String? = null,
+    val profilePictureUrl: Any? = null,
+    val pendingPictureBytes: ByteArray? = null,
     val error: String? = null
 )
 
@@ -80,6 +81,28 @@ class EditProfileViewModel @Inject constructor(
                 _uiState.update { it.copy(error = "El teléfono no puede estar vacío.") }
             else -> viewModelScope.launch {
                 _uiState.update { it.copy(isLoading = true, error = null) }
+                val state = _uiState.value
+                var currentPictureUrl = state.profilePictureUrl
+
+                // 1. Upload picture if pending
+                if (state.pendingPictureBytes != null) {
+                    val requestBody = state.pendingPictureBytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
+                    val filePart = MultipartBody.Part.createFormData("file", "profile_pic.jpg", requestBody)
+                    
+                    when (val result = repository.updateProfilePicture(filePart)) {
+                        is NetworkResult.Success -> {
+                            currentPictureUrl = result.data.profilePictureUrl
+                            session.updateProfilePictureUrl(currentPictureUrl)
+                        }
+                        is NetworkResult.Error -> {
+                            _uiState.update { it.copy(isLoading = false, error = result.message ?: "Error al subir imagen.") }
+                            return@launch
+                        }
+                        NetworkResult.Loading -> Unit
+                    }
+                }
+
+                // 2. Update common info
                 when (val result = repository.updateCommonInfo(
                     id      = userId,
                     request = UserInfoUpdateRequest(
@@ -89,8 +112,28 @@ class EditProfileViewModel @Inject constructor(
                         birthDate = state.birthDate
                     )
                 )) {
-                    is NetworkResult.Success -> _uiState.update {
-                        it.copy(isLoading = false, isSaved = true)
+                    is NetworkResult.Success -> {
+                        val user = result.data
+                        session.updateUserInfo(
+                            firstName = user.firstName,
+                            lastName = user.lastName,
+                            email = user.email,
+                            phoneNumber = user.phoneNumber,
+                            birthDate = user.birthDate.toString()
+                        )
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false, 
+                                isSaved = true,
+                                firstName = user.firstName,
+                                lastName = user.lastName,
+                                email = user.email,
+                                phoneNumber = user.phoneNumber,
+                                birthDate = user.birthDate,
+                                profilePictureUrl = currentPictureUrl,
+                                pendingPictureBytes = null
+                            )
+                        }
                     }
                     is NetworkResult.Error -> _uiState.update {
                         it.copy(
@@ -107,24 +150,8 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
-    fun uploadProfilePicture(imageBytes: ByteArray, mimeType: String = "image/jpeg") {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isUploadingPicture = true, error = null) }
-            val requestBody = imageBytes.toRequestBody(mimeType.toMediaTypeOrNull())
-            val filePart = MultipartBody.Part.createFormData("file", "profile_pic.jpg", requestBody)
-
-            when (val result = repository.updateProfilePicture(filePart)) {
-                is NetworkResult.Success -> {
-                    val newUrl = result.data.profilePictureUrl
-                    session.updateProfilePictureUrl(newUrl)
-                    _uiState.update { it.copy(isUploadingPicture = false, profilePictureUrl = newUrl) }
-                }
-                is NetworkResult.Error -> _uiState.update {
-                    it.copy(isUploadingPicture = false, error = result.message ?: "Error al subir imagen.")
-                }
-                NetworkResult.Loading -> Unit
-            }
-        }
+    fun uploadProfilePicture(imageBytes: ByteArray) {
+        _uiState.update { it.copy(pendingPictureBytes = imageBytes, error = null) }
     }
 
     fun clearMessages() = _uiState.update { it.copy(error = null, isSaved = false) }

@@ -340,7 +340,8 @@ fun AdminReservationListScreen(
                         hasNextPage = hasNextPage,
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 24.dp)
+                            .padding(horizontal = 24.dp),
+                        spacing = Arrangement.spacedBy(4.dp)
                     ) { reservation ->
                         val reservableTypeDisplay = when (reservation.reservable?.reservableType) {
                             ReservableType.SPACE     -> "Espacio"

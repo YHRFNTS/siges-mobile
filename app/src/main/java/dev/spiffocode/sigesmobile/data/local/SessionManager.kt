@@ -105,6 +105,22 @@ class SessionManager @Inject constructor(
     suspend fun updateProfilePictureUrl(url: String) {
         context.dataStore.edit { it[Keys.PROFILE_PICTURE_URL] = url }
     }
+ 
+    suspend fun updateUserInfo(
+        firstName: String,
+        lastName: String,
+        email: String,
+        phoneNumber: String,
+        birthDate: String
+    ) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.FIRST_NAME]   = firstName
+            prefs[Keys.LAST_NAME]    = lastName
+            prefs[Keys.EMAIL]        = email
+            prefs[Keys.PHONE_NUMBER] = phoneNumber
+            prefs[Keys.BIRTH_DATE]   = birthDate
+        }
+    }
 
     suspend fun clearSession() {
         context.dataStore.edit { prefs ->

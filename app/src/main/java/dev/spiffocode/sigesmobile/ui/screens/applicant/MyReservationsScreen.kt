@@ -407,6 +407,7 @@ fun MyReservationsScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 24.dp),
+                    spacing = Arrangement.spacedBy(4.dp),
                     content = { reservation ->
                         val reservableTypeDisplay = when (reservation.reservable?.reservableType) {
                             ReservableType.SPACE -> "Espacio"
