@@ -36,7 +36,7 @@ public fun UserRoleChip(
 
     val onBackgroundTint = if (userRole == UserRole.ADMIN)
         MaterialTheme.colorScheme.background
-    else MaterialTheme.colorScheme.secondary
+    else MaterialTheme.colorScheme.onPrimaryContainer
 
     val icon = if (userRole == UserRole.ADMIN)
         Icons.Default.Shield

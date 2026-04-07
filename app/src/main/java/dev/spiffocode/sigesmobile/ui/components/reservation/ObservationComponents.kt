@@ -47,7 +47,7 @@ fun ObservationChat(
                 modifier = Modifier.padding(vertical = 8.dp)
             )
         } else {
-            notes.forEach { note ->
+            notes.sortedBy { it.createdAt ?: java.time.LocalDateTime.MIN }.forEach { note ->
                 val isMine = note.createdBy?.id == currentUserId
                 ObservationBubble(
                     note = note,
