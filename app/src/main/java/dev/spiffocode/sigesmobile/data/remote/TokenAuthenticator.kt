@@ -26,16 +26,17 @@ class AuthInterceptor @Inject constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
         val token = session.accessToken
+        val timezone = java.util.TimeZone.getDefault().id
 
-        // 1. Añadir el token si está disponible
-        val authRequest = if (token != null && originalRequest.header("Authorization") == null) {
-            originalRequest.newBuilder()
-                .header("Authorization", "Bearer $token")
-                .build()
-        } else {
-            originalRequest
+        // 1. Añadir el token y el timezone
+        val authRequestBuilder = originalRequest.newBuilder()
+            .header("X-Timezone", timezone)
+
+        if (token != null && originalRequest.header("Authorization") == null) {
+            authRequestBuilder.header("Authorization", "Bearer $token")
         }
 
+        val authRequest = authRequestBuilder.build()
         val response = chain.proceed(authRequest)
 
         // 2. Si recibimos 401 o 403 y no es una petición de auth base (como login o refresh mismo)
