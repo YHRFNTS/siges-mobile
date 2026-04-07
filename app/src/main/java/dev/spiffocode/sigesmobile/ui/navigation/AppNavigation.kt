@@ -293,18 +293,18 @@ fun AppNavigation(
 
             composable(Routes.HOME) {
                 ApplicantHomeScreen(
-                    windowSizeClass          = windowSizeClass,
-                    viewModel                = hiltViewModel(),
-                    onNavigateToAvailability = { navController.navigate(Routes.availability(true)) },
-                    onNavigateToNewRequest   = { navController.navigate(Routes.newRequest()) },
-                    onNavigateToMyRequests   = { navController.navigate(Routes.myRequests(true)) },
-                    onNavigateToDetail       = { id -> navController.navigate(Routes.requestDetail(id)) },
-                    onNavigateToResourceDetail = {id, type ->
+                    windowSizeClass = windowSizeClass,
+                    onNavigateToAvailability = { navController.navigate(Routes.AVAILABILITY) },
+                    onNavigateToNewRequest = { navController.navigate(Routes.NEW_REQUEST) },
+                    onNavigateToMyRequests = { navController.navigate(Routes.MY_REQUESTS) },
+                    onNavigateToReservationDetail = { id -> 
+                        navController.navigate(Routes.requestDetail(id)) 
+                    },
+                    onNavigateToProfile = { navController.navigate(Routes.PROFILE) },
+                    onNavigateToResourceDetail = { id, type ->
                         when(type){
-                            ReservableType.SPACE ->
-                                navController.navigate(Routes.spaceDetail(id))
-                            ReservableType.EQUIPMENT ->
-                                navController.navigate(Routes.equipmentDetail(id))
+                            ReservableType.SPACE -> navController.navigate(Routes.spaceDetail(id))
+                            ReservableType.EQUIPMENT -> navController.navigate(Routes.equipmentDetail(id))
                         }
                     }
                 )
@@ -450,10 +450,12 @@ fun AppNavigation(
 
             composable(Routes.ADMIN_HOME) {
                 AdminHomeScreen(
-                    windowSizeClass         = windowSizeClass,
-                    viewModel               = hiltViewModel(),
+                    windowSizeClass = windowSizeClass,
                     onNavigateToAllRequests = { navController.navigate(Routes.ADMIN_ALL_REQUESTS) },
-                    onNavigateToDetail      = { id -> navController.navigate(Routes.adminReviewDetail(id)) }
+                    onNavigateToDetail = { id -> 
+                        navController.navigate(Routes.adminReviewDetail(id)) 
+                    },
+                    onNavigateToProfile = { navController.navigate(Routes.PROFILE) }
                 )
             }
 

@@ -326,6 +326,7 @@ fun AvailabilityScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp),
+                            spacing = Arrangement.spacedBy(4.dp),
                             content = { space ->
                                 AvailableItemCard(
                                     title = space.name,

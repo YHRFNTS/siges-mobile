@@ -44,7 +44,6 @@ import dev.spiffocode.sigesmobile.viewmodel.AvailableResourceUIItem
 import dev.spiffocode.sigesmobile.viewmodel.HomeViewModel
 import dev.spiffocode.sigesmobile.viewmodel.NotificationsViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ReservationUIItem
-import dev.spiffocode.sigesmobile.viewmodel.ResourceType
 import kotlinx.datetime.LocalDateTime
 import java.util.Collections.emptyList
 
@@ -56,7 +55,8 @@ fun ApplicantHomeScreen(
     onNavigateToAvailability: () -> Unit = {},
     onNavigateToNewRequest: () -> Unit = {},
     onNavigateToMyRequests: () -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {},
+    onNavigateToReservationDetail: (Long) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onNavigateToResourceDetail: (Long, ReservableType) -> Unit = {_, _ -> }
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -89,7 +89,8 @@ fun ApplicantHomeScreen(
         onNavigateToAvailability = onNavigateToAvailability,
         onNavigateToNewRequest = onNavigateToNewRequest,
         onNavigateToMyRequests = onNavigateToMyRequests,
-        onNavigateToDetail = onNavigateToDetail,
+        onNavigateToReservationDetail = onNavigateToReservationDetail,
+        onNavigateToProfile = onNavigateToProfile,
         onNavigateToResourceDetail = onNavigateToResourceDetail
     )
 
@@ -115,7 +116,8 @@ fun ApplicantHomeScreen(
     onNavigateToAvailability: () -> Unit = {},
     onNavigateToNewRequest: () -> Unit = {},
     onNavigateToMyRequests: () -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {},
+    onNavigateToReservationDetail: (Long) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onNavigateToResourceDetail: (Long, ReservableType) -> Unit = {_, _ -> }
 ) {
     val scrollState = rememberScrollState()
@@ -136,14 +138,10 @@ fun ApplicantHomeScreen(
             userRole         = userRole,
             notifications    = notifications,
             notificationsHasNextPage = hasNextNotificationPage,
-            onNotificationClick = { notification ->
-                onClickNotification(notification)
-                val resId = notification.reservation?.id ?: notification.metadata?.reservationId
-                if (resId != null) {
-                    onNavigateToDetail(resId)
-                }
-            },
+            onNotificationClick = { onClickNotification(it) },
             onMarkAllNotificationsRead = markAllNotificationsAsRead,
+            onNavigateToDetail = onNavigateToReservationDetail,
+            onNavigateToProfile = onNavigateToProfile,
             onLoadMoreNotifications = onLoadMoreNotifications
         )
 
@@ -201,7 +199,7 @@ fun ApplicantHomeScreen(
                             status = reservation.status,
                             meta1 = reservation.meta1,
                             meta2 = reservation.meta2,
-                            onClick = { onNavigateToDetail(reservation.id) }
+                            onClick = { onNavigateToReservationDetail(reservation.id) }
                         )
                     }
                 }

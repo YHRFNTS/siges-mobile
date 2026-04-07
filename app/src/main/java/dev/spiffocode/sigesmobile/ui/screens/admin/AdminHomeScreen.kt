@@ -49,7 +49,8 @@ fun AdminHomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     notificationsViewModel: NotificationsViewModel = hiltViewModel(),
     onNavigateToAllRequests: () -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {}
+    onNavigateToDetail: (Long) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val notificationsState by notificationsViewModel.uiState.collectAsStateWithLifecycle()
@@ -79,7 +80,8 @@ fun AdminHomeScreen(
         onLoadMoreNotifications = notificationsViewModel::loadNextPage,
         onRefresh = viewModel::loadHome,
         onNavigateToAllRequests = onNavigateToAllRequests,
-        onNavigateToDetail = onNavigateToDetail
+        onNavigateToDetail = onNavigateToDetail,
+        onNavigateToProfile = onNavigateToProfile
     )
 }
 
@@ -102,7 +104,8 @@ fun AdminHomeScreen(
     onLoadMoreNotifications: () -> Unit = {},
     onRefresh: () -> Unit = {},
     onNavigateToAllRequests: () -> Unit = {},
-    onNavigateToDetail: (Long) -> Unit = {}
+    onNavigateToDetail: (Long) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -125,6 +128,8 @@ fun AdminHomeScreen(
             notificationsHasNextPage = hasNextNotificationPage,
             onNotificationClick = {onClickNotification(it)},
             onMarkAllNotificationsRead = markAllNotificationsAsRead,
+            onNavigateToDetail = onNavigateToDetail,
+            onNavigateToProfile = onNavigateToProfile,
             onLoadMoreNotifications = onLoadMoreNotifications
         )
 

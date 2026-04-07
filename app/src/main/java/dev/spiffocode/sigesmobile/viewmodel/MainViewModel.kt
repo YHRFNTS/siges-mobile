@@ -5,8 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.local.SessionManager
-import dev.spiffocode.sigesmobile.domain.repository.UserRepository
 import android.util.Log
+import dev.spiffocode.sigesmobile.domain.repository.NotificationRepository
+import dev.spiffocode.sigesmobile.domain.repository.UserRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -19,7 +20,8 @@ sealed class ExternalNavigationEvent {
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val sessionManager: SessionManager,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val notificationRepository: NotificationRepository
 ) : ViewModel() {
 
     private val _navigationEvent = MutableSharedFlow<ExternalNavigationEvent>()
@@ -30,14 +32,23 @@ class MainViewModel @Inject constructor(
             val reservationId = it.getStringExtra("reservationId")?.toLongOrNull()
                 ?: it.getSerializableExtra("reservationId")?.toString()?.toLongOrNull()
             
-            if (reservationId != null) {
+            val notificationId = it.getStringExtra("id")?.toLongOrNull()
+                ?: it.getSerializableExtra("id")?.toString()?.toLongOrNull()
+            
+            if (reservationId != null || notificationId != null) {
                 viewModelScope.launch {
-                    _navigationEvent.emit(
-                        ExternalNavigationEvent.ReservationDetail(
-                            id = reservationId,
-                            isAdmin = sessionManager.role == "ADMIN"
+                    notificationId?.let { id ->
+                        notificationRepository.markAsRead(id)
+                    }
+                    
+                    reservationId?.let { id ->
+                        _navigationEvent.emit(
+                            ExternalNavigationEvent.ReservationDetail(
+                                id = id,
+                                isAdmin = sessionManager.role == "ADMIN"
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

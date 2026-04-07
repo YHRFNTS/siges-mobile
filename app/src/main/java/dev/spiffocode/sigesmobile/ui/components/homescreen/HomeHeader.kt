@@ -30,6 +30,8 @@ public fun HomeHeader(
     notificationsHasNextPage: Boolean,
     onNotificationClick: (NotificationResponse) -> Unit = {},
     onMarkAllNotificationsRead: () -> Unit = {},
+    onNavigateToDetail: (Long) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onLoadMoreNotifications: () -> Unit = {}
 ) {
     Box(
@@ -60,6 +62,8 @@ public fun HomeHeader(
                     hasNextPage  = notificationsHasNextPage,
                     onNotificationClick = onNotificationClick,
                     onMarkAllRead = onMarkAllNotificationsRead,
+                    onNavigateToDetail = onNavigateToDetail,
+                    onNavigateToProfile = onNavigateToProfile,
                     onLoadMoreItems = onLoadMoreNotifications
                 )
             }

@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -14,6 +13,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.spiffocode.sigesmobile.MainActivity
 import dev.spiffocode.sigesmobile.R
 import dev.spiffocode.sigesmobile.data.local.SessionManager
+import dev.spiffocode.sigesmobile.data.remote.dto.NotificationMetadata
+import dev.spiffocode.sigesmobile.data.remote.dto.NotificationReadStatus
+import dev.spiffocode.sigesmobile.data.remote.dto.NotificationResponse
+import dev.spiffocode.sigesmobile.data.remote.dto.NotificationType
+import dev.spiffocode.sigesmobile.domain.repository.NotificationRepository
 import dev.spiffocode.sigesmobile.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +33,9 @@ class SigesFirebaseMessagingService : FirebaseMessagingService() {
 
     @Inject
     lateinit var userRepository: UserRepository
+
+    @Inject
+    lateinit var notificationRepository: NotificationRepository
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -57,7 +64,14 @@ class SigesFirebaseMessagingService : FirebaseMessagingService() {
         // Check if message contains a notification payload.
         message.notification?.let {
             Log.d("FCM", "Message Notification Body: ${it.body}")
-            showNotification(it.title ?: "Siges", it.body ?: "", message.data)
+            val data = message.data
+            showNotification(it.title ?: "Siges", it.body ?: "", data)
+            
+            // Send to repository for in-app update
+            scope.launch {
+                val notification = mapToNotificationResponse(it.title ?: "Siges", it.body ?: "", data)
+                notificationRepository.onFcmMessageReceived(notification)
+            }
         }
     }
 
@@ -65,6 +79,12 @@ class SigesFirebaseMessagingService : FirebaseMessagingService() {
         val title = data["title"] ?: "Actualización de Reservación"
         val body = data["body"] ?: "Tienes una nueva actualización en tu reservación."
         showNotification(title, body, data)
+        
+        // Send to repository for in-app update
+        scope.launch {
+            val notification = mapToNotificationResponse(title, body, data)
+            notificationRepository.onFcmMessageReceived(notification)
+        }
     }
 
     private fun showNotification(title: String, body: String, data: Map<String, String>) {
@@ -85,11 +105,17 @@ class SigesFirebaseMessagingService : FirebaseMessagingService() {
             data.forEach { (key, value) ->
                 putExtra(key, value)
             }
+            // Ensure reservationId is present even if it came as "id" in FCM data
+            if (!hasExtra("reservationId")) {
+                data["id"]?.let { putExtra("reservationId", it) }
+            }
         }
 
+        val requestCode = (data["reservationId"] ?: data["id"] ?: System.currentTimeMillis().toString()).hashCode()
+
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            this, requestCode, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
@@ -101,6 +127,25 @@ class SigesFirebaseMessagingService : FirebaseMessagingService() {
             .setContentIntent(pendingIntent)
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
+    }
+
+    private fun mapToNotificationResponse(title: String, body: String, data: Map<String, String>): NotificationResponse {
+        val id = (data["id"] ?: System.currentTimeMillis().toString()).toLongOrNull() ?: System.currentTimeMillis()
+        val typeStr = data["type"] ?: "RESERVATION_CREATED"
+        val type = try { NotificationType.valueOf(typeStr) } catch(e: Exception) { NotificationType.RESERVATION_CREATED }
+        
+        return NotificationResponse(
+            id = id,
+            title = title,
+            message = body,
+            readStatus = NotificationReadStatus.UNREAD,
+            type = type,
+            sentAt = java.time.LocalDateTime.now(),
+            reservation = null, // Summary not available in push
+            metadata = NotificationMetadata(
+                reservationId = (data["reservationId"] ?: data["id"])?.toLongOrNull()
+            )
+        )
     }
 
     override fun onDestroy() {
