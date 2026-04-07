@@ -37,9 +37,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
@@ -54,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.TimeBlockItem
+import dev.spiffocode.sigesmobile.ui.components.SigesErrorBanner
 import dev.spiffocode.sigesmobile.ui.components.newrequest.AvailabilityCalendarPicker
 import dev.spiffocode.sigesmobile.ui.components.newrequest.DatePickerField
 import dev.spiffocode.sigesmobile.ui.components.newrequest.TimePickerField
@@ -156,6 +155,8 @@ fun RescheduleScreenContent(
                         .padding(if (isCompact) 24.dp else 48.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    SigesErrorBanner(errorMessage = state.error)
+
                     Card(
                         modifier = Modifier.widthIn(max = 800.dp),
                         shape    = RoundedCornerShape(24.dp),
@@ -319,12 +320,6 @@ fun RescheduleScreenContent(
                 }
             }
 
-            if (state.error != null) {
-                Snackbar(
-                    modifier = Modifier.padding(16.dp).align(Alignment.BottomCenter),
-                    action   = { TextButton(onClick = onClearError) { Text("OK", color = MaterialTheme.colorScheme.inversePrimary) } }
-                ) { Text(state.error) }
-            }
         }
     }
 }

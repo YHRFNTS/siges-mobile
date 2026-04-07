@@ -19,14 +19,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,9 +39,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
@@ -55,13 +51,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.EquipmentDto
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.SpaceDto
+import dev.spiffocode.sigesmobile.ui.components.SigesErrorBanner
+import dev.spiffocode.sigesmobile.ui.components.SigesNumberSpinner
 import dev.spiffocode.sigesmobile.ui.components.newrequest.AvailabilityCalendarPicker
 import dev.spiffocode.sigesmobile.ui.components.newrequest.DatePickerField
 import dev.spiffocode.sigesmobile.ui.components.newrequest.ResourceSelectionSection
@@ -195,6 +192,7 @@ fun NewRequestScreenContent(
                     .padding(if (isCompact) 24.dp else 48.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                SigesErrorBanner(errorMessage = state.error)
                 if (isCompact) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         NewRequestFormFields(
@@ -253,20 +251,6 @@ fun NewRequestScreenContent(
                 }
             }
 
-            if (state.error != null) {
-                Snackbar(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .align(Alignment.BottomCenter),
-                    action = {
-                        TextButton(onClick = onClearError) {
-                            Text("OK", color = MaterialTheme.colorScheme.inversePrimary)
-                        }
-                    }
-                ) {
-                    Text(state.error)
-                }
-            }
         }
     }
 }
@@ -477,21 +461,16 @@ fun NewRequestFormFields(
         }
     }
 
-    // ── Companions ────────────────────────────────────────────────────────────
-    OutlinedTextField(
-        value         = state.companions,
+    val maxCap = state.maxCapacity ?: 0
+
+    SigesNumberSpinner(
+        value         = if (resourceSelected) state.companions else "",
         onValueChange = onCompanionsChange,
-        label         = { Text("NÚMERO DE ASISTENTES *") },
-        placeholder   = { Text("Ej: 15") },
-        leadingIcon   = { Icon(Icons.Outlined.Person, contentDescription = "Asistentes") },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        shape         = RoundedCornerShape(12.dp),
-        colors        = OutlinedTextFieldDefaults.colors(
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-            focusedBorderColor   = MaterialTheme.colorScheme.primary
-        ),
-        modifier      = Modifier.fillMaxWidth(),
-        singleLine    = true
+        max           = maxCap,
+        label         = if (resourceSelected) "NÚMERO DE ASISTENTES (Máx. $maxCap) *" else "NÚMERO DE ASISTENTES *",
+        placeholder   = if (resourceSelected) "Selecciona la cantidad..." else "Selecciona un recurso primero",
+        enabled       = resourceSelected && maxCap > 0,
+        modifier      = Modifier.fillMaxWidth()
     )
 
     Spacer(modifier = Modifier.height(24.dp))

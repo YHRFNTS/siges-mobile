@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.spiffocode.sigesmobile.ui.components.PasswordTextField
 import dev.spiffocode.sigesmobile.ui.components.PrimaryButton
 import dev.spiffocode.sigesmobile.ui.components.PrimaryTextField
+import dev.spiffocode.sigesmobile.ui.components.SigesErrorBanner
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.LoginViewModel
 
@@ -79,9 +80,7 @@ public fun LoginForm(
             onVisibilityToggle = togglePasswordVisibility
         )
 
-        errorMessage?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 8.dp))
-        }
+        SigesErrorBanner(errorMessage = errorMessage)
 
         Spacer(modifier = Modifier.height(16.dp))
 

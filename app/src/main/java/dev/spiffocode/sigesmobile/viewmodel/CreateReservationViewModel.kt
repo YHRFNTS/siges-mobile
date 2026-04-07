@@ -69,7 +69,8 @@ data class CreateReservationUiState(
     // Submission
     val isLoading: Boolean = false,
     val createdReservation: ReservationResponse? = null,
-    val error: String? = null
+    val error: String? = null,
+    val maxCapacity: Int? = null
 )
 
 @HiltViewModel
@@ -127,7 +128,8 @@ class CreateReservationViewModel @Inject constructor(
                 earliestSelectableDateTime = computeEarliest(leadTime),
                 date                   = null,
                 startTime              = null,
-                endTime                = null
+                endTime                = null,
+                maxCapacity            = space.capacity
             )
         }
         loadAvailability(space.id)
@@ -144,7 +146,8 @@ class CreateReservationViewModel @Inject constructor(
                 earliestSelectableDateTime = computeEarliest(leadTime),
                 date                   = null,
                 startTime              = null,
-                endTime                = null
+                endTime                = null,
+                maxCapacity            = equipment.spaceAttached?.capacity
             )
         }
         loadAvailability(equipment.id)
@@ -249,6 +252,9 @@ class CreateReservationViewModel @Inject constructor(
             state.purpose.isBlank() ->
                 _uiState.update { it.copy(error = "Describe el propósito de la reserva.") }
 
+            state.maxCapacity != null && (state.companions.toIntOrNull() ?: 0) > state.maxCapacity ->
+                _uiState.update { it.copy(error = "El número de asistentes excede la capacidad máxima (${state.maxCapacity}) del recurso seleccionado.") }
+
             else -> viewModelScope.launch {
                 _uiState.update { it.copy(isLoading = true, error = null) }
 
@@ -274,7 +280,11 @@ class CreateReservationViewModel @Inject constructor(
                             isLoading = false,
                             error = when (result.code) {
                                 409  -> "Este horario ya está ocupado. Elige otro."
-                                422  -> "Debes reservar este espacio con más anticipación."
+                                422  ->
+                                    if (result.message.contains("capacidad"))
+                                        "Debes reservar este espacio con más anticipación."
+                                    else "Debes reservar este espacio con más anticipación."
+
                                 404  -> "El recurso ya no está disponible."
                                 else -> result.message
                             }
