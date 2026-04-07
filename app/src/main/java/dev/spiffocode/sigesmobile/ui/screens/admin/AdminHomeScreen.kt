@@ -1,7 +1,6 @@
 package dev.spiffocode.sigesmobile.ui.screens.admin
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +15,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +33,7 @@ import dev.spiffocode.sigesmobile.data.remote.dto.UserRole
 import dev.spiffocode.sigesmobile.ui.components.homescreen.DashboardMetrics
 import dev.spiffocode.sigesmobile.ui.components.homescreen.HomeHeader
 import dev.spiffocode.sigesmobile.ui.components.homescreen.RequestCard
+import dev.spiffocode.sigesmobile.ui.components.homescreen.ResponsiveGrid
 import dev.spiffocode.sigesmobile.ui.components.homescreen.SectionHeader
 import dev.spiffocode.sigesmobile.ui.helpers.toText
 import dev.spiffocode.sigesmobile.ui.theme.Plum
@@ -39,10 +42,6 @@ import dev.spiffocode.sigesmobile.viewmodel.HomeViewModel
 import dev.spiffocode.sigesmobile.viewmodel.NotificationsViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ReservationUIItem
 import kotlinx.datetime.LocalDateTime
-
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import dev.spiffocode.sigesmobile.ui.components.homescreen.ResponsiveGrid
 
 @Composable
 fun AdminHomeScreen(
@@ -78,12 +77,14 @@ fun AdminHomeScreen(
         onClickNotification = notificationsViewModel::onClick,
         markAllNotificationsAsRead = notificationsViewModel::markAllRead,
         onLoadMoreNotifications = notificationsViewModel::loadNextPage,
+        onRefresh = viewModel::loadHome,
         onNavigateToAllRequests = onNavigateToAllRequests,
         onNavigateToDetail = onNavigateToDetail
     )
 }
 
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun AdminHomeScreen(
     columns: Int = 1,
@@ -99,17 +100,23 @@ fun AdminHomeScreen(
     onClickNotification: (NotificationResponse) -> Unit = {},
     markAllNotificationsAsRead: () -> Unit = {},
     onLoadMoreNotifications: () -> Unit = {},
+    onRefresh: () -> Unit = {},
     onNavigateToAllRequests: () -> Unit = {},
     onNavigateToDetail: (Long) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(scrollState)
+    PullToRefreshBox(
+        isRefreshing = isLoading,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize()
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(scrollState)
+        ) {
 
         HomeHeader(
             userName         = userName,
@@ -134,28 +141,30 @@ fun AdminHomeScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             SectionHeader(
-                title         = "Solicitudes Pendientes",
-                actionText    = "Ver todas",
+                title = "Solicitudes Pendientes",
+                actionText = "Ver todas",
                 onActionClick = onNavigateToAllRequests
             )
 
             when {
                 isLoading -> {
                     Box(
-                        modifier         = Modifier.fillMaxWidth().padding(24.dp),
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(color = Plum, modifier = Modifier.size(24.dp))
                     }
                 }
+
                 pendingReservations.isEmpty() -> {
                     Text(
-                        text     = "No hay solicitudes pendientes.",
-                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = "No hay solicitudes pendientes.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                     )
                 }
+
                 else -> {
                     ResponsiveGrid(
                         items = pendingReservations,
@@ -163,15 +172,15 @@ fun AdminHomeScreen(
                         modifier = Modifier.padding(horizontal = 20.dp)
                     ) { reservation ->
                         RequestCard(
-                            title       = reservation.title,
+                            title = reservation.title,
                             startDateTime = reservation.dateStart,
                             endDateTime = reservation.dateEnd,
                             requesterName = reservation.petitionerName,
                             requesterRole = reservation.petitionerRole.toText(),
-                            status      = reservation.status,
-                            meta1       = reservation.meta1,
-                            meta2       = reservation.meta2,
-                            onClick     = { onNavigateToDetail(reservation.id) }
+                            status = reservation.status,
+                            meta1 = reservation.meta1,
+                            meta2 = reservation.meta2,
+                            onClick = { onNavigateToDetail(reservation.id) }
                         )
                     }
                 }
@@ -179,14 +188,15 @@ fun AdminHomeScreen(
 
             error?.let { error ->
                 Text(
-                    text     = error,
-                    color    = MaterialTheme.colorScheme.error,
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+        }
         }
     }
 }

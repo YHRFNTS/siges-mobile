@@ -33,6 +33,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -92,6 +93,7 @@ fun AdminReviewDetailScreen(
         onOpenReject    = viewModel::showRejectDialog,
         onCloseReject   = viewModel::hideRejectDialog,
         onReject        = { viewModel.reject(reservationId) },
+        onRefresh       = { viewModel.loadReservation(reservationId) },
         onClearMessages = viewModel::clearMessages
     )
 }
@@ -108,6 +110,7 @@ fun AdminReviewDetailScreenContent(
     onOpenReject: () -> Unit = {},
     onCloseReject: () -> Unit = {},
     onReject: () -> Unit = {},
+    onRefresh: () -> Unit = {},
     onClearMessages: () -> Unit = {}
 ) {
     Scaffold(
@@ -131,47 +134,70 @@ fun AdminReviewDetailScreenContent(
             )
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+        PullToRefreshBox(
+            isRefreshing = state.isLoading,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
-            when {
-                state.isLoading && state.reservation == null -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                state.error != null && state.reservation == null -> {
-                    Text(
-                        text = state.error,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(24.dp)
-                    )
-                }
-                state.reservation != null -> {
-                    val res = state.reservation
-                    val isExpanded = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
-                    
-                    if (isExpanded) {
-                        Row(
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    state.isLoading && state.reservation == null -> {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
+
+                    state.error != null && state.reservation == null -> {
+                        Text(
+                            text = state.error,
+                            color = MaterialTheme.colorScheme.error,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .padding(24.dp),
-                            horizontalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
+                                .align(Alignment.Center)
+                                .padding(24.dp)
+                        )
+                    }
+
+                    state.reservation != null -> {
+                        val res = state.reservation
+                        val isExpanded =
+                            windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
+
+                        if (isExpanded) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp),
+                                horizontalArrangement = Arrangement.spacedBy(24.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    AdminReviewLeftSection(res)
+                                }
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    AdminReviewRightSection(
+                                        res = res,
+                                        state = state,
+                                        onObservationChange = onObservationChange,
+                                        onApprove = onApprove,
+                                        onOpenReject = onOpenReject
+                                    )
+                                }
+                            }
+                        } else {
+                            val scrollState = rememberScrollState()
+
                             Column(
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .verticalScroll(rememberScrollState())
+                                    .fillMaxSize()
+                                    .verticalScroll(scrollState)
+                                    .padding(24.dp)
                             ) {
                                 AdminReviewLeftSection(res)
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .verticalScroll(rememberScrollState())
-                            ) {
                                 AdminReviewRightSection(
                                     res = res,
                                     state = state,
@@ -181,36 +207,18 @@ fun AdminReviewDetailScreenContent(
                                 )
                             }
                         }
-                    } else {
-                        val scrollState = rememberScrollState()
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(scrollState)
-                                .padding(24.dp)
-                        ) {
-                            AdminReviewLeftSection(res)
-                            AdminReviewRightSection(
-                                res = res,
-                                state = state,
-                                onObservationChange = onObservationChange,
-                                onApprove = onApprove,
-                                onOpenReject = onOpenReject
-                            )
-                        }
                     }
                 }
-            }
 
-            if (state.showRejectDialog) {
-                RejectReasonDialog(
-                    reason = state.rejectReason,
-                    onReasonChange = onRejectReasonChange,
-                    onDismiss = onCloseReject,
-                    onConfirm = onReject,
-                    isLoading = state.isLoading
-                )
+                if (state.showRejectDialog) {
+                    RejectReasonDialog(
+                        reason = state.rejectReason,
+                        onReasonChange = onRejectReasonChange,
+                        onDismiss = onCloseReject,
+                        onConfirm = onReject,
+                        isLoading = state.isLoading
+                    )
+                }
             }
         }
     }
