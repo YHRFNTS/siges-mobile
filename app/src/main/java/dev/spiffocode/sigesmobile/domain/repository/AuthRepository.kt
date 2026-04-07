@@ -63,6 +63,11 @@ class AuthRepository @Inject constructor(
     suspend fun logout(): NetworkResult<Unit> {
         val accessToken  = session.accessToken  ?: return NetworkResult.Error(401, "No hay sesión activa")
         val refreshToken = session.refreshToken ?: return NetworkResult.Error(401, "No hay sesión activa")
+        val fcmToken     = session.fcmToken
+
+        fcmToken?.let { token ->
+             safeApiCall { userApi.unregisterPushToken(token) }
+        }
 
         val result = safeApiCall {
             authApi.logout(
