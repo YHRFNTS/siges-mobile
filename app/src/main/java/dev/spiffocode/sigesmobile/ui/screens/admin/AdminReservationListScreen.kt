@@ -1,14 +1,19 @@
 package dev.spiffocode.sigesmobile.ui.screens.admin
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryTabRow
@@ -40,6 +45,7 @@ import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationType
 import dev.spiffocode.sigesmobile.ui.components.FilterSelector
 import dev.spiffocode.sigesmobile.ui.components.homescreen.RequestCard
+import dev.spiffocode.sigesmobile.ui.components.newrequest.ClickableOutlinedTextField
 import dev.spiffocode.sigesmobile.ui.helpers.toText
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.AdminReservationListUiState
@@ -62,8 +68,10 @@ fun AdminReservationListScreen(
         state = state,
         onSelectTab = viewModel::selectTab,
         onFilterByReservable = viewModel::filterByReservable,
+        onSetDateRange = viewModel::setDateRange,
+        onSetSort = viewModel::setSort,
         onLoadPage = viewModel::loadPage,
-        onNavigateToDetail = onNavigateToDetail
+        onNavigateToDetail = onNavigateToDetail,
     )
 }
 
@@ -74,9 +82,66 @@ fun AdminReservationListScreen(
     state: AdminReservationListUiState,
     onSelectTab: (AdminReservationTab) -> Unit = {},
     onFilterByReservable: (Long?) -> Unit = {},
+    onSetDateRange: (java.time.LocalDate?, java.time.LocalDate?) -> Unit = { _, _ -> },
+    onSetSort: (String, String) -> Unit = { _, _ -> },
     onLoadPage: (Int) -> Unit = {},
     onNavigateToDetail: (Long) -> Unit = {}
 ) {
+    var showFromDatePicker by remember { mutableStateOf(false) }
+    var showToDatePicker by remember { mutableStateOf(false) }
+
+    if (showFromDatePicker) {
+        val datePickerState = androidx.compose.material3.rememberDatePickerState(
+            initialSelectedDateMillis = state.dateFrom?.atStartOfDay(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
+        )
+        androidx.compose.material3.DatePickerDialog(
+            onDismissRequest = { showFromDatePicker = false },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    val selectedDate = datePickerState.selectedDateMillis?.let {
+                        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+                    }
+                    onSetDateRange(selectedDate, state.dateTo)
+                    showFromDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    onSetDateRange(null, state.dateTo)
+                    showFromDatePicker = false
+                }) { Text("Limpiar") }
+            }
+        ) {
+            androidx.compose.material3.DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showToDatePicker) {
+        val datePickerState = androidx.compose.material3.rememberDatePickerState(
+            initialSelectedDateMillis = state.dateTo?.atStartOfDay(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
+        )
+        androidx.compose.material3.DatePickerDialog(
+            onDismissRequest = { showToDatePicker = false },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    val selectedDate = datePickerState.selectedDateMillis?.let {
+                        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+                    }
+                    onSetDateRange(state.dateFrom, selectedDate)
+                    showToDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    onSetDateRange(state.dateFrom, null)
+                    showToDatePicker = false
+                }) { Text("Limpiar") }
+            }
+        ) {
+            androidx.compose.material3.DatePicker(state = datePickerState)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -134,22 +199,104 @@ fun AdminReservationListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ── Resource filter ───────────────────────────────────────────────
-            var expandedFilter by remember { mutableStateOf(false) }
-            FilterSelector(
-                value = if (state.selectedReservableId == null) "Todos los recursos"
-                        else "Recurso ID: ${state.selectedReservableId}",
-                expanded = expandedFilter,
-                modifier = Modifier.padding(horizontal = 24.dp),
-                onExpandedChange = { expandedFilter = it }
+            // ── Filters & Sort Row ──────────────────────────────────────────────
+            androidx.compose.foundation.layout.Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                DropdownMenuItem(
-                    text = { Text("Todos los recursos") },
-                    onClick = {
-                        onFilterByReservable(null)
-                        expandedFilter = false
+                // ── Resource filter ──────────────────────────────────────────────
+                var expandedFilter by remember { mutableStateOf(false) }
+                FilterSelector(
+                    value = if (state.selectedReservableId == null) "Recurso"
+                            else "ID: ${state.selectedReservableId}",
+                    expanded = expandedFilter,
+                    modifier = Modifier.weight(1f),
+                    onExpandedChange = { expandedFilter = it }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Todos") },
+                        onClick = {
+                            onFilterByReservable(null)
+                            expandedFilter = false
+                        }
+                    )
+                    state.reservables.forEach { reservable ->
+                        DropdownMenuItem(
+                            text = { Text(reservable.name) },
+                            onClick = {
+                                onFilterByReservable(reservable.id)
+                                expandedFilter = false
+                            }
+                        )
                     }
-                )
+                }
+
+                // ── Sort filter ──────────────────────────────────────────────────
+                var expandedSort by remember { mutableStateOf(false) }
+                val sortLabel = when {
+                    state.sort.startsWith("createdAt") -> "Fecha Sol."
+                    state.sort.startsWith("reservable") -> "Recurso"
+                    state.sort.startsWith("status") -> "Estado"
+                    else -> "Ordenar"
+                }
+
+                FilterSelector(
+                    value = sortLabel,
+                    expanded = expandedSort,
+                    modifier = Modifier.weight(1f),
+                    onExpandedChange = { expandedSort = it }
+                ) {
+                    listOf(
+                        "Reciente" to "createdAt,desc",
+                        "Antiguo" to "createdAt,asc",
+                        "Recurso (A-Z)" to "reservable,asc",
+                        "Estado" to "status,asc"
+                    ).forEach { (label, sortValue) ->
+                        val parts = sortValue.split(",")
+                        DropdownMenuItem(
+                            text = { Text(label) },
+                            onClick = {
+                                onSetSort(parts[0], parts[1])
+                                expandedSort = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // ── Date Range Row ───────────────────────────────────────────────
+            androidx.compose.foundation.layout.Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val dateFromStr = state.dateFrom?.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yy")) ?: "Desde"
+                val dateToStr = state.dateTo?.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yy")) ?: "Hasta"
+
+                Box(modifier = Modifier.weight(1f)) {
+                    ClickableOutlinedTextField(
+                        label = "Desde",
+                        value = dateFromStr,
+                        placeholder = "Desde",
+                        trailingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) },
+                        onClick = { showFromDatePicker = true }
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    ClickableOutlinedTextField(
+                        label = "Hasta",
+                        value = dateToStr,
+                        placeholder = "Hasta",
+                        trailingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) },
+                        onClick = { showToDatePicker = true }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -231,6 +378,11 @@ fun AdminReservationListScreen(
                             meta2         = durationDisplay,
                             requesterName = petitionerName,
                             requesterRole = petitionerRole,
+                            createdAt     = reservation.createdAt?.let {
+                                kotlinx.datetime.LocalDateTime(
+                                    it.year, it.monthValue, it.dayOfMonth, it.hour, it.minute
+                                )
+                            },
                             onClick       = { onNavigateToDetail(reservation.id) },
                         )
                         Spacer(modifier = Modifier.height(12.dp))

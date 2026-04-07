@@ -6,6 +6,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
+import dev.spiffocode.sigesmobile.data.remote.dto.ReservableDto
+import dev.spiffocode.sigesmobile.domain.repository.ReservableRepository
 import dev.spiffocode.sigesmobile.domain.repository.ReservationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -102,8 +104,12 @@ enum class AdminReservationTab { ALL, PENDING, RESOLVED }
 data class AdminReservationListUiState(
     val isLoading: Boolean = false,
     val reservations: List<ReservationResponse> = emptyList(),
-    val selectedTab: AdminReservationTab = AdminReservationTab.ALL,
+    val selectedTab: AdminReservationTab = AdminReservationTab.PENDING,
     val selectedReservableId: Long? = null,
+    val dateFrom: java.time.LocalDate? = null,
+    val dateTo: java.time.LocalDate? = null,
+    val sort: String = "createdAt,desc",
+    val reservables: List<ReservableDto> = emptyList(),
     val totalPages: Int = 0,
     val currentPage: Int = 0,
     val error: String? = null
@@ -111,13 +117,17 @@ data class AdminReservationListUiState(
 
 @HiltViewModel
 class AdminReservationListViewModel @Inject constructor(
-    private val repository: ReservationRepository
+    private val repository: ReservationRepository,
+    private val reservableRepository: ReservableRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdminReservationListUiState())
     val uiState: StateFlow<AdminReservationListUiState> = _uiState.asStateFlow()
 
-    init { load() }
+    init {
+        load()
+        loadReservables()
+    }
 
     fun selectTab(tab: AdminReservationTab) {
         _uiState.update { it.copy(selectedTab = tab, currentPage = 0) }
@@ -126,6 +136,16 @@ class AdminReservationListViewModel @Inject constructor(
 
     fun filterByReservable(reservableId: Long?) {
         _uiState.update { it.copy(selectedReservableId = reservableId, currentPage = 0) }
+        load()
+    }
+
+    fun setDateRange(from: java.time.LocalDate?, to: java.time.LocalDate?) {
+        _uiState.update { it.copy(dateFrom = from, dateTo = to, currentPage = 0) }
+        load()
+    }
+
+    fun setSort(sortField: String, direction: String) {
+        _uiState.update { it.copy(sort = "$sortField,$direction", currentPage = 0) }
         load()
     }
 
@@ -149,9 +169,11 @@ class AdminReservationListViewModel @Inject constructor(
             when (val result = repository.getReservations(
                 page         = state.currentPage,
                 size         = 20,
-                sort         = "date,desc",
+                sort         = state.sort,
                 statuses       = statuses,
-                reservableId = state.selectedReservableId
+                reservableId = state.selectedReservableId,
+                dateFrom     = state.dateFrom,
+                dateTo       = state.dateTo
             )) {
                 is NetworkResult.Success -> {
                     val content = if (state.selectedTab == AdminReservationTab.RESOLVED) {
@@ -172,6 +194,17 @@ class AdminReservationListViewModel @Inject constructor(
                     it.copy(isLoading = false, error = result.message)
                 }
                 NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
+    private fun loadReservables() {
+        viewModelScope.launch {
+            when (val result = reservableRepository.searchSpaces(size = 100)) {
+                is NetworkResult.Success -> _uiState.update {
+                    it.copy(reservables = result.data.content)
+                }
+                else -> Unit
             }
         }
     }

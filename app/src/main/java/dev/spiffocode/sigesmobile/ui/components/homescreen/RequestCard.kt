@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.ui.helpers.toBgColor
 import dev.spiffocode.sigesmobile.ui.helpers.toCardDateString
+import dev.spiffocode.sigesmobile.ui.helpers.toFullDateTimeString
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import kotlinx.datetime.LocalDateTime
 
@@ -42,6 +43,7 @@ fun RequestCard(
     meta2: String,
     requesterName: String? = null,
     requesterRole: String? = null,
+    createdAt: LocalDateTime? = null,
     onClick: () -> Unit = {}
 ) {
     Card(
@@ -136,6 +138,16 @@ fun RequestCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+
+            if (createdAt != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Solicitado el ${createdAt.toFullDateTimeString()}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }

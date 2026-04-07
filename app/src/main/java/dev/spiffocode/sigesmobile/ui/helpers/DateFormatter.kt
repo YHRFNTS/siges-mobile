@@ -21,8 +21,19 @@ fun LocalDateTime.toCardDateString(end: LocalDateTime): String {
         5 to "May", 6 to "Jun", 7 to "Jul", 8 to "Ago",
         9 to "Sep", 10 to "Oct", 11 to "Nov", 12 to "Dic"
     )
-    val month = monthAbbr[month.number] ?: ""
+    val monthAbbrName = monthAbbr[month.number] ?: ""
     val startTime = "%02d:%02d".format(hour, minute)
     val endTime = "%02d:%02d".format(end.hour, end.minute)
-    return "$day $month · $startTime – $endTime"
+    return "$dayOfMonth $monthAbbrName · $startTime – $endTime"
+}
+
+fun LocalDateTime.toFullDateTimeString(): String {
+    val monthAbbr = mapOf(
+        1 to "Ene", 2 to "Feb", 3 to "Mar", 4 to "Abr",
+        5 to "May", 6 to "Jun", 7 to "Jul", 8 to "Ago",
+        9 to "Sep", 10 to "Oct", 11 to "Nov", 12 to "Dic"
+    )
+    val monthAbbrName = monthAbbr[month.number] ?: ""
+    val time = "%02d:%02d".format(hour, minute)
+    return "$dayOfMonth $monthAbbrName $year a las $time"
 }
