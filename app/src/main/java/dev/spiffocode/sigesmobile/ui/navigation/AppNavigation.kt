@@ -56,6 +56,8 @@ import dev.spiffocode.sigesmobile.ui.screens.profile.ChangePasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.EditProfileScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.NotificationPrefsScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.ProfileScreen
+import dev.spiffocode.sigesmobile.viewmodel.ExternalNavigationEvent
+import dev.spiffocode.sigesmobile.viewmodel.MainViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ResetPasswordError
 import dev.spiffocode.sigesmobile.viewmodel.ResetPasswordViewModel
 
@@ -157,9 +159,23 @@ fun AppNavigation(
         }
     }
  
+    val mainViewModel: MainViewModel = hiltViewModel()
+
     LaunchedEffect(Unit) {
         if (sessionManager.isLoggedIn && !sessionManager.rememberMe) {
             sessionManager.clearSession()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        mainViewModel.navigationEvent.collect { event ->
+            when (event) {
+                is ExternalNavigationEvent.ReservationDetail -> {
+                    val route = if (event.isAdmin) Routes.adminReviewDetail(event.id)
+                                else Routes.requestDetail(event.id)
+                    navController.navigate(route)
+                }
+            }
         }
     }
 

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.domain.repository.UserRepository
+import android.util.Log
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -43,11 +44,22 @@ class MainViewModel @Inject constructor(
     }
 
     fun registerFcmToken() {
+        Log.d("MainViewModel", "registerFcmToken called. isLoggedIn: ${sessionManager.isLoggedIn}")
         val token = sessionManager.fcmToken
         if (token != null && sessionManager.isLoggedIn) {
             viewModelScope.launch {
-                userRepository.registerPushToken(token)
+                when (val result = userRepository.registerPushToken(token)) {
+                    is dev.spiffocode.sigesmobile.data.remote.NetworkResult.Success -> {
+                        Log.d("MainViewModel", "FCM Token registered successfully with API")
+                    }
+                    is dev.spiffocode.sigesmobile.data.remote.NetworkResult.Error -> {
+                        Log.e("MainViewModel", "Failed to register FCM Token: ${result.message}")
+                    }
+                    else -> Unit
+                }
             }
+        } else if (token == null) {
+            Log.w("MainViewModel", "No FCM token found in session manager")
         }
     }
 }

@@ -15,12 +15,16 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.ui.navigation.AppNavigation
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
+import dev.spiffocode.sigesmobile.viewmodel.MainViewModel
 import javax.inject.Inject
+import androidx.activity.viewModels
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject
     lateinit var sessionManager: SessionManager
+    
+    private val viewModel: MainViewModel by viewModels()
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -33,6 +37,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         requestNotificationPermission()
+        
+        viewModel.registerFcmToken()
+        viewModel.handleIntent(intent)
 
         setContent {
             val windowSizeClass = calculateWindowSizeClass(this)
@@ -57,5 +64,6 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        viewModel.handleIntent(intent)
     }
 }
