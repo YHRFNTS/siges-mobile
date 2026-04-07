@@ -1,5 +1,8 @@
 package dev.spiffocode.sigesmobile.ui.navigation
 
+import android.app.Activity
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -18,8 +21,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -128,6 +135,27 @@ fun AppNavigation(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+ 
+    // ── Double Back to Exit ──────────────────────────────────────────────────
+    val context = LocalContext.current
+    var lastBackPressTime by remember { mutableStateOf(0L) }
+    
+    val topLevelRoutes = setOf(
+        Routes.HOME, Routes.AVAILABILITY.substringBefore("?"), 
+        Routes.MY_REQUESTS.substringBefore("?"), Routes.PROFILE,
+        Routes.ADMIN_HOME, Routes.ADMIN_ALL_REQUESTS, Routes.LOGIN
+    )
+    val isTopLevel = currentRoute?.substringBefore("?") in topLevelRoutes
+
+    BackHandler(enabled = isTopLevel) {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastBackPressTime < 2000) {
+            (context as? Activity)?.finish()
+        } else {
+            lastBackPressTime = currentTime
+            Toast.makeText(context, "Presiona de nuevo para salir", Toast.LENGTH_SHORT).show()
+        }
+    }
  
     LaunchedEffect(Unit) {
         if (sessionManager.isLoggedIn && !sessionManager.rememberMe) {
