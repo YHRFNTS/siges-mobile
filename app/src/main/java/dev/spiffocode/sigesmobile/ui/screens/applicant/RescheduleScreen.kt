@@ -239,17 +239,26 @@ fun RescheduleScreenContent(
                         enter   = fadeIn() + expandVertically(),
                         exit    = fadeOut() + shrinkVertically()
                     ) {
-                        Column(modifier = Modifier.fillMaxWidth().widthIn(max = 600.dp)) {
-                            // Date Picker with restrictions
                             DatePickerField(
                                 date           = state.date,
                                 minDate        = state.earliestSelectableDateTime.toLocalDate(),
                                 selectableDates = state.availableDatesForPicker,
                                 onDateChange   = onDateChange
                             )
+                        }
 
-                            Spacer(modifier = Modifier.height(24.dp))
-
+                    // --- Time Selection (Shared between modes) ---
+                    AnimatedVisibility(
+                        visible = state.date != null,
+                        enter   = fadeIn() + expandVertically(),
+                        exit    = fadeOut() + shrinkVertically(),
+                        modifier = Modifier.widthIn(max = 600.dp)
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            if (state.inputMode == InputMode.PICKERS) {
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+                            
                             // Custom Range Slider Picker
                             Text(
                                 "Selecciona el horario:",
