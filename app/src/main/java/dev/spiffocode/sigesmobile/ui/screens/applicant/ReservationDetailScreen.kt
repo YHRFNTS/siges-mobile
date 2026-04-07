@@ -59,6 +59,7 @@ import dev.spiffocode.sigesmobile.ui.helpers.toHumanString
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.ReservationDetailUiState
 import dev.spiffocode.sigesmobile.viewmodel.ReservationDetailViewModel
+import dev.spiffocode.sigesmobile.ui.components.reservation.ObservationChat
 import kotlinx.datetime.toKotlinLocalDateTime
 import java.time.LocalDate
 import java.time.LocalTime
@@ -86,6 +87,8 @@ fun ReservationDetailScreen(
         onNavigateToEdit = { onNavigateToEdit(reservationId) },
         onCancelReservation = { reason -> viewModel.cancel(reservationId, reason) },
         onRefresh = { viewModel.loadReservation(reservationId) },
+        onAddNote = { note -> viewModel.addNoteWithText(reservationId, note) },
+        onEditNote = { noteId, comment -> viewModel.editNote(reservationId, noteId, comment) },
         onClearMessages = viewModel::clearMessages
     )
 }
@@ -99,6 +102,8 @@ fun ReservationDetailScreenContent(
     onNavigateToEdit: () -> Unit = {},
     onCancelReservation: (String) -> Unit = {},
     onRefresh: () -> Unit = {},
+    onAddNote: (String) -> Unit = {},
+    onEditNote: (Long, String) -> Unit = { _, _ -> },
     onClearMessages: () -> Unit = {}
 ) {
     Scaffold(
@@ -153,8 +158,11 @@ fun ReservationDetailScreenContent(
                             ) {
                                 ReservationDetailRightSection(
                                     res = res,
+                                    currentUserId = state.currentUserId,
                                     onNavigateToEdit = onNavigateToEdit,
-                                    onCancelReservation = onCancelReservation
+                                    onCancelReservation = onCancelReservation,
+                                    onAddNote = onAddNote,
+                                    onEditNote = onEditNote
                                 )
                             }
                         }
@@ -169,8 +177,11 @@ fun ReservationDetailScreenContent(
                             ReservationDetailLeftSection(res)
                             ReservationDetailRightSection(
                                 res = res,
+                                currentUserId = state.currentUserId,
                                 onNavigateToEdit = onNavigateToEdit,
-                                onCancelReservation = onCancelReservation
+                                onCancelReservation = onCancelReservation,
+                                onAddNote = onAddNote,
+                                onEditNote = onEditNote
                             )
                         }
                     }
@@ -239,8 +250,11 @@ fun ReservationDetailLeftSection(res: dev.spiffocode.sigesmobile.data.remote.dto
 @Composable
 fun ReservationDetailRightSection(
     res: dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse,
+    currentUserId: Long?,
     onNavigateToEdit: () -> Unit,
-    onCancelReservation: (String) -> Unit
+    onCancelReservation: (String) -> Unit,
+    onAddNote: (String) -> Unit,
+    onEditNote: (Long, String) -> Unit
 ) {
     // ── Request Reason ──────────────────────────────────
     if (!res.requestReason.isNullOrBlank()) {
@@ -273,19 +287,13 @@ fun ReservationDetailRightSection(
         )
     }
 
-    val otherNotes = res.notes ?: emptyList()
-    if (otherNotes.isNotEmpty()) {
-        SectionTitle("NOTAS ADICIONALES")
-        otherNotes.forEach { note ->
-            ObservationBox(
-                observation = note.comment,
-                authorAndDate = "${note.createdBy?.firstName} ${note.createdBy?.lastName} - - ${
-                    note.createdAt?.toKotlinLocalDateTime()?.toHumanString()
-                }",
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-    }
+    ObservationChat(
+        notes = res.notes ?: emptyList(),
+        currentUserId = currentUserId,
+        onAddNote = onAddNote,
+        onEditNote = onEditNote,
+        modifier = Modifier.padding(bottom = 16.dp)
+    )
 
     Spacer(modifier = Modifier.height(48.dp))
 
