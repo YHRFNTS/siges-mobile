@@ -127,6 +127,8 @@ fun AvailabilityScreen(
     totalPages: Int,
     currentPage: Int,
     error: String?,
+    isFilterExpanded: Boolean,
+    onToggleFilters: () -> Unit,
     loadPage: (Int) -> Unit = {},
     onSortBy: (String?) -> Unit = {},
     filterBySpaceType: (Long?) -> Unit = {},
@@ -341,38 +343,6 @@ fun AvailabilityScreen(
                                 )
                             }
                         }
-                    }
-                }
-            }
-
-                // Sort Filter
-                var expandedSort by remember { mutableStateOf(false) }
-                val sortOptions =
-                    listOf("Nombre (A-Z)" to "name,asc", "Nombre (Z-A)" to "name,desc")
-                val currentSortLabel =
-                    sortOptions.find { it.second == sortBy }?.first ?: "Ordenar por"
-
-                FilterSelector(
-                    value = currentSortLabel,
-                    expanded = expandedSort,
-                    onExpandedChange = { expandedSort = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Sin ordenar") },
-                        onClick = {
-                            onSortBy(null)
-                            expandedSort = false
-                        }
-                    )
-                    sortOptions.forEach { (label, sortValue) ->
-                        DropdownMenuItem(
-                            text = { Text(label) },
-                            onClick = {
-                                onSortBy(sortValue)
-                                expandedSort = false
-                            }
-                        )
                     }
                 }
             }

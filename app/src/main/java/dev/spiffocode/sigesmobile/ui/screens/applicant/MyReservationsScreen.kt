@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.spiffocode.sigesmobile.utils.DateUtils
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableDto
@@ -143,7 +144,7 @@ fun MyReservationsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     val selectedDate = datePickerState.selectedDateMillis?.let {
-                        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                        DateUtils.millisToLocalDate(it)
                     }
                     onSetDateRange(selectedDate, state.dateTo)
                     showFromDatePicker = false
@@ -167,7 +168,7 @@ fun MyReservationsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     val selectedDate = datePickerState.selectedDateMillis?.let {
-                        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                        DateUtils.millisToLocalDate(it)
                     }
                     onSetDateRange(state.dateFrom, selectedDate)
                     showToDatePicker = false

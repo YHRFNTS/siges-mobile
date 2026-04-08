@@ -37,6 +37,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.spiffocode.sigesmobile.utils.DateUtils
+import java.time.Instant
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableDto
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
@@ -105,7 +107,7 @@ fun AdminReservationListScreen(
             confirmButton = {
                 androidx.compose.material3.TextButton(onClick = {
                     val selectedDate = datePickerState.selectedDateMillis?.let {
-                        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                        DateUtils.millisToLocalDate(it)
                     }
                     onSetDateRange(selectedDate, state.dateTo)
                     showFromDatePicker = false
@@ -131,7 +133,7 @@ fun AdminReservationListScreen(
             confirmButton = {
                 androidx.compose.material3.TextButton(onClick = {
                     val selectedDate = datePickerState.selectedDateMillis?.let {
-                        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                        DateUtils.millisToLocalDate(it)
                     }
                     onSetDateRange(state.dateFrom, selectedDate)
                     showToDatePicker = false
