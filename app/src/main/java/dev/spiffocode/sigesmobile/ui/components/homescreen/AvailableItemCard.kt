@@ -76,7 +76,7 @@ fun AvailableItemCard(
                     ReservableType.SPACE -> Icons.Outlined.DoorFront
                     ReservableType.EQUIPMENT -> Icons.Outlined.Computer
                 }
-                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(iconSize / 2))
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(iconSize / 2))
             }
 
             Spacer(modifier = Modifier.width(16.dp))

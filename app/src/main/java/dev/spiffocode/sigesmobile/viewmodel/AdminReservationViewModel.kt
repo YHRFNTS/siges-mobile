@@ -178,6 +178,7 @@ data class AdminReservationListUiState(
     val reservables: List<ReservableDto> = emptyList(),
     val totalPages: Int = 0,
     val currentPage: Int = 0,
+    val searchQuery: String = "",
     val error: String? = null
 )
 
@@ -215,6 +216,11 @@ class AdminReservationListViewModel @Inject constructor(
         load()
     }
 
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query, currentPage = 0) }
+        load()
+    }
+
     fun loadPage(page: Int) {
         _uiState.update { it.copy(currentPage = page) }
         load()
@@ -239,7 +245,8 @@ class AdminReservationListViewModel @Inject constructor(
                 statuses       = statuses,
                 reservableId = state.selectedReservableId,
                 dateFrom     = state.dateFrom,
-                dateTo       = state.dateTo
+                dateTo       = state.dateTo,
+                q            = state.searchQuery.ifBlank { null }
             )) {
                 is NetworkResult.Success -> {
                     val content = if (state.selectedTab == AdminReservationTab.RESOLVED) {

@@ -3,6 +3,7 @@ package dev.spiffocode.sigesmobile.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.spiffocode.sigesmobile.data.local.SessionManager
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
 import dev.spiffocode.sigesmobile.data.remote.dto.DayAvailabilityItem
 import dev.spiffocode.sigesmobile.data.remote.dto.EquipmentDto
@@ -72,20 +73,29 @@ data class CreateReservationUiState(
     val error: String? = null,
     val maxCapacity: Int? = null,
     val isCompanionsError: Boolean = false,
-    val isPurposeError: Boolean = false
+    val isPurposeError: Boolean = false,
+    
+    // Role based
+    val userRole: String = "",
+    val reservationType: ReservationType = ReservationType.SINGLE
 )
 
 @HiltViewModel
 class CreateReservationViewModel @Inject constructor(
     private val reservationRepository: ReservationRepository,
     private val spaceRepository: SpaceRepository,
-    private val equipmentRepository: EquipmentRepository
+    private val equipmentRepository: EquipmentRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateReservationUiState())
     val uiState: StateFlow<CreateReservationUiState> = _uiState.asStateFlow()
 
     private var calendarJob: Job? = null
+
+    init {
+        _uiState.update { it.copy(userRole = sessionManager.role ?: "") }
+    }
 
     // ── Resource selection ────────────────────────────────────────────────────
 
@@ -131,7 +141,8 @@ class CreateReservationViewModel @Inject constructor(
                 date                   = null,
                 startTime              = null,
                 endTime                = null,
-                maxCapacity            = space.capacity
+                maxCapacity            = space.capacity,
+                resourceType           = ResourceType.SPACE
             )
         }
         loadAvailability(space.id)
@@ -149,7 +160,8 @@ class CreateReservationViewModel @Inject constructor(
                 date                   = null,
                 startTime              = null,
                 endTime                = null,
-                maxCapacity            = equipment.spaceAttached?.capacity
+                maxCapacity            = equipment.spaceAttached?.capacity,
+                resourceType           = ResourceType.EQUIPMENT
             )
         }
         loadAvailability(equipment.id)
@@ -225,12 +237,15 @@ class CreateReservationViewModel @Inject constructor(
     fun onEndTimeChange(value: LocalTime)   = _uiState.update { it.copy(endTime = value, error = null, selectedBlock = null) }
     fun onCompanionsChange(value: String)   = _uiState.update { it.copy(companions = value, error = null, isCompanionsError = false) }
     fun onPurposeChange(value: String)      = _uiState.update { it.copy(purpose = value, error = null, isPurposeError = false) }
+    fun onReservationTypeChange(type: ReservationType) = _uiState.update { it.copy(reservationType = type) }
 
     // ── Submission ────────────────────────────────────────────────────────────
 
     fun submit() {
         val state = _uiState.value
         val reservableId = state.selectedSpace?.id ?: state.selectedEquipment?.id
+        val isStaff = state.userRole == "INSTITUTIONAL_STAFF"
+        val isEquipment = state.resourceType == ResourceType.EQUIPMENT
 
         when {
             reservableId == null ->
@@ -248,20 +263,31 @@ class CreateReservationViewModel @Inject constructor(
             state.date.isBefore(LocalDate.now()) ->
                 _uiState.update { it.copy(error = "La fecha no puede ser en el pasado.") }
 
-            state.companions.isBlank() ->
+            // Determine if we need to validate companions
+            (if (isStaff) state.reservationType else (state.companions.trim().toIntOrNull() ?: 1).let { if (it > 1) ReservationType.GROUP else ReservationType.SINGLE }) 
+                .let { type -> type == ReservationType.GROUP && !isEquipment && state.companions.isBlank() } ->
                 _uiState.update { it.copy(error = "Ingresa el número de asistentes.", isCompanionsError = true) }
 
             state.purpose.isBlank() ->
                 _uiState.update { it.copy(error = "Describe el propósito de la reserva.", isPurposeError = true) }
 
-            state.maxCapacity != null && (state.companions.toIntOrNull() ?: 0) > state.maxCapacity ->
+            // Capacity check only for group requests
+            (if (isStaff) state.reservationType else (state.companions.trim().toIntOrNull() ?: 1).let { if (it > 1) ReservationType.GROUP else ReservationType.SINGLE })
+                .let { type -> type == ReservationType.GROUP && !isEquipment && state.maxCapacity != null && (state.companions.toIntOrNull() ?: 0) > state.maxCapacity } ->
                 _uiState.update { it.copy(error = "El número de asistentes excede la capacidad máxima (${state.maxCapacity}) del recurso seleccionado.", isCompanionsError = true) }
 
             else -> viewModelScope.launch {
                 _uiState.update { it.copy(isLoading = true, error = null, isCompanionsError = false, isPurposeError = false) }
 
-                val companions = state.companions.trim().toIntOrNull() ?: 1
-                val type = if (companions > 1) ReservationType.GROUP else ReservationType.SINGLE
+                // For equipment, use default 2 as requested. Otherwise use input or 1 for groups, null for singles.
+                val type = if (isStaff) state.reservationType 
+                          else (state.companions.trim().toIntOrNull() ?: 1).let { if (it > 1) ReservationType.GROUP else ReservationType.SINGLE }
+
+                val companions = when {
+                    isEquipment -> 2
+                    type == ReservationType.GROUP -> state.companions.trim().toIntOrNull() ?: 2
+                    else -> null
+                }
 
                 when (val result = reservationRepository.createReservation(
                     reservableId = reservableId,

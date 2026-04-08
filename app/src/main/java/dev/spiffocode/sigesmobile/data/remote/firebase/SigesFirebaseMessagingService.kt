@@ -105,10 +105,6 @@ class SigesFirebaseMessagingService : FirebaseMessagingService() {
             data.forEach { (key, value) ->
                 putExtra(key, value)
             }
-            // Ensure reservationId is present even if it came as "id" in FCM data
-            if (!hasExtra("reservationId")) {
-                data["id"]?.let { putExtra("reservationId", it) }
-            }
         }
 
         val requestCode = (data["reservationId"] ?: data["id"] ?: System.currentTimeMillis().toString()).hashCode()
@@ -143,7 +139,7 @@ class SigesFirebaseMessagingService : FirebaseMessagingService() {
             sentAt = java.time.LocalDateTime.now(),
             reservation = null, // Summary not available in push
             metadata = NotificationMetadata(
-                reservationId = (data["reservationId"] ?: data["id"])?.toLongOrNull()
+                reservationId = data["reservationId"]?.toLongOrNull()
             )
         )
     }

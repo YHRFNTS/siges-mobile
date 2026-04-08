@@ -56,7 +56,7 @@ fun ResourceSelectionSection(
 ) {
     Column(modifier = modifier) {
         Text(
-            text = "SELECCIONA EL RECURSO *",
+            text = "Selecciona el recurso *",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Bold,

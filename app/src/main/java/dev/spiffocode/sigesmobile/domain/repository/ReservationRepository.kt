@@ -37,7 +37,8 @@ class ReservationRepository @Inject constructor(
         dateTo: LocalDate? = null,
         statuses: List<ReservationStatus>? = null,
         reservableId: Long? = null,
-        type: ReservationType? = null
+        type: ReservationType? = null,
+        q: String? = null
     ): NetworkResult<PageReservationResponse> = safeApiCall {
         api.getReservations(
             page           = page,

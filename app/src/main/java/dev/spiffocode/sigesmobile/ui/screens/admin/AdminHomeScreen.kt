@@ -69,6 +69,7 @@ fun AdminHomeScreen(
         userName = state.userName,
         userRole = state.userRole,
         notifications = notificationsState.notifications,
+        unreadCount = notificationsState.unreadCount.toInt(),
         hasNextNotificationPage = notificationsState.hasNextPage,
         reservationsThisMonthCount = state.thisMonthCount,
         pendingReservationsCount = state.pendingCount,
@@ -93,6 +94,7 @@ fun AdminHomeScreen(
     userName: String,
     userRole: UserRole,
     notifications: List<NotificationResponse>,
+    unreadCount: Int,
     hasNextNotificationPage: Boolean,
     reservationsThisMonthCount: Int,
     pendingReservationsCount: Int,
@@ -125,6 +127,7 @@ fun AdminHomeScreen(
             userName         = userName,
             userRole         = userRole,
             notifications    = notifications,
+            unreadCount      = unreadCount,
             notificationsHasNextPage = hasNextNotificationPage,
             onNotificationClick = {onClickNotification(it)},
             onMarkAllNotificationsRead = markAllNotificationsAsRead,
@@ -219,6 +222,7 @@ fun AdminHomeScreenPreview() {
             reservationsThisMonthCount = 3,
             pendingReservationsCount = 1,
             notifications = emptyList(),
+            unreadCount = 0,
             pendingReservations = emptyList()
         )
     }
@@ -239,6 +243,7 @@ fun AdminHomeScreenWithPendingReservations() {
             reservationsThisMonthCount = 3,
             pendingReservationsCount = 1,
             notifications = emptyList(),
+            unreadCount = 0,
             pendingReservations = listOf(
                 ReservationUIItem(
                     id = 1,
@@ -269,6 +274,7 @@ fun AdminHomeScreenWithPending_Dark_Reservations() {
             hasNextNotificationPage = false,
             reservationsThisMonthCount = 3,
             pendingReservationsCount = 1,
+            unreadCount = 0,
             notifications = emptyList(),
             pendingReservations = listOf(
                 ReservationUIItem(

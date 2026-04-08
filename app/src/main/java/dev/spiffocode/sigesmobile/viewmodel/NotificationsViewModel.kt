@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.NetworkResult
+import dev.spiffocode.sigesmobile.data.remote.dto.NotificationReadStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.NotificationResponse
 import dev.spiffocode.sigesmobile.domain.repository.NotificationRepository
 import jakarta.inject.Inject
-import dev.spiffocode.sigesmobile.data.remote.dto.NotificationReadStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +24,7 @@ class NotificationsViewModel @Inject constructor(
 
     init {
         loadNotifications()
+        loadUnreadCount()
         observeFcmUpdates()
     }
 
@@ -32,12 +33,12 @@ class NotificationsViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             try {
                 val notifications = notificationsRepository
-                    .listNotifications(page = 0, size = 20, status = NotificationReadStatus.UNREAD)
+                    .listNotifications(page = 0, size = 20, sort = "sentAt,desc")
 
                 if(notifications is NetworkResult.Success){
                     _uiState.update {
                         it.copy(
-                            notifications = notifications.data.content,
+                            notifications = (it.notifications + notifications.data.content).distinctBy { n -> n.id },
                             hasNextPage = !notifications.data.last,
                             totalElements = notifications.data.totalElements
                         )
@@ -50,14 +51,31 @@ class NotificationsViewModel @Inject constructor(
         }
     }
 
+    private fun loadUnreadCount() {
+        viewModelScope.launch {
+            val result = notificationsRepository.listNotifications(
+                status = NotificationReadStatus.UNREAD,
+                size = 1
+            )
+            if (result is NetworkResult.Success) {
+                _uiState.update { it.copy(unreadCount = result.data.totalElements) }
+            }
+        }
+    }
+
     private fun observeFcmUpdates() {
         viewModelScope.launch {
             notificationsRepository.incomingNotifications.collect { newNotif ->
                 _uiState.update { current ->
-                    current.copy(
-                        notifications = listOf(newNotif) + current.notifications,
-                        totalElements = current.totalElements + 1
-                    )
+                    if (current.notifications.any { it.id == newNotif.id }) {
+                        current
+                    } else {
+                        current.copy(
+                            notifications = listOf(newNotif) + current.notifications,
+                            totalElements = current.totalElements + 1,
+                            unreadCount = current.unreadCount + 1
+                        )
+                    }
                 }
             }
         }
@@ -72,13 +90,13 @@ class NotificationsViewModel @Inject constructor(
             val nextPage = current.currentPage + 1
             try {
                 val notifications = notificationsRepository
-                    .listNotifications(page = nextPage, size = 20, status = NotificationReadStatus.UNREAD)
+                    .listNotifications(page = nextPage, size = 20)
 
                 if(notifications is NetworkResult.Success){
                     _uiState.update {
                         it.copy(
-                            notifications = it.notifications + notifications.data.content,
-                            hasNextPage = notifications.data.last,
+                            notifications = (it.notifications + notifications.data.content).distinctBy { n -> n.id },
+                            hasNextPage = !notifications.data.last,
                             currentPage = nextPage,
                             isLoadingMore = false
                         )
@@ -92,18 +110,30 @@ class NotificationsViewModel @Inject constructor(
     }
 
     fun onClick(notification: NotificationResponse){
-        viewModelScope.launch {
-            notificationsRepository.markAsRead(notification.id)
-        }
-        _uiState.update { it.copy(notifications = it.notifications
-            .filter { noti -> noti.id != notification.id  })
+        if (notification.readStatus == NotificationReadStatus.UNREAD) {
+            viewModelScope.launch {
+                notificationsRepository.markAsRead(notification.id)
+            }
+            _uiState.update { current ->
+                current.copy(
+                    notifications = current.notifications.map { 
+                        if (it.id == notification.id) it.copy(readStatus = NotificationReadStatus.READ) else it 
+                    },
+                    unreadCount = (current.unreadCount - 1).coerceAtLeast(0)
+                )
+            }
         }
     }
 
     fun markAllRead() {
         viewModelScope.launch {
             notificationsRepository.markAllAsRead()
-            _uiState.update { it.copy(notifications = emptyList(), totalElements = 0) }
+            _uiState.update { current ->
+                current.copy(
+                    notifications = current.notifications.map { it.copy(readStatus = NotificationReadStatus.READ) },
+                    unreadCount = 0
+                )
+            }
         }
     }
 }
@@ -113,6 +143,7 @@ class NotificationsViewModel @Inject constructor(
 data class NotificationsUiState(
     val notifications: List<NotificationResponse> = emptyList(),
     val totalElements: Long = 0,
+    val unreadCount: Long = 0,
     val currentPage: Int = 0,
     val hasNextPage: Boolean = false,
     val isLoading: Boolean = false,

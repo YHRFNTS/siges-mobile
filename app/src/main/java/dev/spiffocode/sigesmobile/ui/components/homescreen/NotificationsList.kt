@@ -98,7 +98,7 @@ fun NotificationsList(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No tienes notificaciones no leídas",
+                    text = "No tienes notificaciones",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -125,15 +125,13 @@ fun NotificationsList(
                                 onNavigateToProfile()
                             }
                             else -> {
-                                // Try to find reservation ID in multiple places
+                                // For all other types, we expect a reservation ID
                                 val resId = notif.reservation?.id ?: notif.metadata?.reservationId
                                 
                                 if (resId != null && resId != 0L) {
                                     onNavigateToDetail(resId)
                                 } else {
-                                    // If no ID found, we just stay on the current screen (Home)
-                                    // This matches the user's description of being "redirected to home"
-                                    // because the menu closes and they are still where they were.
+                                    // If no reservation ID is found, we stay on Home
                                 }
                             }
                         }

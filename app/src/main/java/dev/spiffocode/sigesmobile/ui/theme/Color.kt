@@ -22,7 +22,7 @@ val Peach = Color(0xFFFFE5D9)
 val Lemon = Color(0xFFFFF4D4)
 val Plum = Color(0xFF6B5B95)
 val Teal = Color(0xFF4A9B8E)
-val Coral = Color(0xFFFF9B85)
+val Coral = Color(0xFFAF2607)
 val Slate = Color(0xFF5A6C7D)
 val TextPrimary = Color(0xFF30343F)
 val TextSecondary = Color(0xFF6B7280)
@@ -38,7 +38,7 @@ val TealLight = Color(0xFF0F6E56)
 val SurfaceLight = Color(0xFFF8F9FA)
 
 // Paleta dark
-val TealDark  = Color(0xFF5DCAA5)
+val TealDark  = Color(0xFF93D5BF)
 val SurfaceDark = Color(0xFF1C1C1E)
 
 val LavDark = Color(0xFF4A1A7A)

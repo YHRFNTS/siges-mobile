@@ -37,7 +37,8 @@ interface ReservationApiService {
         @Query("dateTo")         dateTo: LocalDate?,
         @Query("statuses")         statuses: List<ReservationStatus>?,
         @Query("reservableId")   reservableId: Long?,
-        @Query("type")           type: ReservationType?
+        @Query("type")           type: ReservationType?,
+        @Query("q")              q: String? = null
     ): Response<PageReservationResponse>
 
     @GET("reservations/{id}")

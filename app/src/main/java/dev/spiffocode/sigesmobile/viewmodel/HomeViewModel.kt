@@ -132,7 +132,11 @@ class HomeViewModel @Inject constructor(
             it.copy(
                 isLoading            = false,
                 myRecentReservations = if (reservationsResult is NetworkResult.Success) reservationsResult.data.content.map {item -> item.toUiItem() } else emptyList(),
-                availableResources      = if (spacesResult is NetworkResult.Success) spacesResult.data.content.map { item -> item.toUiItem() } else emptyList(),
+                availableResources      = if (spacesResult is NetworkResult.Success) {
+                    spacesResult.data.content
+                        .filter { it.availabilitySlots?.isNotEmpty() == true }
+                        .map { item -> item.toUiItem() }
+                } else emptyList(),
                 error                = if (reservationsResult is NetworkResult.Error) reservationsResult.message else null
             )
         }
@@ -157,7 +161,11 @@ class HomeViewModel @Inject constructor(
     private fun ReservableDto.toUiItem() = AvailableResourceUIItem(
         id = id,
         title  = name,
-        meta   = capacity?.let { "Capacidad para $it personas" } ?: inventoryIdNum ?: "",
+        meta   = if (reservableType == ReservableType.SPACE) {
+            capacity?.let { "Capacidad para $it personas" } ?: ""
+        } else {
+            inventoryIdNum ?: ""
+        },
         status = status,
         reservableType = reservableType,
         category = type?.name ?: spaceType?.name ?: ""

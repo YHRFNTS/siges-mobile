@@ -26,10 +26,10 @@ fun ButtonWithLeadingIcon(
     icon: ImageVector,
     backgroundColor: Color = MaterialTheme.colorScheme.background,
     iconSize: Dp = 14.dp,
-    iconColor: Color = MaterialTheme.colorScheme.secondary,
+    iconColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
     text: String,
     textStyle: TextStyle = MaterialTheme.typography.bodySmall,
-    textColor: Color = MaterialTheme.colorScheme.secondary,
+    textColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
     onClick: () -> Unit = {}
 ) {
     Button(

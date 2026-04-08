@@ -142,14 +142,16 @@ fun AppNavigation(
     val context = LocalContext.current
     var lastBackPressTime by remember { mutableStateOf(0L) }
     
-    val topLevelRoutes = setOf(
-        Routes.HOME, Routes.AVAILABILITY.substringBefore("?"), 
-        Routes.MY_REQUESTS.substringBefore("?"), Routes.PROFILE,
-        Routes.ADMIN_HOME, Routes.ADMIN_ALL_REQUESTS, Routes.LOGIN
-    )
-    val isTopLevel = currentRoute?.substringBefore("?") in topLevelRoutes
+    val isAdmin = sessionManager.role == "ADMIN"
+    val startDestination = when {
+        sessionManager.isLoggedIn && !sessionManager.rememberMe -> Routes.LOGIN
+        sessionManager.isLoggedIn && isAdmin -> Routes.ADMIN_HOME
+        sessionManager.isLoggedIn            -> Routes.HOME
+        else                                 -> Routes.LOGIN
+    }
 
-    BackHandler(enabled = isTopLevel) {
+    val isStartDestination = currentRoute?.substringBefore("?") == startDestination.substringBefore("?")
+    BackHandler(enabled = isStartDestination) {
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastBackPressTime < 2000) {
             (context as? Activity)?.finish()
@@ -198,17 +200,8 @@ fun AppNavigation(
             }
         }
     }
-
-    val isAdmin = sessionManager.role == "ADMIN"
     val showBottomBar = currentRoute != null &&
             noBottomBarPrefixes.none { currentRoute.startsWith(it) }
-
-    val startDestination = when {
-        sessionManager.isLoggedIn && !sessionManager.rememberMe -> Routes.LOGIN
-        sessionManager.isLoggedIn && isAdmin -> Routes.ADMIN_HOME
-        sessionManager.isLoggedIn            -> Routes.HOME
-        else                                 -> Routes.LOGIN
-    }
 
     Scaffold(
         bottomBar = {

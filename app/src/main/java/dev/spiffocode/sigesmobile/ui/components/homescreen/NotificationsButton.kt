@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,9 +20,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -33,6 +32,7 @@ import java.time.LocalDateTime
 @Composable
 fun NotificationsButton(
     notifications: List<NotificationResponse>,
+    unreadCount: Int,
     hasNextPage: Boolean,
     onNotificationClick: (NotificationResponse) -> Unit = {},
     onMarkAllRead: () -> Unit = {},
@@ -59,31 +59,23 @@ fun NotificationsButton(
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(padding)
             )
-            if (notifications.isNotEmpty()) {
+        }
 
-                val errorColor = MaterialTheme.colorScheme.error
-
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .align(Alignment.TopEnd)
-                        .offset(x = (-5).dp, y = 5.dp)
-                        .drawBehind {
-                            drawCircle(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        errorColor,
-                                        errorColor.copy(alpha = 0.6f),
-                                        errorColor.copy(alpha = 0f)
-                                    ),
-                                    center = Offset(size.width / 2f, size.height / 2f),
-                                    radius = size.width / 2f
-                                )
-                            )
-                        }
+        if (unreadCount > 0) {
+            Badge(
+                containerColor = MaterialTheme.colorScheme.error,
+                contentColor = androidx.compose.ui.graphics.Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 4.dp, y = (-2).dp)
+            ) {
+                Text(
+                    text = if (unreadCount > 99) "99+" else unreadCount.toString(),
+                    style = MaterialTheme.typography.labelSmall
                 )
             }
         }
+
         NotificationsList(
             onNotificationClick = onNotificationClick,
             onMarkAllRead = onMarkAllRead,
@@ -104,7 +96,8 @@ fun NotificationsButtonEmptyPreview(){
     SigesmobileTheme {
         NotificationsButton(
             notifications = emptyList(),
-            hasNextPage = false
+            hasNextPage = false,
+            unreadCount = 0
         )
     }
 }
@@ -113,7 +106,7 @@ fun NotificationsButtonEmptyPreview(){
 @Composable
 @Preview(showBackground = true, backgroundColor = 0xffe1cfff)
 fun NotificationsButtonOnePagePreview(){
-    SigesmobileTheme {
+    SigesmobileTheme(darkTheme = true) {
         NotificationsButton(
             notifications = listOf(
                 NotificationResponse(
@@ -127,7 +120,8 @@ fun NotificationsButtonOnePagePreview(){
                     metadata = null
                 )
             ),
-            hasNextPage = false
+            hasNextPage = false,
+            unreadCount = 1
         )
     }
 }

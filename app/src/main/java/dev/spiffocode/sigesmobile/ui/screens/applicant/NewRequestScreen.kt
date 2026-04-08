@@ -135,6 +135,7 @@ fun NewRequestScreen(
         onEndTimeChange       = viewModel::onEndTimeChange,
         onCompanionsChange    = viewModel::onCompanionsChange,
         onPurposeChange       = viewModel::onPurposeChange,
+        onReservationTypeChange = viewModel::onReservationTypeChange,
         onSubmit              = viewModel::submit,
         onClearError          = viewModel::clearError
     )
@@ -163,6 +164,7 @@ fun NewRequestScreenContent(
     onEndTimeChange: (LocalTime) -> Unit = {},
     onCompanionsChange: (String) -> Unit = {},
     onPurposeChange: (String) -> Unit = {},
+    onReservationTypeChange: (dev.spiffocode.sigesmobile.data.remote.dto.ReservationType) -> Unit = {},
     onSubmit: () -> Unit = {},
     onClearError: () -> Unit = {}
 ) {
@@ -214,6 +216,7 @@ fun NewRequestScreenContent(
                             onEndTimeChange       = onEndTimeChange,
                             onCompanionsChange    = onCompanionsChange,
                             onPurposeChange       = onPurposeChange,
+                            onReservationTypeChange = onReservationTypeChange,
                             onSubmit              = onSubmit
                         )
                     }
@@ -244,6 +247,7 @@ fun NewRequestScreenContent(
                                 onEndTimeChange       = onEndTimeChange,
                                 onCompanionsChange    = onCompanionsChange,
                                 onPurposeChange       = onPurposeChange,
+                                onReservationTypeChange = onReservationTypeChange,
                                 onSubmit              = onSubmit
                             )
                         }
@@ -276,11 +280,12 @@ fun NewRequestFormFields(
     onEndTimeChange: (LocalTime) -> Unit,
     onCompanionsChange: (String) -> Unit,
     onPurposeChange: (String) -> Unit,
+    onReservationTypeChange: (dev.spiffocode.sigesmobile.data.remote.dto.ReservationType) -> Unit,
     onSubmit: () -> Unit
 ) {
     // ── Resource type tabs ────────────────────────────────────────────────────
     Text(
-        text       = "TIPO DE RECURSO *",
+        text       = "Tipo de recurso *",
         style      = MaterialTheme.typography.labelSmall,
         color      = MaterialTheme.colorScheme.onSurfaceVariant,
         fontWeight = FontWeight.Bold,
@@ -292,6 +297,7 @@ fun NewRequestFormFields(
     )
 
     Spacer(modifier = Modifier.height(24.dp))
+
 
     // ── Resource search ───────────────────────────────────────────────────────
     ResourceSelectionSection(
@@ -317,7 +323,7 @@ fun NewRequestFormFields(
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text       = "FECHA Y HORARIO *",
+                text       = "Fecha y horario *",
                 style      = MaterialTheme.typography.labelSmall,
                 color      = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Bold,
@@ -438,7 +444,7 @@ fun NewRequestFormFields(
                     ) {
                         TimePickerField(
                             time          = state.startTime,
-                            label         = "HORA INICIO *",
+                            label         = "Hora inicio *",
                             minTime       = minStart,
                             allowedRanges = state.allowedTimeRangesForDate,
                             onTimeChange  = onStartTimeChange,
@@ -446,7 +452,7 @@ fun NewRequestFormFields(
                         )
                         TimePickerField(
                             time          = state.endTime,
-                            label         = "HORA FIN *",
+                            label         = "Hora fin *",
                             minTime       = state.startTime?.plusMinutes(30),
                             allowedRanges = state.allowedTimeRangesForDate,
                             onTimeChange  = onEndTimeChange,
@@ -460,25 +466,59 @@ fun NewRequestFormFields(
         }
     }
 
-    val maxCap = state.maxCapacity ?: 0
-    SigesNumberSpinner(
-        value         = if (resourceSelected) state.companions else "",
-        onValueChange = onCompanionsChange,
-        max           = maxCap,
-        label         = if (resourceSelected) "NÚMERO DE ASISTENTES (Máx. $maxCap) *" else "NÚMERO DE ASISTENTES *",
-        placeholder   = if (resourceSelected) "Selecciona la cantidad..." else "Selecciona un recurso primero",
-        enabled       = resourceSelected && maxCap > 0,
-        isError       = state.isCompanionsError,
-        modifier      = Modifier.fillMaxWidth()
-    )
+    val isStaff = state.userRole == "INSTITUTIONAL_STAFF"
+    val isEquipment = state.resourceType == ResourceType.EQUIPMENT
 
-    Spacer(modifier = Modifier.height(24.dp))
+    // ── Reservation Type (Staff Only) ───────────────────────────────────────── (NUEVA UBICACIÓN)
+    if (isStaff) {
+        Text(
+            text       = "Tipo de solicitud *",
+            style      = MaterialTheme.typography.labelSmall,
+            color      = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Bold,
+            modifier   = Modifier.padding(bottom = 8.dp)
+        )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            SegmentedButton(
+                selected = state.reservationType == dev.spiffocode.sigesmobile.data.remote.dto.ReservationType.SINGLE,
+                onClick  = { onReservationTypeChange(dev.spiffocode.sigesmobile.data.remote.dto.ReservationType.SINGLE) },
+                shape    = SegmentedButtonDefaults.itemShape(0, 2)
+            ) {
+                Text("Individual")
+            }
+            SegmentedButton(
+                selected = state.reservationType == dev.spiffocode.sigesmobile.data.remote.dto.ReservationType.GROUP,
+                onClick  = { onReservationTypeChange(dev.spiffocode.sigesmobile.data.remote.dto.ReservationType.GROUP) },
+                shape    = SegmentedButtonDefaults.itemShape(1, 2)
+            ) {
+                Text("Grupal")
+            }
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+    }
+
+    // Number of assistants (only for group requests and NOT equipment)
+    val showAssistants = !isEquipment && (!isStaff || state.reservationType == dev.spiffocode.sigesmobile.data.remote.dto.ReservationType.GROUP)
+    if (showAssistants) {
+        val maxCap = state.maxCapacity ?: 0
+        SigesNumberSpinner(
+            value         = if (resourceSelected) state.companions else "",
+            onValueChange = onCompanionsChange,
+            max           = maxCap,
+            label         = if (resourceSelected) "Número de asistentes (Máx. $maxCap) *" else "Número de asistentes *",
+            placeholder   = if (resourceSelected) "Selecciona la cantidad..." else "Selecciona un recurso primero",
+            enabled       = resourceSelected && maxCap > 0,
+            isError       = state.isCompanionsError,
+            modifier      = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+    }
 
     // ── Purpose ───────────────────────────────────────────────────────────────
     OutlinedTextField(
         value         = state.purpose,
         onValueChange = onPurposeChange,
-        label         = { Text("PROPÓSITO DE LA RESERVA *") },
+        label         = { Text("Propósito de la reserva *") },
         placeholder   = { Text("Describe el propósito...") },
         shape         = RoundedCornerShape(12.dp),
         isError       = state.isPurposeError,

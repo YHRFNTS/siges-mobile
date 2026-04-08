@@ -140,7 +140,7 @@ fun DatePickerField(
 
     ClickableOutlinedTextField(
         value = date?.format(formatter) ?: "",
-        label = "FECHA DE USO *",
+        label = "Fecha de uso *",
         placeholder = "dd / mm / aaaa",
         trailingIcon = {
             Icon(Icons.Default.DateRange, contentDescription = "Fecha de uso")

@@ -1,5 +1,8 @@
 package dev.spiffocode.sigesmobile.ui.screens.applicant
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,7 +52,11 @@ import dev.spiffocode.sigesmobile.data.remote.dto.SpaceTypeDto
 import dev.spiffocode.sigesmobile.ui.components.FilterSelector
 import dev.spiffocode.sigesmobile.ui.components.InfiniteScrollGrid
 import dev.spiffocode.sigesmobile.ui.components.SearchBar
+import dev.spiffocode.sigesmobile.ui.components.newrequest.DatePickerField
+import dev.spiffocode.sigesmobile.ui.components.newrequest.TimePickerField
 import dev.spiffocode.sigesmobile.ui.components.homescreen.AvailableItemCard
+import java.time.LocalDate
+import java.time.LocalTime
 import dev.spiffocode.sigesmobile.viewmodel.AvailabilityTab
 import dev.spiffocode.sigesmobile.viewmodel.AvailabilityViewModel
 
@@ -83,7 +93,15 @@ fun AvailabilityScreen(
         filterByEquipmentType = viewModel::filterByEquipmentType,
         onSelectTab = viewModel::selectTab,
         onSearchQueryChange = viewModel::onSearchQueryChange,
+        selectedDate = state.selectedDate,
+        selectedStartTime = state.selectedStartTime,
+        selectedEndTime = state.selectedEndTime,
+        onDateChange = viewModel::onDateChange,
+        onStartTimeChange = viewModel::onStartTimeChange,
+        onEndTimeChange = viewModel::onEndTimeChange,
         onRefresh = {viewModel.selectTab(state.selectedTab)},
+        isFilterExpanded = state.isFilterExpanded,
+        onToggleFilters = viewModel::toggleFilters,
         showBackButton = showBackButton,
         onNavigateBack = onNavigateBack,
         onNavigateToSpaceDetail = onNavigateToSpaceDetail,
@@ -116,6 +134,12 @@ fun AvailabilityScreen(
     onSelectTab: (AvailabilityTab) -> Unit = {},
     onRefresh: () -> Unit = {},
     onSearchQueryChange: (String) -> Unit = {},
+    selectedDate: LocalDate? = null,
+    selectedStartTime: LocalTime? = null,
+    selectedEndTime: LocalTime? = null,
+    onDateChange: (LocalDate?) -> Unit = {},
+    onStartTimeChange: (LocalTime?) -> Unit = {},
+    onEndTimeChange: (LocalTime?) -> Unit = {},
     showBackButton: Boolean = false,
     onNavigateBack: () -> Unit = {},
     onNavigateToSpaceDetail: (Long) -> Unit = {},
@@ -192,65 +216,134 @@ fun AvailabilityScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            SearchBar(
-                searchQuery = searchQuery,
-                onSearchQueryChange = onSearchQueryChange
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                verticalAlignment = Alignment.CenterVertically
             ) {
-
-
-                var expandedType by remember { mutableStateOf(false) }
-
-                FilterSelector(
-                    value = if (selectedTab == AvailabilityTab.SPACES) {
-                        spaceTypes.find { it.id == selectedSpaceTypeId }?.name ?: "Tipo de espacio"
-                    } else {
-                        equipmentTypes.find { it.id == selectedEquipmentTypeId }?.name
-                            ?: "Tipo de equipo"
-                    },
-                    modifier = Modifier.weight(1f),
-                    expanded = expandedType,
-                    onExpandedChange = { expandedType = it },
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Todos") },
-                        onClick = {
-                            if (selectedTab == AvailabilityTab.SPACES) filterBySpaceType(null)
-                            else filterByEquipmentType(null)
-                            expandedType = false
-                        }
+                Box(modifier = Modifier.weight(1f)) {
+                    SearchBar(
+                        searchQuery = searchQuery,
+                        onSearchQueryChange = onSearchQueryChange
                     )
-                    if (selectedTab == AvailabilityTab.SPACES) {
-                        spaceTypes.forEach { type ->
+                }
+                androidx.compose.material3.IconButton(
+                    onClick = onToggleFilters,
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isFilterExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.FilterList,
+                        contentDescription = "Toggle filters",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = isFilterExpanded,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    ScheduleFilters(
+                        selectedDate = selectedDate,
+                        startTime = selectedStartTime,
+                        endTime = selectedEndTime,
+                        onDateChange = onDateChange,
+                        onStartTimeChange = onStartTimeChange,
+                        onEndTimeChange = onEndTimeChange
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        var expandedType by remember { mutableStateOf(false) }
+
+                        FilterSelector(
+                            value = if (selectedTab == AvailabilityTab.SPACES) {
+                                spaceTypes.find { it.id == selectedSpaceTypeId }?.name ?: "Tipo de espacio"
+                            } else {
+                                equipmentTypes.find { it.id == selectedEquipmentTypeId }?.name
+                                    ?: "Tipo de equipo"
+                            },
+                            modifier = Modifier.weight(1f),
+                            expanded = expandedType,
+                            onExpandedChange = { expandedType = it },
+                        ) {
                             DropdownMenuItem(
-                                text = { Text(type.name) },
+                                text = { Text("Todos") },
                                 onClick = {
-                                    filterBySpaceType(type.id)
+                                    if (selectedTab == AvailabilityTab.SPACES) filterBySpaceType(null)
+                                    else filterByEquipmentType(null)
                                     expandedType = false
                                 }
                             )
+                            if (selectedTab == AvailabilityTab.SPACES) {
+                                spaceTypes.forEach { type ->
+                                    DropdownMenuItem(
+                                        text = { Text(type.name) },
+                                        onClick = {
+                                            filterBySpaceType(type.id)
+                                            expandedType = false
+                                        }
+                                    )
+                                }
+                            } else {
+                                equipmentTypes.forEach { type ->
+                                    DropdownMenuItem(
+                                        text = { Text(type.name) },
+                                        onClick = {
+                                            filterByEquipmentType(type.id)
+                                            expandedType = false
+                                        }
+                                    )
+                                }
+                            }
                         }
-                    } else {
-                        equipmentTypes.forEach { type ->
+
+                        var expandedSort by remember { mutableStateOf(false) }
+                        FilterSelector(
+                            value = when (sortBy) {
+                                "name,asc" -> "Nombre (A-Z)"
+                                "name,desc" -> "Nombre (Z-A)"
+                                "capacity,asc" -> "Capacidad (menor)"
+                                "capacity,desc" -> "Capacidad (mayor)"
+                                else -> "Ordenar por"
+                            },
+                            modifier = Modifier.weight(1f),
+                            expanded = expandedSort,
+                            onExpandedChange = { expandedSort = it },
+                        ) {
                             DropdownMenuItem(
-                                text = { Text(type.name) },
-                                onClick = {
-                                    filterByEquipmentType(type.id)
-                                    expandedType = false
-                                }
+                                text = { Text("Nombre (A-Z)") },
+                                onClick = { onSortBy("name,asc"); expandedSort = false }
                             )
+                            DropdownMenuItem(
+                                text = { Text("Nombre (Z-A)") },
+                                onClick = { onSortBy("name,desc"); expandedSort = false }
+                            )
+                            if (selectedTab == AvailabilityTab.SPACES) {
+                                DropdownMenuItem(
+                                    text = { Text("Capacidad (menor)") },
+                                    onClick = { onSortBy("capacity,asc"); expandedSort = false }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Capacidad (mayor)") },
+                                    onClick = { onSortBy("capacity,desc"); expandedSort = false }
+                                )
+                            }
                         }
                     }
                 }
+            }
 
                 // Sort Filter
                 var expandedSort by remember { mutableStateOf(false) }
@@ -383,3 +476,68 @@ fun AvailabilityScreen(
 // Previews removed to avoid WindowSizeClass mock errors
 
 // removed
+
+@Composable
+fun ScheduleFilters(
+    selectedDate: LocalDate?,
+    startTime: LocalTime?,
+    endTime: LocalTime?,
+    onDateChange: (LocalDate?) -> Unit,
+    onStartTimeChange: (LocalTime?) -> Unit,
+    onEndTimeChange: (LocalTime?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.padding(horizontal = 24.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Filtrar por horario",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (selectedDate != null || startTime != null || endTime != null) {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        onDateChange(null)
+                        onStartTimeChange(null)
+                        onEndTimeChange(null)
+                    }
+                ) {
+                    Text("Limpiar", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        DatePickerField(
+            date = selectedDate,
+            onDateChange = { onDateChange(it) },
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            TimePickerField(
+                time = startTime,
+                label = "Inicio",
+                onTimeChange = { onStartTimeChange(it) },
+                modifier = Modifier.weight(1f)
+            )
+            TimePickerField(
+                time = endTime,
+                label = "Fin",
+                onTimeChange = { onEndTimeChange(it) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}

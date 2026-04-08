@@ -143,7 +143,7 @@ fun MyReservationsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     val selectedDate = datePickerState.selectedDateMillis?.let {
-                        Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+                        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate()
                     }
                     onSetDateRange(selectedDate, state.dateTo)
                     showFromDatePicker = false
@@ -167,7 +167,7 @@ fun MyReservationsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     val selectedDate = datePickerState.selectedDateMillis?.let {
-                        Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+                        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate()
                     }
                     onSetDateRange(state.dateFrom, selectedDate)
                     showToDatePicker = false

@@ -81,6 +81,7 @@ fun ApplicantHomeScreen(
         availableSpaces = state.availableResources,
         error = state.error,
         notifications = notifState.notifications,
+        unreadCount = notifState.unreadCount.toInt(),
         hasNextNotificationPage = notifState.hasNextPage,
         onClickNotification = notificationsViewModel::onClick,
         markAllNotificationsAsRead = notificationsViewModel::markAllRead,
@@ -108,6 +109,7 @@ fun ApplicantHomeScreen(
     availableSpaces: List<AvailableResourceUIItem>,
     error: String?,
     notifications: List<NotificationResponse>,
+    unreadCount: Int,
     hasNextNotificationPage: Boolean,
     onClickNotification: (NotificationResponse) -> Unit = {},
     markAllNotificationsAsRead: () -> Unit = {},
@@ -137,6 +139,7 @@ fun ApplicantHomeScreen(
             userName         = userName,
             userRole         = userRole,
             notifications    = notifications,
+            unreadCount      = unreadCount,
             notificationsHasNextPage = hasNextNotificationPage,
             onNotificationClick = { onClickNotification(it) },
             onMarkAllNotificationsRead = markAllNotificationsAsRead,
@@ -269,6 +272,7 @@ fun ApplicantHomeScreenPreview() {
             error = null,
             availableSpaces = emptyList(),
             notifications = emptyList(),
+            unreadCount = 0,
             hasNextNotificationPage = false
         )
     }
@@ -299,6 +303,7 @@ fun ApplicantHomeScreenWithReservations() {
             error = null,
             availableSpaces = emptyList(),
             notifications = emptyList(),
+            unreadCount = 0,
             hasNextNotificationPage = false
         )
     }
@@ -326,6 +331,7 @@ fun ApplicantHomeScreenWithSpaces() {
             error = null,
             myRecentReservations = emptyList(),
             notifications = emptyList(),
+            unreadCount = 0,
             hasNextNotificationPage = false,
         )
     }

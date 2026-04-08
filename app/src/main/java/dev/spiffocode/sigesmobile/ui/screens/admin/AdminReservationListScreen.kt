@@ -45,6 +45,7 @@ import dev.spiffocode.sigesmobile.data.remote.dto.ReservationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationType
 import dev.spiffocode.sigesmobile.ui.components.FilterSelector
+import dev.spiffocode.sigesmobile.ui.components.SearchBar
 import dev.spiffocode.sigesmobile.ui.components.homescreen.RequestCard
 import dev.spiffocode.sigesmobile.ui.components.newrequest.ClickableOutlinedTextField
 import dev.spiffocode.sigesmobile.ui.helpers.toText
@@ -71,6 +72,7 @@ fun AdminReservationListScreen(
         onFilterByReservable = viewModel::filterByReservable,
         onSetDateRange = viewModel::setDateRange,
         onSetSort = viewModel::setSort,
+        onSearchQueryChange = viewModel::onSearchQueryChange,
         onLoadPage = viewModel::loadPage,
         onRefresh = viewModel::refresh,
         onNavigateToDetail = onNavigateToDetail,
@@ -86,6 +88,7 @@ fun AdminReservationListScreen(
     onFilterByReservable: (Long?) -> Unit = {},
     onSetDateRange: (java.time.LocalDate?, java.time.LocalDate?) -> Unit = { _, _ -> },
     onSetSort: (String, String) -> Unit = { _, _ -> },
+    onSearchQueryChange: (String) -> Unit = {},
     onLoadPage: (Int) -> Unit = {},
     onRefresh: () -> Unit = {},
     onNavigateToDetail: (Long) -> Unit = {}
@@ -102,7 +105,7 @@ fun AdminReservationListScreen(
             confirmButton = {
                 androidx.compose.material3.TextButton(onClick = {
                     val selectedDate = datePickerState.selectedDateMillis?.let {
-                        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+                        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate()
                     }
                     onSetDateRange(selectedDate, state.dateTo)
                     showFromDatePicker = false
@@ -128,7 +131,7 @@ fun AdminReservationListScreen(
             confirmButton = {
                 androidx.compose.material3.TextButton(onClick = {
                     val selectedDate = datePickerState.selectedDateMillis?.let {
-                        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+                        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate()
                     }
                     onSetDateRange(state.dateFrom, selectedDate)
                     showToDatePicker = false
@@ -207,6 +210,14 @@ fun AdminReservationListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // ── Search Bar ────────────────────────────────────────────────────
+            SearchBar(
+                searchQuery = state.searchQuery,
+                onSearchQueryChange = onSearchQueryChange
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // ── Filters & Sort Row ──────────────────────────────────────────────
             androidx.compose.foundation.layout.Row(
                 modifier = Modifier
@@ -217,14 +228,14 @@ fun AdminReservationListScreen(
                 // ── Resource filter ──────────────────────────────────────────────
                 var expandedFilter by remember { mutableStateOf(false) }
                 FilterSelector(
-                    value = if (state.selectedReservableId == null) "Recurso"
-                            else "ID: ${state.selectedReservableId}",
+                    value = if (state.selectedReservableId == null) "Filtrar por recurso"
+                            else state.reservables.find { it.id == state.selectedReservableId }?.name ?: "ID: ${state.selectedReservableId}",
                     expanded = expandedFilter,
                     modifier = Modifier.weight(1f),
                     onExpandedChange = { expandedFilter = it }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Todos") },
+                        text = { Text("Todos los recursos") },
                         onClick = {
                             onFilterByReservable(null)
                             expandedFilter = false
@@ -244,9 +255,9 @@ fun AdminReservationListScreen(
                 // ── Sort filter ──────────────────────────────────────────────────
                 var expandedSort by remember { mutableStateOf(false) }
                 val sortLabel = when {
-                    state.sort.startsWith("createdAt") -> "Fecha Sol."
-                    state.sort.startsWith("reservable") -> "Recurso"
-                    state.sort.startsWith("status") -> "Estado"
+                    state.sort.startsWith("createdAt") -> "Ordenar por fecha"
+                    state.sort.startsWith("reservable") -> "Ordenar por recurso"
+                    state.sort.startsWith("status") -> "Ordenar por estado"
                     else -> "Ordenar"
                 }
 
@@ -257,8 +268,8 @@ fun AdminReservationListScreen(
                     onExpandedChange = { expandedSort = it }
                 ) {
                     listOf(
-                        "Reciente" to "createdAt,desc",
-                        "Antiguo" to "createdAt,asc",
+                        "Más reciente" to "createdAt,desc",
+                        "Más antiguo" to "createdAt,asc",
                         "Recurso (A-Z)" to "reservable,asc",
                         "Estado" to "status,asc"
                     ).forEach { (label, sortValue) ->

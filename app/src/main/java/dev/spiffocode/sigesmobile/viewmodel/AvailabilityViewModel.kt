@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import javax.inject.Inject
 
 enum class AvailabilityTab { SPACES, EQUIPMENTS }
@@ -31,6 +34,11 @@ data class AvailabilityUiState(
     val equipments: List<EquipmentDto> = emptyList(),
     val equipmentTypes: List<EquipmentTypeDto> = emptyList(),
     val selectedEquipmentTypeId: Long? = null,
+    
+    val selectedDate: LocalDate? = null,
+    val selectedStartTime: LocalTime? = null,
+    val selectedEndTime: LocalTime? = null,
+    val isFilterExpanded: Boolean = false,
 
     val totalPages: Int = 0,
     val currentPage: Int = 0,
@@ -83,6 +91,21 @@ class AvailabilityViewModel @Inject constructor(
         load()
     }
 
+    fun onDateChange(date: LocalDate?) {
+        _uiState.update { it.copy(selectedDate = date, currentPage = 0) }
+        load()
+    }
+
+    fun onStartTimeChange(time: LocalTime?) {
+        _uiState.update { it.copy(selectedStartTime = time, currentPage = 0) }
+        load()
+    }
+
+    fun onEndTimeChange(time: LocalTime?) {
+        _uiState.update { it.copy(selectedEndTime = time, currentPage = 0) }
+        load()
+    }
+
     fun refresh() = load()
 
     private fun load() {
@@ -102,10 +125,24 @@ class AvailabilityViewModel @Inject constructor(
                 searchQuery       = state.searchQuery.ifBlank { null },
                 spaceTypeIdFilter = state.selectedSpaceTypeId,
                 studentsAvailable = true,
-                showMode          = ShowMode.ACTIVE
+                showMode          = ShowMode.ACTIVE,
+                requestStart      = state.selectedDate?.let { date ->
+                    state.selectedStartTime?.let { time ->
+                        LocalDateTime.of(date, time)
+                    }
+                },
+                requestEnd        = state.selectedDate?.let { date ->
+                    state.selectedEndTime?.let { time ->
+                        LocalDateTime.of(date, time)
+                    }
+                }
             )) {
                 is NetworkResult.Success -> _uiState.update {
-                    it.copy(isLoading = false, spaces = result.data.content, totalPages = result.data.totalPages)
+                    it.copy(
+                        isLoading = false,
+                        spaces = result.data.content.filter { space -> space.availabilitySlots?.isNotEmpty() == true },
+                        totalPages = result.data.totalPages
+                    )
                 }
                 is NetworkResult.Error -> _uiState.update {
                     it.copy(isLoading = false, error = result.message)
@@ -126,10 +163,24 @@ class AvailabilityViewModel @Inject constructor(
                 searchQuery       = state.searchQuery.ifBlank { null },
                 equipmentTypeId   = state.selectedEquipmentTypeId,
                 studentsAvailable = true,
-                showMode          = ShowMode.ACTIVE
+                showMode          = ShowMode.ACTIVE,
+                requestStart      = state.selectedDate?.let { date ->
+                    state.selectedStartTime?.let { time ->
+                        LocalDateTime.of(date, time)
+                    }
+                },
+                requestEnd        = state.selectedDate?.let { date ->
+                    state.selectedEndTime?.let { time ->
+                        LocalDateTime.of(date, time)
+                    }
+                }
             )) {
                 is NetworkResult.Success -> _uiState.update {
-                    it.copy(isLoading = false, equipments = result.data.content, totalPages = result.data.totalPages)
+                    it.copy(
+                        isLoading = false,
+                        equipments = result.data.content.filter { equip -> equip.availabilitySlots?.isNotEmpty() == true },
+                        totalPages = result.data.totalPages
+                    )
                 }
                 is NetworkResult.Error -> _uiState.update {
                     it.copy(isLoading = false, error = result.message)
@@ -155,6 +206,10 @@ class AvailabilityViewModel @Inject constructor(
                 else -> {}
             }
         }
+    }
+
+    fun toggleFilters() {
+        _uiState.update { it.copy(isFilterExpanded = !it.isFilterExpanded) }
     }
 
     fun clearError() = _uiState.update { it.copy(error = null) }

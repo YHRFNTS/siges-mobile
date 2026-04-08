@@ -27,6 +27,7 @@ public fun HomeHeader(
     userName: String,
     userRole: UserRole,
     notifications: List<NotificationResponse>,
+    unreadCount: Int,
     notificationsHasNextPage: Boolean,
     onNotificationClick: (NotificationResponse) -> Unit = {},
     onMarkAllNotificationsRead: () -> Unit = {},
@@ -59,6 +60,7 @@ public fun HomeHeader(
                 }
                 NotificationsButton(
                     notifications = notifications,
+                    unreadCount = unreadCount,
                     hasNextPage  = notificationsHasNextPage,
                     onNotificationClick = onNotificationClick,
                     onMarkAllRead = onMarkAllNotificationsRead,
@@ -82,6 +84,7 @@ fun HomeHeaderPreview(){
             userName = "Caryuter",
             userRole = UserRole.STUDENT,
             notifications = emptyList(),
+            unreadCount = 0,
             notificationsHasNextPage = false
         )
     }
