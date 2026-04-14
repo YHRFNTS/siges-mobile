@@ -31,9 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavType
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -58,6 +58,7 @@ import dev.spiffocode.sigesmobile.ui.screens.profile.ChangePasswordScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.EditProfileScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.NotificationPrefsScreen
 import dev.spiffocode.sigesmobile.ui.screens.profile.ProfileScreen
+import dev.spiffocode.sigesmobile.viewmodel.AvailabilityViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ExternalNavigationEvent
 import dev.spiffocode.sigesmobile.viewmodel.MainViewModel
 import dev.spiffocode.sigesmobile.viewmodel.ResetPasswordError
@@ -85,10 +86,12 @@ object Routes {
     const val RESOURCE_CALENDAR = "resource_calendar/{reservableId}/{type}/{name}"
     fun resourceCalendar(reservableId: Long, type: String, name: String) =
         "resource_calendar/$reservableId/$type/${android.net.Uri.encode(name)}"
-    const val SPACE_DETAIL   = "space_detail/{id}"
-    const val EQUIPMENT_DETAIL = "equipment_detail/{id}"
-    fun spaceDetail(id: Long) = "space_detail/$id"
-    fun equipmentDetail(id: Long) = "equipment_detail/$id"
+    const val SPACE_DETAIL   = "space_detail/{id}?date={date}&startTime={startTime}&endTime={endTime}"
+    const val EQUIPMENT_DETAIL = "equipment_detail/{id}?date={date}&startTime={startTime}&endTime={endTime}"
+    fun spaceDetail(id: Long, date: String = "", start: String = "", end: String = "") = 
+        "space_detail/$id?date=$date&startTime=$start&endTime=$end"
+    fun equipmentDetail(id: Long, date: String = "", start: String = "", end: String = "") = 
+        "equipment_detail/$id?date=$date&startTime=$start&endTime=$end"
     const val REQUEST_DETAIL = "request_detail/{reservationId}"
     const val RESCHEDULE_REQUEST = "reschedule_request/{reservationId}"
     fun requestDetail(id: Long) = "request_detail/$id"
@@ -331,13 +334,20 @@ fun AppNavigation(
                 arguments = listOf(navArgument("showBackButton") { type = NavType.BoolType; defaultValue = false })
             ) { backStack ->
                 val showBack = backStack.arguments?.getBoolean("showBackButton") ?: false
+                val viewModel: AvailabilityViewModel = hiltViewModel()
                 dev.spiffocode.sigesmobile.ui.screens.applicant.AvailabilityScreen(
                     windowSizeClass = windowSizeClass,
                     showBackButton = showBack,
-                    viewModel = hiltViewModel(),
+                    viewModel = viewModel,
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToSpaceDetail = { id -> navController.navigate(Routes.spaceDetail(id)) },
-                    onNavigateToEquipmentDetail = { id -> navController.navigate(Routes.equipmentDetail(id)) }
+                    onNavigateToSpaceDetail = { id -> 
+                        val state = viewModel.uiState.value
+                        navController.navigate(Routes.spaceDetail(id, state.selectedDate?.toString() ?: "", state.selectedStartTime?.toString() ?: "", state.selectedEndTime?.toString() ?: "")) 
+                    },
+                    onNavigateToEquipmentDetail = { id -> 
+                        val state = viewModel.uiState.value
+                        navController.navigate(Routes.equipmentDetail(id, state.selectedDate?.toString() ?: "", state.selectedStartTime?.toString() ?: "", state.selectedEndTime?.toString() ?: "")) 
+                    }
                 )
             }
 
@@ -410,28 +420,54 @@ fun AppNavigation(
 
             composable(
                 route     = Routes.SPACE_DETAIL,
-                arguments = listOf(navArgument("id") { type = NavType.LongType })
+                arguments = listOf(
+                    navArgument("id") { type = NavType.LongType },
+                    navArgument("date") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("startTime") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("endTime") { type = NavType.StringType; defaultValue = "" }
+                )
             ) { backStack ->
                 val spaceId = backStack.arguments?.getLong("id") ?: return@composable
+                val date = backStack.arguments?.getString("date") ?: ""
+                val start = backStack.arguments?.getString("startTime") ?: ""
+                val end = backStack.arguments?.getString("endTime") ?: ""
                 dev.spiffocode.sigesmobile.ui.screens.applicant.SpaceDetailScreen(
                     windowSizeClass      = windowSizeClass,
                     spaceId              = spaceId,
+                    prefillDate          = date,
+                    prefillStartTime     = start,
+                    prefillEndTime       = end,
                     onNavigateBack       = { navController.popBackStack() },
-                    onNavigateToReserve  = { id, name -> navController.navigate(Routes.newRequestPrefilled(id, "SPACE", name, "", "", "")) },
+                    onNavigateToReserve  = { id, name, d, s, e -> 
+                        navController.navigate(Routes.newRequestPrefilled(id, "SPACE", name, d, s, e)) 
+                    },
                     onNavigateToCalendar = { id, name -> navController.navigate(Routes.resourceCalendar(id, "SPACE", name)) }
                 )
             }
 
             composable(
                 route     = Routes.EQUIPMENT_DETAIL,
-                arguments = listOf(navArgument("id") { type = NavType.LongType })
+                arguments = listOf(
+                    navArgument("id") { type = NavType.LongType },
+                    navArgument("date") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("startTime") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("endTime") { type = NavType.StringType; defaultValue = "" }
+                )
             ) { backStack ->
                 val equipmentId   = backStack.arguments?.getLong("id") ?: return@composable
+                val date = backStack.arguments?.getString("date") ?: ""
+                val start = backStack.arguments?.getString("startTime") ?: ""
+                val end = backStack.arguments?.getString("endTime") ?: ""
                 dev.spiffocode.sigesmobile.ui.screens.applicant.EquipmentDetailScreen(
                     windowSizeClass      = windowSizeClass,
                     equipmentId          = equipmentId,
+                    prefillDate          = date,
+                    prefillStartTime     = start,
+                    prefillEndTime       = end,
                     onNavigateBack       = { navController.popBackStack() },
-                    onNavigateToReserve  = { id, name -> navController.navigate(Routes.newRequestPrefilled(id, "EQUIPMENT", name, "", "", "")) },
+                    onNavigateToReserve  = { id, name, d, s, e -> 
+                        navController.navigate(Routes.newRequestPrefilled(id, "EQUIPMENT", name, d, s, e)) 
+                    },
                     onNavigateToCalendar = { id, name -> navController.navigate(Routes.resourceCalendar(id, "EQUIPMENT", name)) }
                 )
             }

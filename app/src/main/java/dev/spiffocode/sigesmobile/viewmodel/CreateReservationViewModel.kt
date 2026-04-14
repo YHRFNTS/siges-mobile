@@ -138,9 +138,9 @@ class CreateReservationViewModel @Inject constructor(
                 searchQuery            = space.name,
                 bookInAdvanceDuration  = leadTime,
                 earliestSelectableDateTime = computeEarliest(leadTime),
-                date                   = null,
-                startTime              = null,
-                endTime                = null,
+                date                   = it.date ?: null,
+                startTime              = it.startTime ?: null,
+                endTime                = it.endTime ?: null,
                 maxCapacity            = space.capacity,
                 resourceType           = ResourceType.SPACE
             )
@@ -157,9 +157,9 @@ class CreateReservationViewModel @Inject constructor(
                 searchQuery            = equipment.name,
                 bookInAdvanceDuration  = leadTime,
                 earliestSelectableDateTime = computeEarliest(leadTime),
-                date                   = null,
-                startTime              = null,
-                endTime                = null,
+                date                   = it.date ?: null,
+                startTime              = it.startTime ?: null,
+                endTime                = it.endTime ?: null,
                 maxCapacity            = equipment.spaceAttached?.capacity,
                 resourceType           = ResourceType.EQUIPMENT
             )

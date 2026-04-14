@@ -57,8 +57,11 @@ fun SpaceDetailScreen(
     spaceId: Long,
     viewModel: SpaceDetailViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
-    onNavigateToReserve: (spaceId: Long, name: String) -> Unit,
-    onNavigateToCalendar: (spaceId: Long, name: String) -> Unit = { _, _ -> }
+    onNavigateToReserve: (spaceId: Long, name: String, date: String, start: String, end: String) -> Unit,
+    onNavigateToCalendar: (spaceId: Long, name: String) -> Unit = { _, _ -> },
+    prefillDate: String = "",
+    prefillStartTime: String = "",
+    prefillEndTime: String = ""
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -70,7 +73,7 @@ fun SpaceDetailScreen(
         windowSizeClass      = windowSizeClass,
         state                = uiState,
         onNavigateBack       = onNavigateBack,
-        onNavigateToReserve  = { uiState.space?.let { onNavigateToReserve(it.id, it.name) } },
+        onNavigateToReserve  = { uiState.space?.let { onNavigateToReserve(it.id, it.name, prefillDate, prefillStartTime, prefillEndTime) } },
         onNavigateToCalendar = { uiState.space?.let { onNavigateToCalendar(it.id, it.name) } },
     )
 }

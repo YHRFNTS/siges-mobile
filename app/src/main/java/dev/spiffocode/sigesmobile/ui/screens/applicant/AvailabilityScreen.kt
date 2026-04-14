@@ -29,6 +29,8 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -41,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.spiffocode.sigesmobile.data.remote.dto.EquipmentDto
@@ -129,7 +132,7 @@ fun AvailabilityScreen(
     currentPage: Int,
     error: String?,
     isFilterExpanded: Boolean,
-    onToggleFilters: () -> Unit,
+    onToggleFilters: () -> Unit = {},
     loadPage: (Int) -> Unit = {},
     onSortBy: (String?) -> Unit = {},
     filterBySpaceType: (Long?) -> Unit = {},
@@ -477,6 +480,28 @@ fun AvailabilityScreen(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+@Preview
+fun AvailabilityScreenPreview(){
+    AvailabilityScreen(windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass,
+        spaces = emptyList(),
+        equipments = emptyList(),
+        searchQuery = "",
+        selectedTab = AvailabilityTab.SPACES,
+        spaceTypes = emptyList(),
+        selectedSpaceTypeId = null,
+        equipmentTypes = emptyList(),
+        selectedEquipmentTypeId = null,
+        sortBy = null,
+        isLoading = false,
+        totalPages = 1,
+        currentPage = 0,
+        error = null,
+        isFilterExpanded = false
+    )
 }
 
 // Previews removed to avoid WindowSizeClass mock errors

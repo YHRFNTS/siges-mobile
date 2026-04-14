@@ -10,8 +10,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -155,7 +158,7 @@ fun AdminHomeScreen(
                 onClick = onNavigateToCatalogs,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
             ) {
-                androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Default.androidx.compose.material.icons.filled.Settings, contentDescription = null)
+                androidx.compose.material3.Icon(Icons.Filled.Settings, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Gestionar Catálogos")
             }

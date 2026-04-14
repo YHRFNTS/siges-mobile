@@ -3,7 +3,10 @@ package dev.spiffocode.sigesmobile.data.remote.api
 import dev.spiffocode.sigesmobile.data.remote.dto.BuildingDto
 import dev.spiffocode.sigesmobile.data.remote.dto.ShowMode
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
