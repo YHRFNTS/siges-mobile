@@ -180,9 +180,10 @@ fun AdminReservationListScreen(
             ) {
             // ── Tabs ─────────────────────────────────────────────────────────
             val selectedTabIndex = when (state.selectedTab) {
-                AdminReservationTab.ALL      -> 0
-                AdminReservationTab.PENDING  -> 1
-                AdminReservationTab.RESOLVED -> 2
+                AdminReservationTab.ALL         -> 0
+                AdminReservationTab.PENDING     -> 1
+                AdminReservationTab.IN_PROGRESS -> 2
+                AdminReservationTab.RESOLVED    -> 3
             }
 
             SecondaryTabRow(
@@ -193,9 +194,10 @@ fun AdminReservationListScreen(
                 divider = {}
             ) {
                 listOf(
-                    "Todas"     to AdminReservationTab.ALL,
-                    "Pendientes" to AdminReservationTab.PENDING,
-                    "Resueltas"  to AdminReservationTab.RESOLVED
+                    "Todas"       to AdminReservationTab.ALL,
+                    "Pendientes"  to AdminReservationTab.PENDING,
+                    "Progreso"    to AdminReservationTab.IN_PROGRESS,
+                    "Resueltas"   to AdminReservationTab.RESOLVED
                 ).forEach { (label, tab) ->
                     Tab(
                         selected = state.selectedTab == tab,
@@ -203,6 +205,7 @@ fun AdminReservationListScreen(
                         text = {
                             Text(
                                 label,
+                                style = MaterialTheme.typography.labelMedium,
                                 fontWeight = if (state.selectedTab == tab) FontWeight.Bold else FontWeight.Normal
                             )
                         }
@@ -400,6 +403,7 @@ fun AdminReservationListScreen(
                             meta2 = durationDisplay,
                             requesterName = petitionerName,
                             requesterRole = petitionerRole,
+                            isLateReturner = (petitioner?.lateReturnsCount ?: 0L) > 0,
                             createdAt = reservation.createdAt?.let {
                                 kotlinx.datetime.LocalDateTime(
                                     it.year, it.monthValue, it.dayOfMonth, it.hour, it.minute

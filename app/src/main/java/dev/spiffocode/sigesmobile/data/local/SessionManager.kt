@@ -128,6 +128,27 @@ class SessionManager @Inject constructor(
         }
     }
 
+    suspend fun updateAllUserInfo(user: dev.spiffocode.sigesmobile.data.remote.dto.UserResponse) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.ID] = user.id.toString()
+            prefs[Keys.ROLE] = user.role.name
+            prefs[Keys.FIRST_NAME] = user.firstName
+            prefs[Keys.LAST_NAME] = user.lastName
+            prefs[Keys.EMAIL] = user.email
+            prefs[Keys.PHONE_NUMBER] = user.phoneNumber
+            prefs[Keys.BIRTH_DATE] = user.birthDate.toString()
+            
+            user.profilePictureUrl?.let { prefs[Keys.PROFILE_PICTURE_URL] = it }
+                ?: prefs.remove(Keys.PROFILE_PICTURE_URL)
+                
+            user.employeeNumber?.let { prefs[Keys.EMPLOYEE_NUMBER] = it }
+                ?: prefs.remove(Keys.EMPLOYEE_NUMBER)
+                
+            user.registrationNumber?.let { prefs[Keys.REGISTRATION_NUMBER] = it }
+                ?: prefs.remove(Keys.REGISTRATION_NUMBER)
+        }
+    }
+
     suspend fun clearSession() {
         context.dataStore.edit { prefs ->
             val remember = prefs[Keys.REMEMBER_ME] ?: false

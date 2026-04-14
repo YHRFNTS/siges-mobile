@@ -52,7 +52,7 @@ public fun RowScope.QuickCard(
                 modifier         = Modifier.size(iconSize).clip(MaterialTheme.shapes.medium).background(iconBg),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(iconSize / 2))
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(iconSize / 2))
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)

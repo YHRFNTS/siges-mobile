@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -52,13 +51,13 @@ import dev.spiffocode.sigesmobile.data.remote.dto.SpaceTypeDto
 import dev.spiffocode.sigesmobile.ui.components.FilterSelector
 import dev.spiffocode.sigesmobile.ui.components.InfiniteScrollGrid
 import dev.spiffocode.sigesmobile.ui.components.SearchBar
+import dev.spiffocode.sigesmobile.ui.components.homescreen.AvailableItemCard
 import dev.spiffocode.sigesmobile.ui.components.newrequest.DatePickerField
 import dev.spiffocode.sigesmobile.ui.components.newrequest.TimePickerField
-import dev.spiffocode.sigesmobile.ui.components.homescreen.AvailableItemCard
-import java.time.LocalDate
-import java.time.LocalTime
 import dev.spiffocode.sigesmobile.viewmodel.AvailabilityTab
 import dev.spiffocode.sigesmobile.viewmodel.AvailabilityViewModel
+import java.time.LocalDate
+import java.time.LocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,6 +102,8 @@ fun AvailabilityScreen(
         isFilterExpanded = state.isFilterExpanded,
         onToggleFilters = viewModel::toggleFilters,
         showBackButton = showBackButton,
+        showHiddenItems = state.showHiddenItems,
+        onToggleHiddenItems = viewModel::toggleHiddenItems,
         onNavigateBack = onNavigateBack,
         onNavigateToSpaceDetail = onNavigateToSpaceDetail,
         onNavigateToEquipmentDetail = onNavigateToEquipmentDetail
@@ -143,6 +144,8 @@ fun AvailabilityScreen(
     onStartTimeChange: (LocalTime?) -> Unit = {},
     onEndTimeChange: (LocalTime?) -> Unit = {},
     showBackButton: Boolean = false,
+    showHiddenItems: Boolean = false,
+    onToggleHiddenItems: () -> Unit = {},
     onNavigateBack: () -> Unit = {},
     onNavigateToSpaceDetail: (Long) -> Unit = {},
     onNavigateToEquipmentDetail: (Long) -> Unit = {}
@@ -380,16 +383,32 @@ fun AvailabilityScreen(
                             )
                         }
                     } else {
+                        val active = spaces.filter { it.status != dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus.MAINTENANCE }
+                        val maintenance = spaces.filter { it.status == dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus.MAINTENANCE }
+                        val elementsToShow = if (showHiddenItems) active + maintenance else active
+
                         InfiniteScrollGrid(
-                            elements = spaces,
+                            elements = elementsToShow,
                             columns = columns,
                             key = { _, space -> space.id },
                             loadMoreItems = { loadPage(currentPage + 1) },
                             hasNextPage = hasNextPage,
+                            footerContent = {
+                                if (maintenance.isNotEmpty()) {
+                                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(this.maxLineSpan) }) {
+                                        androidx.compose.material3.TextButton(
+                                            onClick = onToggleHiddenItems,
+                                            modifier = Modifier.fillMaxWidth().padding(16.dp)
+                                        ) {
+                                            Text(if (showHiddenItems) "Ocultar en mantenimiento" else "Ver en mantenimiento (${maintenance.size})")
+                                        }
+                                    }
+                                }
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp),
-                            spacing = Arrangement.spacedBy(4.dp),
+                            spacing = Arrangement.spacedBy(6.dp),
                             content = { space ->
                                 AvailableItemCard(
                                     title = space.name,
@@ -415,15 +434,32 @@ fun AvailabilityScreen(
                             )
                         }
                     } else {
+                        val active = equipments.filter { it.status != dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus.MAINTENANCE }
+                        val maintenance = equipments.filter { it.status == dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus.MAINTENANCE }
+                        val elementsToShow = if (showHiddenItems) active + maintenance else active
+
                         InfiniteScrollGrid(
-                            elements = equipments,
+                            elements = elementsToShow,
                             columns = columns,
                             key = { _, eq -> eq.id },
                             loadMoreItems = { loadPage(currentPage + 1) },
                             hasNextPage = hasNextPage,
+                            footerContent = {
+                                if (maintenance.isNotEmpty()) {
+                                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(this.maxLineSpan) }) {
+                                        androidx.compose.material3.TextButton(
+                                            onClick = onToggleHiddenItems,
+                                            modifier = Modifier.fillMaxWidth().padding(16.dp)
+                                        ) {
+                                            Text(if (showHiddenItems) "Ocultar en mantenimiento" else "Ver en mantenimiento (${maintenance.size})")
+                                        }
+                                    }
+                                }
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp),
+                            spacing = Arrangement.spacedBy(6.dp),
                             content = { eq ->
                                 AvailableItemCard(
                                     title = eq.name,

@@ -28,6 +28,7 @@ import dev.spiffocode.sigesmobile.ui.components.PasswordTextField
 import dev.spiffocode.sigesmobile.ui.components.PrimaryButton
 import dev.spiffocode.sigesmobile.ui.components.PrimaryTextField
 import dev.spiffocode.sigesmobile.ui.components.SigesErrorBanner
+import dev.spiffocode.sigesmobile.ui.helpers.labelWithAsterisk
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.LoginViewModel
 
@@ -60,7 +61,7 @@ public fun LoginForm(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Usuario", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = labelWithAsterisk("Usuario"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(8.dp))
         PrimaryTextField(
             value         = identifier,
@@ -72,7 +73,7 @@ public fun LoginForm(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Contraseña", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = labelWithAsterisk("Contraseña"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(8.dp))
         PasswordTextField(
             value              = password,

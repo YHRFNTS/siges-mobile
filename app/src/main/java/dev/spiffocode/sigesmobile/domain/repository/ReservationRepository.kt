@@ -7,6 +7,7 @@ import dev.spiffocode.sigesmobile.data.remote.dto.CancelReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.CreateReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.DayAvailabilityItem
 import dev.spiffocode.sigesmobile.data.remote.dto.EditNoteRequest
+import dev.spiffocode.sigesmobile.data.remote.dto.FinishReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.NoteItem
 import dev.spiffocode.sigesmobile.data.remote.dto.PageReservationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.PublishNoteRequest
@@ -81,8 +82,8 @@ class ReservationRepository @Inject constructor(
     suspend fun startReservation(id: Long): NetworkResult<ReservationResponse> =
         safeApiCall { api.startReservation(id) }
 
-    suspend fun finishReservation(id: Long): NetworkResult<ReservationResponse> =
-        safeApiCall { api.finishReservation(id) }
+    suspend fun finishReservation(id: Long, returnedLate: Boolean?): NetworkResult<ReservationResponse> =
+        safeApiCall { api.finishReservation(id, FinishReservationRequest(returnedLate)) }
 
     suspend fun rescheduleReservation(
         id: Long,

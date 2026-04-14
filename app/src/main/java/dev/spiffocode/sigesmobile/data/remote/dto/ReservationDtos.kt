@@ -105,3 +105,7 @@ data class DayAvailabilityItem(
     @SerializedName("availableBlocks") val availableBlocks: List<TimeBlockItem>,
     @SerializedName("occupiedBlocks")  val occupiedBlocks: List<OccupiedBlockItem>
 )
+
+data class FinishReservationRequest(
+    @SerializedName("returnedLate") val returnedLate: Boolean? = null
+)

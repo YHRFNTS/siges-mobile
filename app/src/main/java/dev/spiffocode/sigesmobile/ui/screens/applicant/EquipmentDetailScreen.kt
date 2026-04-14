@@ -208,9 +208,14 @@ fun EquipmentDetailRightSection(
         onClick = onNavigateToReserve,
         modifier = Modifier.fillMaxWidth().height(50.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+        enabled = equipment.status != ReservableStatus.MAINTENANCE
     ) {
-        Text("Reservar", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+        val textColor = if (equipment.status == ReservableStatus.MAINTENANCE) 
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+        else MaterialTheme.colorScheme.onPrimary
+        
+        Text("Reservar", color = textColor, fontWeight = FontWeight.Bold)
     }
 }
 

@@ -47,6 +47,22 @@ interface SpaceApiService {
         @Path("id") id: Long
     ): Response<SpaceTypeDto>
 
+    @retrofit2.http.POST("space-types")
+    suspend fun createSpaceType(
+        @retrofit2.http.Body request: dev.spiffocode.sigesmobile.data.remote.dto.SpaceTypeRegisterDto
+    ): Response<SpaceTypeDto>
+
+    @retrofit2.http.PUT("space-types/{id}")
+    suspend fun updateSpaceType(
+        @Path("id") id: Long,
+        @retrofit2.http.Body request: dev.spiffocode.sigesmobile.data.remote.dto.SpaceTypeRegisterDto
+    ): Response<SpaceTypeDto>
+
+    @retrofit2.http.POST("space-types/{id}/deactivate")
+    suspend fun deactivateSpaceType(
+        @Path("id") id: Long
+    ): Response<SpaceTypeDto>
+
     @GET("spaces/assets")
     suspend fun searchSpaceAssets(
         @Query("page")            page: Int = 0,

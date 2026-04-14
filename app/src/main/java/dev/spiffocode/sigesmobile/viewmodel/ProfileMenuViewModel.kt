@@ -21,11 +21,29 @@ data class ProfileMenuUiState(
 @HiltViewModel
 class ProfileMenuViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val userRepository: dev.spiffocode.sigesmobile.domain.repository.UserRepository,
     private val session: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileMenuUiState())
     val uiState: StateFlow<ProfileMenuUiState> = _uiState.asStateFlow()
+
+    init {
+        loadSelfIfMissing()
+    }
+
+    private fun loadSelfIfMissing() {
+        if (session.firstName.isNullOrBlank() || session.lastName.isNullOrBlank()) {
+            viewModelScope.launch {
+                val result = userRepository.getSelf()
+                if (result is dev.spiffocode.sigesmobile.data.remote.NetworkResult.Success) {
+                    val user = result.data
+                    session.updateAllUserInfo(user)
+                    _uiState.update { it.copy() }
+                }
+            }
+        }
+    }
 
     val fullName: String
         get() {

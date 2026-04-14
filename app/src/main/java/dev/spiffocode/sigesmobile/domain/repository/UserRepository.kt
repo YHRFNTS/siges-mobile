@@ -45,6 +45,9 @@ class UserRepository @Inject constructor(
     suspend fun getUserById(id: Long): NetworkResult<UserResponse> =
         safeApiCall { api.getUserById(id) }
 
+    suspend fun getSelf(): NetworkResult<UserResponse> =
+        safeApiCall { api.getSelf() }
+
     suspend fun lookupByIdentifier(identifier: String): NetworkResult<UserResponse> =
         safeApiCall { api.lookupByIdentifier(identifier) }
 

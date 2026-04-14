@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservationStatus
 import dev.spiffocode.sigesmobile.ui.helpers.toBgColor
@@ -44,6 +45,7 @@ fun RequestCard(
     requesterName: String? = null,
     requesterRole: String? = null,
     createdAt: LocalDateTime? = null,
+    isLateReturner: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     Card(

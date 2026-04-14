@@ -17,4 +17,13 @@ class BuildingRepository @Inject constructor(
 
     suspend fun getBuilding(id: Long): NetworkResult<BuildingDto> =
         safeApiCall { api.getBuilding(id) }
+
+    suspend fun createBuilding(request: dev.spiffocode.sigesmobile.data.remote.dto.BuildingRegisterDto): NetworkResult<BuildingDto> =
+        safeApiCall { api.createBuilding(request) }
+
+    suspend fun updateBuilding(id: Long, request: dev.spiffocode.sigesmobile.data.remote.dto.BuildingRegisterDto): NetworkResult<BuildingDto> =
+        safeApiCall { api.updateBuilding(id, request) }
+
+    suspend fun deactivateBuilding(id: Long): NetworkResult<BuildingDto> =
+        safeApiCall { api.deactivateBuilding(id) }
 }

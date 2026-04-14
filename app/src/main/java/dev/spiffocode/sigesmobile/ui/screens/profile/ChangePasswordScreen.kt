@@ -42,6 +42,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.spiffocode.sigesmobile.ui.components.PasswordTextField
 import dev.spiffocode.sigesmobile.ui.components.SigesErrorBanner
+import dev.spiffocode.sigesmobile.ui.helpers.labelWithAsterisk
 import dev.spiffocode.sigesmobile.viewmodel.ChangePasswordViewModel
 
 @Composable
@@ -162,7 +163,7 @@ fun ChangePasswordScreenContent(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "CONTRASEÑA ACTUAL *",
+                    text = labelWithAsterisk("CONTRASEÑA ACTUAL"),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
@@ -179,7 +180,7 @@ fun ChangePasswordScreenContent(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "NUEVA CONTRASEÑA *",
+                    text = labelWithAsterisk("NUEVA CONTRASEÑA"),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
@@ -202,7 +203,7 @@ fun ChangePasswordScreenContent(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "CONFIRMAR NUEVA CONTRASEÑA *",
+                    text = labelWithAsterisk("CONFIRMAR NUEVA CONTRASEÑA"),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)

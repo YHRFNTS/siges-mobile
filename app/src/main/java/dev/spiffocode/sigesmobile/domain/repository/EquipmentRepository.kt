@@ -58,4 +58,13 @@ class EquipmentRepository @Inject constructor(
 
     suspend fun getEquipmentType(id: Long): NetworkResult<EquipmentTypeDto> =
         safeApiCall { api.getEquipmentType(id) }
+
+    suspend fun createEquipmentType(request: dev.spiffocode.sigesmobile.data.remote.dto.EquipmentTypeRegisterDto): NetworkResult<EquipmentTypeDto> =
+        safeApiCall { api.createEquipmentType(request) }
+
+    suspend fun updateEquipmentType(id: Long, request: dev.spiffocode.sigesmobile.data.remote.dto.EquipmentTypeRegisterDto): NetworkResult<EquipmentTypeDto> =
+        safeApiCall { api.updateEquipmentType(id, request) }
+
+    suspend fun deactivateEquipmentType(id: Long): NetworkResult<EquipmentTypeDto> =
+        safeApiCall { api.deactivateEquipmentType(id) }
 }

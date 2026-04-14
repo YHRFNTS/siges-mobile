@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -95,6 +97,7 @@ object Routes {
     const val ADMIN_HOME           = "admin_home"
     const val ADMIN_ALL_REQUESTS   = "admin_all_requests"
     const val ADMIN_REVIEW_DETAIL  = "admin_review/{reservationId}"
+    const val CATALOGS             = "catalogs"
     fun adminReviewDetail(id: Long) = "admin_review/$id"
 
     const val PROFILE            = "profile"
@@ -125,6 +128,7 @@ private val noBottomBarPrefixes = setOf(
     "reset_password",
     "change_password",
     "admin_review",
+    "catalogs"
 )
 
 
@@ -132,9 +136,8 @@ private val noBottomBarPrefixes = setOf(
 fun AppNavigation(
     sessionManager: SessionManager,
     windowSizeClass: WindowSizeClass,
-    navController: NavController = rememberNavController()
+    navController: NavHostController = rememberNavController()
 ) {
-    val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
  
@@ -468,7 +471,15 @@ fun AppNavigation(
                     onNavigateToDetail = { id -> 
                         navController.navigate(Routes.adminReviewDetail(id)) 
                     },
-                    onNavigateToProfile = { navController.navigate(Routes.PROFILE) }
+                    onNavigateToProfile = { navController.navigate(Routes.PROFILE) },
+                    onNavigateToCatalogs = { navController.navigate(Routes.CATALOGS) }
+                )
+            }
+
+            composable(Routes.CATALOGS) {
+                dev.spiffocode.sigesmobile.ui.screens.admin.CatalogsScreen(
+                    viewModel = hiltViewModel(),
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 
@@ -566,12 +577,12 @@ private fun SigesBottomBar(
                 label    = { Text(title, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                 selected = isSelected,
                 onClick  = {
-                    if (currentRoute != route) {
-                        navController.navigate(route) {
-                            navController.graph.startDestinationRoute?.let { popUpTo(it) { saveState = true } }
-                            launchSingleTop = true
-                            restoreState    = true
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = false
                         }
+                        launchSingleTop = true
+                        restoreState    = false
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(

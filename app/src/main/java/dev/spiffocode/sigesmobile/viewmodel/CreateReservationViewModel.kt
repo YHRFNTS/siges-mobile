@@ -377,14 +377,14 @@ class CreateReservationViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSearching = true) }
             if (type == ResourceType.SPACE) {
-                val result = spaceRepository.searchSpaces(searchQuery = query.ifBlank { null }, size = 15, studentsAvailable = true)
+                val result = spaceRepository.searchSpaces(searchQuery = query.ifBlank { null }, size = 15)
                 if (result is NetworkResult.Success) {
                     _uiState.update { it.copy(isSearching = false, searchResults = result.data.content) }
                 } else {
                     _uiState.update { it.copy(isSearching = false) }
                 }
             } else {
-                val result = equipmentRepository.searchEquipments(searchQuery = query.ifBlank { null }, size = 15, studentsAvailable = true)
+                val result = equipmentRepository.searchEquipments(searchQuery = query.ifBlank { null }, size = 15)
                 if (result is NetworkResult.Success) {
                     _uiState.update { it.copy(isSearching = false, searchResults = result.data.content) }
                 } else {

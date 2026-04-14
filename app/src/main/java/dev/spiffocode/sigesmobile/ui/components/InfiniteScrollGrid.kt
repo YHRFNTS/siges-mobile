@@ -30,6 +30,7 @@ fun <T> InfiniteScrollGrid(
     loadMoreItems: () -> Unit,
     hasNextPage: Boolean,
     spacing: Arrangement.HorizontalOrVertical = Arrangement.spacedBy(0.dp),
+    footerContent: (LazyGridScope.() -> Unit)? = null,
     content: @Composable LazyGridScope.(T) -> Unit
 ) {
     val gridState = rememberLazyGridState()
@@ -53,6 +54,8 @@ fun <T> InfiniteScrollGrid(
         itemsIndexed(items = elements, key = { i, el -> key(i, el) }) { _, element ->
             this@LazyVerticalGrid.content(element)
         }
+
+        footerContent?.invoke(this)
 
         if (hasNextPage) {
             item(key = "loader", span = { GridItemSpan(this.maxLineSpan) }) {

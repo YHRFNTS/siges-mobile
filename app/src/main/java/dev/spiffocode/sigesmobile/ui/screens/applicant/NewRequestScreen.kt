@@ -65,6 +65,7 @@ import dev.spiffocode.sigesmobile.ui.components.newrequest.ResourceSelectionSect
 import dev.spiffocode.sigesmobile.ui.components.newrequest.ResourceTypeTabs
 import dev.spiffocode.sigesmobile.ui.components.newrequest.TimePickerField
 import dev.spiffocode.sigesmobile.ui.components.newrequest.TimeRangePicker
+import dev.spiffocode.sigesmobile.ui.helpers.labelWithAsterisk
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.CalendarMode
 import dev.spiffocode.sigesmobile.viewmodel.CreateReservationUiState
@@ -285,7 +286,7 @@ fun NewRequestFormFields(
 ) {
     // ── Resource type tabs ────────────────────────────────────────────────────
     Text(
-        text       = "Tipo de recurso *",
+        text       = labelWithAsterisk("Tipo de recurso"),
         style      = MaterialTheme.typography.labelSmall,
         color      = MaterialTheme.colorScheme.onSurfaceVariant,
         fontWeight = FontWeight.Bold,
@@ -323,7 +324,7 @@ fun NewRequestFormFields(
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text       = "Fecha y horario *",
+                text       = labelWithAsterisk("Fecha y horario"),
                 style      = MaterialTheme.typography.labelSmall,
                 color      = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Bold,
@@ -472,7 +473,7 @@ fun NewRequestFormFields(
     // ── Reservation Type (Staff Only) ───────────────────────────────────────── (NUEVA UBICACIÓN)
     if (isStaff) {
         Text(
-            text       = "Tipo de solicitud *",
+            text       = labelWithAsterisk("Tipo de solicitud"),
             style      = MaterialTheme.typography.labelSmall,
             color      = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Bold,
@@ -501,13 +502,14 @@ fun NewRequestFormFields(
     val showAssistants = !isEquipment && (!isStaff || state.reservationType == dev.spiffocode.sigesmobile.data.remote.dto.ReservationType.GROUP)
     if (showAssistants) {
         val maxCap = state.maxCapacity ?: 0
+        val maxCompanions = if (maxCap > 0) maxCap - 1 else 0
         SigesNumberSpinner(
             value         = if (resourceSelected) state.companions else "",
             onValueChange = onCompanionsChange,
-            max           = maxCap,
-            label         = if (resourceSelected) "Número de asistentes (Máx. $maxCap) *" else "Número de asistentes *",
+            max           = maxCompanions,
+            label         = if (resourceSelected) "Número de asistentes (Máx. $maxCompanions)" else "Número de asistentes",
             placeholder   = if (resourceSelected) "Selecciona la cantidad..." else "Selecciona un recurso primero",
-            enabled       = resourceSelected && maxCap > 0,
+            enabled       = resourceSelected && maxCompanions > 0,
             isError       = state.isCompanionsError,
             modifier      = Modifier.fillMaxWidth()
         )
@@ -518,7 +520,7 @@ fun NewRequestFormFields(
     OutlinedTextField(
         value         = state.purpose,
         onValueChange = onPurposeChange,
-        label         = { Text("Propósito de la reserva *") },
+        label         = { Text(labelWithAsterisk("Propósito de la reserva")) },
         placeholder   = { Text("Describe el propósito...") },
         shape         = RoundedCornerShape(12.dp),
         isError       = state.isPurposeError,

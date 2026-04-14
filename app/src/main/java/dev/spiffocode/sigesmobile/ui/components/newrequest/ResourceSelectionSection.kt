@@ -38,6 +38,8 @@ import dev.spiffocode.sigesmobile.data.remote.dto.BuildingDto
 import dev.spiffocode.sigesmobile.data.remote.dto.EquipmentDto
 import dev.spiffocode.sigesmobile.data.remote.dto.ReservableStatus
 import dev.spiffocode.sigesmobile.data.remote.dto.SpaceDto
+import dev.spiffocode.sigesmobile.ui.helpers.toColor
+import dev.spiffocode.sigesmobile.ui.helpers.toText
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -150,31 +152,59 @@ fun ResourceSelectionSection(
                     searchResults.forEach { result ->
                         when (result) {
                             is SpaceDto -> {
+                                val isMaintenance = result.status == ReservableStatus.MAINTENANCE
                                 DropdownMenuItem(
                                     text = { 
-                                        Column {
-                                            Text(result.name, fontWeight = FontWeight.Bold)
-                                            Text(result.building?.name ?: "", style = MaterialTheme.typography.bodySmall)
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(result.name, fontWeight = FontWeight.Bold)
+                                                Text(result.building?.name ?: "", style = MaterialTheme.typography.bodySmall)
+                                            }
+                                            if (isMaintenance) {
+                                                Text(
+                                                    text = result.status.toText(),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = result.status.toColor(),
+                                                    modifier = Modifier.padding(start = 8.dp)
+                                                )
+                                            }
                                         }
                                     },
                                     onClick = {
-                                        onSpaceSelected(result)
-                                        expanded = false
-                                    }
+                                        if (!isMaintenance) {
+                                            onSpaceSelected(result)
+                                            expanded = false
+                                        }
+                                    },
+                                    enabled = !isMaintenance
                                 )
                             }
                             is EquipmentDto -> {
+                                val isMaintenance = result.status == ReservableStatus.MAINTENANCE
                                 DropdownMenuItem(
                                     text = { 
-                                        Column {
-                                            Text(result.name, fontWeight = FontWeight.Bold)
-                                            Text(result.building?.name ?: "", style = MaterialTheme.typography.bodySmall)
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(result.name, fontWeight = FontWeight.Bold)
+                                                Text(result.building?.name ?: "", style = MaterialTheme.typography.bodySmall)
+                                            }
+                                            if (isMaintenance) {
+                                                Text(
+                                                    text = result.status.toText(),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = result.status.toColor(),
+                                                    modifier = Modifier.padding(start = 8.dp)
+                                                )
+                                            }
                                         }
                                     },
                                     onClick = {
-                                        onEquipmentSelected(result)
-                                        expanded = false
-                                    }
+                                        if (!isMaintenance) {
+                                            onEquipmentSelected(result)
+                                            expanded = false
+                                        }
+                                    },
+                                    enabled = !isMaintenance
                                 )
                             }
                         }

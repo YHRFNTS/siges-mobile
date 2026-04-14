@@ -43,6 +43,7 @@ data class AvailabilityUiState(
     val totalPages: Int = 0,
     val currentPage: Int = 0,
     val sortBy: String? = null,
+    val showHiddenItems: Boolean = false,
     val error: String? = null
 )
 
@@ -124,7 +125,6 @@ class AvailabilityViewModel @Inject constructor(
                 sort              = state.sortBy,
                 searchQuery       = state.searchQuery.ifBlank { null },
                 spaceTypeIdFilter = state.selectedSpaceTypeId,
-                studentsAvailable = true,
                 showMode          = ShowMode.ACTIVE,
                 requestStart      = state.selectedDate?.let { date ->
                     state.selectedStartTime?.let { time ->
@@ -138,9 +138,10 @@ class AvailabilityViewModel @Inject constructor(
                 }
             )) {
                 is NetworkResult.Success -> _uiState.update {
+                    val newSpaces = result.data.content.filter { space -> space.availabilitySlots?.isNotEmpty() == true }
                     it.copy(
                         isLoading = false,
-                        spaces = result.data.content.filter { space -> space.availabilitySlots?.isNotEmpty() == true },
+                        spaces = if (state.currentPage == 0) newSpaces else state.spaces + newSpaces,
                         totalPages = result.data.totalPages
                     )
                 }
@@ -162,7 +163,6 @@ class AvailabilityViewModel @Inject constructor(
                 sort              = state.sortBy,
                 searchQuery       = state.searchQuery.ifBlank { null },
                 equipmentTypeId   = state.selectedEquipmentTypeId,
-                studentsAvailable = true,
                 showMode          = ShowMode.ACTIVE,
                 requestStart      = state.selectedDate?.let { date ->
                     state.selectedStartTime?.let { time ->
@@ -176,9 +176,10 @@ class AvailabilityViewModel @Inject constructor(
                 }
             )) {
                 is NetworkResult.Success -> _uiState.update {
+                    val newEquipments = result.data.content.filter { equip -> equip.availabilitySlots?.isNotEmpty() == true }
                     it.copy(
                         isLoading = false,
-                        equipments = result.data.content.filter { equip -> equip.availabilitySlots?.isNotEmpty() == true },
+                        equipments = if (state.currentPage == 0) newEquipments else state.equipments + newEquipments,
                         totalPages = result.data.totalPages
                     )
                 }
@@ -213,4 +214,6 @@ class AvailabilityViewModel @Inject constructor(
     }
 
     fun clearError() = _uiState.update { it.copy(error = null) }
+
+    fun toggleHiddenItems() = _uiState.update { it.copy(showHiddenItems = !it.showHiddenItems) }
 }

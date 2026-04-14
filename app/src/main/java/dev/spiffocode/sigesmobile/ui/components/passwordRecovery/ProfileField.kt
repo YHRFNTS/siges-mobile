@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.spiffocode.sigesmobile.ui.helpers.labelWithAsterisk
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 
 
@@ -21,7 +22,8 @@ public fun ProfileField(
     value: String,
     onValueChange: (String) -> Unit = {},
     readOnly: Boolean = false,
-    isError: Boolean = false
+    isError: Boolean = false,
+    required: Boolean = false
 ) {
     Column(modifier = Modifier
         .widthIn(max = 480.dp)
@@ -31,7 +33,7 @@ public fun ProfileField(
         OutlinedTextField(
             label = {
                 Text(
-                    text = label,
+                    text = if (required) labelWithAsterisk(label).text else label,
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

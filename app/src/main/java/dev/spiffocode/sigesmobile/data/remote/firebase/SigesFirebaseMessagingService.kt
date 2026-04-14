@@ -43,10 +43,14 @@ class SigesFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d("FCM", "New token: $token")
+        val deviceId = android.provider.Settings.Secure.getString(
+            contentResolver,
+            android.provider.Settings.Secure.ANDROID_ID
+        )
         scope.launch {
             sessionManager.saveFcmToken(token)
             if (sessionManager.isLoggedIn) {
-                userRepository.registerPushToken(token)
+                userRepository.registerPushToken(token, deviceId)
             }
         }
     }

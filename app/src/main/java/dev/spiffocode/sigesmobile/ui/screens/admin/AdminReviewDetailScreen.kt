@@ -1,5 +1,6 @@
 package dev.spiffocode.sigesmobile.ui.screens.admin
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -19,6 +21,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -40,8 +44,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -67,9 +75,9 @@ import dev.spiffocode.sigesmobile.viewmodel.AdminReviewViewModel
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalTime
+import kotlinx.datetime.toKotlinLocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.datetime.toKotlinLocalDateTime
 
 @Composable
 fun AdminReviewDetailScreen(
@@ -93,12 +101,15 @@ fun AdminReviewDetailScreen(
         onApprove       = { viewModel.approve(reservationId) },
         onOpenReject    = viewModel::showRejectDialog,
         onCloseReject   = viewModel::hideRejectDialog,
+        onOpenFinish    = viewModel::showFinishDialog,
+        onCloseFinish   = viewModel::hideFinishDialog,
         onReject        = { viewModel.reject(reservationId) },
         onCancel        = { viewModel.cancel(reservationId, it) },
         onAddNote       = { note -> viewModel.addNote(reservationId, note) },
         onEditNote      = { noteId, comment -> viewModel.editNote(reservationId, noteId, comment) },
         onRefresh       = { viewModel.loadReservation(reservationId) },
-        onClearMessages = viewModel::clearMessages
+        onClearMessages = viewModel::clearMessages,
+        onFinish        = { late -> viewModel.finish(reservationId, late) }
     )
 }
 
@@ -113,13 +124,17 @@ fun AdminReviewDetailScreenContent(
     onApprove: () -> Unit = {},
     onOpenReject: () -> Unit = {},
     onCloseReject: () -> Unit = {},
+    onOpenFinish: () -> Unit = {},
+    onCloseFinish: () -> Unit = {},
     onReject: () -> Unit = {},
     onCancel: (String) -> Unit = {},
     onAddNote: (String) -> Unit = {},
     onEditNote: (Long, String) -> Unit = { _, _ -> },
     onRefresh: () -> Unit = {},
-    onClearMessages: () -> Unit = {}
+    onClearMessages: () -> Unit = {},
+    onFinish: (Boolean) -> Unit = {}
 ) {
+    var returnedLate by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -146,6 +161,19 @@ fun AdminReviewDetailScreenContent(
             onRefresh = onRefresh,
             modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
+            if (state.showFinishDialog) {
+                FinishReservationDialog(
+                    returnedLate = returnedLate,
+                    onReturnedLateChange = { returnedLate = it },
+                    onDismiss = onCloseFinish,
+                    onConfirm = {
+                        onFinish(returnedLate)
+                        onCloseFinish()
+                    },
+                    isLoading = state.isLoading
+                )
+            }
+
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
                     state.isLoading && state.reservation == null -> {
@@ -192,6 +220,7 @@ fun AdminReviewDetailScreenContent(
                                         onObservationChange = onObservationChange,
                                         onApprove = onApprove,
                                         onOpenReject = onOpenReject,
+                                        onOpenFinish = onOpenFinish,
                                         onCancel = onCancel,
                                         onAddNote = onAddNote,
                                         onEditNote = onEditNote
@@ -214,6 +243,7 @@ fun AdminReviewDetailScreenContent(
                                     onObservationChange = onObservationChange,
                                     onApprove = onApprove,
                                     onOpenReject = onOpenReject,
+                                    onOpenFinish = onOpenFinish,
                                     onCancel = onCancel,
                                     onAddNote = onAddNote,
                                     onEditNote = onEditNote
@@ -303,6 +333,7 @@ fun AdminReviewRightSection(
     onObservationChange: (String) -> Unit,
     onApprove: () -> Unit,
     onOpenReject: () -> Unit,
+    onOpenFinish: () -> Unit,
     onCancel: (String) -> Unit,
     onAddNote: (String) -> Unit,
     onEditNote: (Long, String) -> Unit
@@ -327,7 +358,7 @@ fun AdminReviewRightSection(
     )
 
     if (!res.rejectionReason.isNullOrBlank()) {
-        SectionTitle("Motivo de Rechazo")
+        SectionTitle(if (res.status == ReservationStatus.CANCELLED) "Motivo de Cancelación" else "Motivo de Rechazo")
         val dateText = res.rejectedAt?.toKotlinLocalDateTime()?.toHumanString() ?: ""
         ObservationBox(
             observation = res.rejectionReason,
@@ -344,6 +375,69 @@ fun AdminReviewRightSection(
             authorAndDate = "Administración ${if (dateText.isNotEmpty()) "- $dateText" else ""}",
             modifier = Modifier.padding(bottom = 16.dp)
         )
+    }
+
+    // --- Warnings ---
+    if (res.status == ReservationStatus.PENDING) {
+        if ((res.petitioner?.lateReturnsCount ?: 0L) > 0) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f))
+                    .padding(16.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "¡Atención! Este usuario tiene historial de entregas tardías (${res.petitioner!!.lateReturnsCount}).",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        if (state.conflictingReservations.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.errorContainer)
+                    .padding(16.dp)
+            ) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "SOLICITUDES EN CONFLICTO",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Hay ${state.conflictingReservations.size} reservaciones pendientes que se solapan con esta. Si la apruebas, las demás serán rechazadas automáticamente por el sistema.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
     }
 
     if (res.status == ReservationStatus.PENDING) {
@@ -413,10 +507,29 @@ fun AdminReviewRightSection(
                 )
             }
         }
-    } else if (res.status == ReservationStatus.APPROVED || res.status == ReservationStatus.IN_PROGRESS) {
+    } else if (res.status == ReservationStatus.IN_PROGRESS) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Button(
-                onClick = onOpenReject, // Re-use the dialog trigger
+                onClick = onOpenFinish,
+                enabled = !state.isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Icon(Icons.Default.Check, contentDescription = "Finalizar")
+                Text(
+                    text = "  Finalizar Reserva",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = onOpenReject, // Re-use the dialog trigger for cancellation
                 enabled = !state.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -439,6 +552,27 @@ fun AdminReviewRightSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
             )
+        }
+    } else if (res.status == ReservationStatus.APPROVED) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = onOpenReject, // Re-use the dialog trigger
+                enabled = !state.isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Icon(Icons.Default.Close, contentDescription = "Cancelar")
+                Text(
+                    text = "  Cancelar Reserva",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 
@@ -501,6 +635,77 @@ fun RejectReasonDialog(
                     )
                 }
                 Text("Confirmar rechazo")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
+                Text("Cancelar")
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(24.dp)
+    )
+}
+
+@Composable
+fun FinishReservationDialog(
+    returnedLate: Boolean,
+    onReturnedLateChange: (Boolean) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    isLoading: Boolean
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = {
+            Text(
+                text = "Finalizar Reservación",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = "¿Está seguro de que desea finalizar esta reservación? Asegúrese de que el recurso haya sido devuelto en buen estado.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    Checkbox(
+                        checked = returnedLate,
+                        onCheckedChange = onReturnedLateChange,
+                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "El recurso se entregó tarde",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = !isLoading,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.padding(end = 8.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+                Text("Confirmar finalización")
             }
         },
         dismissButton = {

@@ -5,6 +5,7 @@ import dev.spiffocode.sigesmobile.data.remote.dto.CancelReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.CreateReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.DayAvailabilityItem
 import dev.spiffocode.sigesmobile.data.remote.dto.EditNoteRequest
+import dev.spiffocode.sigesmobile.data.remote.dto.FinishReservationRequest
 import dev.spiffocode.sigesmobile.data.remote.dto.NoteItem
 import dev.spiffocode.sigesmobile.data.remote.dto.PageReservationResponse
 import dev.spiffocode.sigesmobile.data.remote.dto.PublishNoteRequest
@@ -70,7 +71,8 @@ interface ReservationApiService {
 
     @PATCH("reservations/{id}/finish")
     suspend fun finishReservation(
-        @Path("id") id: Long
+        @Path("id") id: Long,
+        @Body request: FinishReservationRequest
     ): Response<ReservationResponse>
 
     // ── User actions ─────────────────────────────────────────────────────────

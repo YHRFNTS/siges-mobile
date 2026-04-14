@@ -55,11 +55,11 @@ import dev.spiffocode.sigesmobile.ui.components.detail.InfoRow
 import dev.spiffocode.sigesmobile.ui.components.detail.ObservationBox
 import dev.spiffocode.sigesmobile.ui.components.detail.SectionTitle
 import dev.spiffocode.sigesmobile.ui.components.detail.StatusHeaderCard
+import dev.spiffocode.sigesmobile.ui.components.reservation.ObservationChat
 import dev.spiffocode.sigesmobile.ui.helpers.toHumanString
 import dev.spiffocode.sigesmobile.ui.theme.SigesmobileTheme
 import dev.spiffocode.sigesmobile.viewmodel.ReservationDetailUiState
 import dev.spiffocode.sigesmobile.viewmodel.ReservationDetailViewModel
-import dev.spiffocode.sigesmobile.ui.components.reservation.ObservationChat
 import kotlinx.datetime.toKotlinLocalDateTime
 import java.time.LocalDate
 import java.time.LocalTime
@@ -238,10 +238,12 @@ fun ReservationDetailLeftSection(res: dev.spiffocode.sigesmobile.data.remote.dto
     val durationText = if (durationMins >= 60) "${(durationMins/60.0).toString().removeSuffix(".0")} horas" else "$durationMins minutos"
     InfoRow("Duración", durationText)
     
-    if (res.companions != null && res.companions > 1) {
-        InfoRow("Asistentes", "${res.companions} personas")
-    } else {
-        InfoRow("Asistentes", "1 persona")
+    if(res.reservable?.reservableType == ReservableType.SPACE){
+        if (res.companions != null && res.companions > 1) {
+            InfoRow("Asistentes", "${res.companions} personas")
+        } else {
+            InfoRow("Asistentes", "1 persona")
+        }
     }
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -268,7 +270,7 @@ fun ReservationDetailRightSection(
     }
 
     if (!res.rejectionReason.isNullOrBlank()) {
-        SectionTitle("Motivo de Rechazo")
+        SectionTitle(if (res.status == ReservationStatus.CANCELLED) "Motivo de Cancelación" else "Motivo de Rechazo")
         val dateText = res.rejectedAt?.toKotlinLocalDateTime()?.toHumanString() ?: ""
         ObservationBox(
             observation = res.rejectionReason,

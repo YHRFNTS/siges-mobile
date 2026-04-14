@@ -43,6 +43,9 @@ interface UserApiService {
         @Path("id") id: Long
     ): Response<UserResponse>
 
+    @GET("users/me")
+    suspend fun getSelf(): Response<UserResponse>
+
     @GET("users/lookup")
     suspend fun lookupByIdentifier(
         @Query("identifier") identifier: String

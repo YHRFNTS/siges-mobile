@@ -68,6 +68,7 @@ class HomeViewModel @Inject constructor(
     private val reservationRepository: ReservationRepository,
     private val reportRepository: ReportRepository,
     private val resourceRepository: ReservableRepository,
+    private val userRepository: dev.spiffocode.sigesmobile.domain.repository.UserRepository,
     private val session: SessionManager
 ) : ViewModel() {
 
@@ -77,6 +78,17 @@ class HomeViewModel @Inject constructor(
     init { loadHome() }
 
     fun loadHome() {
+        if (session.firstName.isNullOrBlank() || session.lastName.isNullOrBlank()) {
+            viewModelScope.launch {
+                val result = userRepository.getSelf()
+                if (result is NetworkResult.Success) {
+                    val user = result.data
+                    session.updateAllUserInfo(user)
+                    _uiState.update { it.copy(userName = user.firstName) }
+                }
+            }
+        }
+
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
@@ -122,7 +134,7 @@ class HomeViewModel @Inject constructor(
             reservationRepository.getReservations(size = 3, sort = "date,desc")
         }
         val spacesJob = viewModelScope.async {
-            resourceRepository.searchSpaces(size = 5, studentsAvailable = true, showMode = ShowMode.ACTIVE)
+            resourceRepository.searchSpaces(size = 5, showMode = ShowMode.ACTIVE)
         }
 
         val reservationsResult = myReservationsJob.await()

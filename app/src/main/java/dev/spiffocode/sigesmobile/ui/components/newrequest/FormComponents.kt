@@ -4,9 +4,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
@@ -15,7 +13,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.spiffocode.sigesmobile.ui.helpers.labelWithAsterisk
 import dev.spiffocode.sigesmobile.viewmodel.ResourceType
 import java.time.Instant
 import java.time.LocalDate
@@ -140,7 +138,7 @@ fun DatePickerField(
 
     ClickableOutlinedTextField(
         value = date?.format(formatter) ?: "",
-        label = "Fecha de uso *",
+        label = labelWithAsterisk("Fecha de uso").text,
         placeholder = "dd / mm / aaaa",
         trailingIcon = {
             Icon(Icons.Default.DateRange, contentDescription = "Fecha de uso")

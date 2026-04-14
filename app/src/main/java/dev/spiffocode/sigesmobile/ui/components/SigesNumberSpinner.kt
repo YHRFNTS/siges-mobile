@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import dev.spiffocode.sigesmobile.ui.helpers.labelWithAsterisk
 
 /**
  * A stylized number spinner using a DropdownMenu.
@@ -58,7 +59,7 @@ fun SigesNumberSpinner(
             onValueChange = {},
             readOnly      = true,
             isError       = isError,
-            label         = { Text(label) },
+            label         = { Text(labelWithAsterisk(label)) },
             placeholder   = { Text(placeholder) },
             leadingIcon   = leadingIcon?.let { { Icon(it, contentDescription = null) } },
             trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },

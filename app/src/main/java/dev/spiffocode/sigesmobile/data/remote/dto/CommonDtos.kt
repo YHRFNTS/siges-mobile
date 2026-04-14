@@ -50,6 +50,20 @@ data class EquipmentTypeDto(
     @SerializedName("deletedAt")   val deletedAt: LocalDateTime? = null
 )
 
+data class BuildingRegisterDto(
+    @SerializedName("name") val name: String
+)
+
+data class SpaceTypeRegisterDto(
+    @SerializedName("name")        val name: String,
+    @SerializedName("description") val description: String? = null
+)
+
+data class EquipmentTypeRegisterDto(
+    @SerializedName("name")        val name: String,
+    @SerializedName("description") val description: String? = null
+)
+
 data class AvailabilitySlotDto(
     @SerializedName("id")          val id: Long?,
     @SerializedName("reservableId") val reservableId: Long?,
@@ -83,5 +97,6 @@ open class UserResponse(
     @SerializedName("enabled")           val enabled: Boolean,
     @SerializedName("profilePictureUrl") val profilePictureUrl: String?,
     @SerializedName("registrationNumber") val registrationNumber: String?,
-    @SerializedName("employeeNumber")     val employeeNumber: String?
+    @SerializedName("employeeNumber")     val employeeNumber: String?,
+    @SerializedName("lateReturnsCount")  val lateReturnsCount: Long? = null
 )

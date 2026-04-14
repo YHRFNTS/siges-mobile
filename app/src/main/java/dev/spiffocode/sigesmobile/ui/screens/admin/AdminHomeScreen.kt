@@ -50,7 +50,8 @@ fun AdminHomeScreen(
     notificationsViewModel: NotificationsViewModel = hiltViewModel(),
     onNavigateToAllRequests: () -> Unit = {},
     onNavigateToDetail: (Long) -> Unit = {},
-    onNavigateToProfile: () -> Unit = {}
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToCatalogs: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val notificationsState by notificationsViewModel.uiState.collectAsStateWithLifecycle()
@@ -82,7 +83,8 @@ fun AdminHomeScreen(
         onRefresh = viewModel::loadHome,
         onNavigateToAllRequests = onNavigateToAllRequests,
         onNavigateToDetail = onNavigateToDetail,
-        onNavigateToProfile = onNavigateToProfile
+        onNavigateToProfile = onNavigateToProfile,
+        onNavigateToCatalogs = onNavigateToCatalogs
     )
 }
 
@@ -107,7 +109,8 @@ fun AdminHomeScreen(
     onRefresh: () -> Unit = {},
     onNavigateToAllRequests: () -> Unit = {},
     onNavigateToDetail: (Long) -> Unit = {},
-    onNavigateToProfile: () -> Unit = {}
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToCatalogs: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -145,6 +148,17 @@ fun AdminHomeScreen(
                 pendingReservationsCount = pendingReservationsCount,
                 reservationsThisMonthCount = reservationsThisMonthCount
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            androidx.compose.material3.OutlinedButton(
+                onClick = onNavigateToCatalogs,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+            ) {
+                androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Default.androidx.compose.material.icons.filled.Settings, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Gestionar Catálogos")
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

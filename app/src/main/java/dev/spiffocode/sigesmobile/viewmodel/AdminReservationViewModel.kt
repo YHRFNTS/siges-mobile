@@ -26,7 +26,9 @@ data class AdminReviewUiState(
     val rejectReason: String = "",
     val showRejectDialog: Boolean = false,
     val error: String? = null,
-    val actionSuccess: String? = null
+    val actionSuccess: String? = null,
+    val conflictingReservations: List<ReservationResponse> = emptyList(),
+    val showFinishDialog: Boolean = false
 )
 
 @HiltViewModel
@@ -43,8 +45,14 @@ class AdminReviewViewModel @Inject constructor(
             val currentId = sessionManager.id?.toLongOrNull()
             _uiState.update { it.copy(isLoading = true, error = null, currentUserId = currentId) }
             when (val result = repository.getReservation(id)) {
-                is NetworkResult.Success -> _uiState.update {
-                    it.copy(isLoading = false, reservation = result.data)
+                is NetworkResult.Success -> {
+                    val reservation = result.data
+                    _uiState.update {
+                        it.copy(isLoading = false, reservation = reservation)
+                    }
+                    if (reservation.status == ReservationStatus.PENDING) {
+                        loadConflicts(reservation)
+                    }
                 }
                 is NetworkResult.Error -> _uiState.update {
                     it.copy(isLoading = false, error = result.message)
@@ -54,11 +62,47 @@ class AdminReviewViewModel @Inject constructor(
         }
     }
 
+    private fun loadConflicts(current: ReservationResponse) {
+        val reservableId = current.reservable?.id ?: return
+        viewModelScope.launch {
+            // Find other PENDING reservations for same resources on same day
+            val result = repository.getReservations(
+                reservableId = reservableId,
+                date = current.date,
+                statuses = listOf(ReservationStatus.PENDING),
+                size = 50
+            )
+
+            if (result is NetworkResult.Success) {
+                val others = result.data.content.filter { it.id != current.id }
+                // Check local overlap
+                val overlapping = others.filter { other ->
+                    // Overlap: (StartA < EndB) and (EndA > StartB)
+                    current.startTime.isBefore(other.endTime) && current.endTime.isAfter(other.startTime)
+                }
+                _uiState.update { it.copy(conflictingReservations = overlapping) }
+            }
+        }
+    }
+
     fun setObservation(text: String) = _uiState.update { it.copy(observation = text) }
     fun onRejectReasonChange(text: String) = _uiState.update { it.copy(rejectReason = text) }
 
-    fun showRejectDialog() = _uiState.update { it.copy(showRejectDialog = true, rejectReason = "") }
-    fun hideRejectDialog() = _uiState.update { it.copy(showRejectDialog = false) }
+    fun showRejectDialog() {
+        _uiState.update { it.copy(showRejectDialog = true) }
+    }
+
+    fun hideRejectDialog() {
+        _uiState.update { it.copy(showRejectDialog = false, rejectReason = "") }
+    }
+
+    fun showFinishDialog() {
+        _uiState.update { it.copy(showFinishDialog = true) }
+    }
+
+    fun hideFinishDialog() {
+        _uiState.update { it.copy(showFinishDialog = false) }
+    }
 
     fun approve(id: Long) {
         val observation = _uiState.value.observation.trim()
@@ -136,6 +180,21 @@ class AdminReviewViewModel @Inject constructor(
         }
     }
 
+    fun finish(id: Long, returnedLate: Boolean) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            when (val result = repository.finishReservation(id, returnedLate)) {
+                is NetworkResult.Success -> _uiState.update {
+                    it.copy(isLoading = false, reservation = result.data, actionSuccess = "Reservación finalizada")
+                }
+                is NetworkResult.Error -> _uiState.update {
+                    it.copy(isLoading = false, error = result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
     fun cancel(id: Long, reason: String) {
         if (reason.isBlank()) {
             _uiState.update { it.copy(error = "El motivo de cancelación es obligatorio") }
@@ -165,7 +224,7 @@ class AdminReviewViewModel @Inject constructor(
     fun clearMessages() = _uiState.update { it.copy(error = null, actionSuccess = null) }
 }
 
-enum class AdminReservationTab { ALL, PENDING, RESOLVED }
+enum class AdminReservationTab { ALL, PENDING, IN_PROGRESS, RESOLVED }
 
 data class AdminReservationListUiState(
     val isLoading: Boolean = false,
@@ -231,9 +290,15 @@ class AdminReservationListViewModel @Inject constructor(
     private fun load() {
         val state = _uiState.value
         val statuses: List<ReservationStatus>? = when (state.selectedTab) {
-            AdminReservationTab.ALL      -> null
-            AdminReservationTab.PENDING  -> listOf(ReservationStatus.PENDING)
-            AdminReservationTab.RESOLVED -> listOf(ReservationStatus.CANCELLED, ReservationStatus.APPROVED, ReservationStatus.REJECTED)
+            AdminReservationTab.ALL         -> null
+            AdminReservationTab.PENDING     -> listOf(ReservationStatus.PENDING)
+            AdminReservationTab.IN_PROGRESS -> listOf(ReservationStatus.IN_PROGRESS)
+            AdminReservationTab.RESOLVED    -> listOf(
+                ReservationStatus.CANCELLED, 
+                ReservationStatus.APPROVED, 
+                ReservationStatus.REJECTED, 
+                ReservationStatus.FINISHED
+            )
         }
 
         viewModelScope.launch {
@@ -249,16 +314,10 @@ class AdminReservationListViewModel @Inject constructor(
                 q            = state.searchQuery.ifBlank { null }
             )) {
                 is NetworkResult.Success -> {
-                    val content = if (state.selectedTab == AdminReservationTab.RESOLVED) {
-                        result.data.content.filter {
-                            it.status != ReservationStatus.PENDING
-                        }
-                    } else result.data.content
-
                     _uiState.update {
                         it.copy(
                             isLoading    = false,
-                            reservations = content,
+                            reservations = result.data.content,
                             totalPages   = result.data.totalPages
                         )
                     }

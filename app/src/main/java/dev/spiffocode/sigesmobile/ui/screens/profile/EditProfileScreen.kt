@@ -119,13 +119,15 @@ fun EditProfileScreenContent(
                     label = "Nombre",
                     value = state.firstName,
                     onValueChange = onFirstNameChange,
-                    isError = state.isFirstNameError
+                    isError = state.isFirstNameError,
+                    required = true
                 )
                 ProfileField(
                     label = "Apellidos",
                     value = state.lastName,
                     onValueChange = onLastNameChange,
-                    isError = state.isLastNameError
+                    isError = state.isLastNameError,
+                    required = true
                 )
                 ProfileField(
                     label = "Tipo de Usuario",

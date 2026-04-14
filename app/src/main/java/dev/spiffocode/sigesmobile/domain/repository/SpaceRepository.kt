@@ -61,6 +61,15 @@ class SpaceRepository @Inject constructor(
     suspend fun getSpaceType(id: Long): NetworkResult<SpaceTypeDto> =
         safeApiCall { api.getSpaceType(id) }
 
+    suspend fun createSpaceType(request: dev.spiffocode.sigesmobile.data.remote.dto.SpaceTypeRegisterDto): NetworkResult<SpaceTypeDto> =
+        safeApiCall { api.createSpaceType(request) }
+
+    suspend fun updateSpaceType(id: Long, request: dev.spiffocode.sigesmobile.data.remote.dto.SpaceTypeRegisterDto): NetworkResult<SpaceTypeDto> =
+        safeApiCall { api.updateSpaceType(id, request) }
+
+    suspend fun deactivateSpaceType(id: Long): NetworkResult<SpaceTypeDto> =
+        safeApiCall { api.deactivateSpaceType(id) }
+
     suspend fun searchSpaceAssets(
         page: Int = 0,
         size: Int = 20,

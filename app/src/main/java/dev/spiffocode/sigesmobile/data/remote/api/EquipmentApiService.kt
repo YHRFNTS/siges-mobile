@@ -45,4 +45,20 @@ interface EquipmentApiService {
     suspend fun getEquipmentType(
         @Path("id") id: Long
     ): Response<EquipmentTypeDto>
+
+    @retrofit2.http.POST("equipment-types")
+    suspend fun createEquipmentType(
+        @retrofit2.http.Body request: dev.spiffocode.sigesmobile.data.remote.dto.EquipmentTypeRegisterDto
+    ): Response<EquipmentTypeDto>
+
+    @retrofit2.http.PUT("equipment-types/{id}")
+    suspend fun updateEquipmentType(
+        @Path("id") id: Long,
+        @retrofit2.http.Body request: dev.spiffocode.sigesmobile.data.remote.dto.EquipmentTypeRegisterDto
+    ): Response<EquipmentTypeDto>
+
+    @retrofit2.http.POST("equipment-types/{id}/deactivate")
+    suspend fun deactivateEquipmentType(
+        @Path("id") id: Long
+    ): Response<EquipmentTypeDto>
 }
